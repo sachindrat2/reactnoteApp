@@ -2,9 +2,15 @@
 // Use different URLs for development vs production to handle CORS
 const BACKEND_URL = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
 
-const BASE_URL = window.location.hostname === 'localhost' 
-  ? BACKEND_URL
-  : `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(BACKEND_URL)}`;
+// Try direct connection first, then fallback to CORS proxy
+const getApiUrl = () => {
+  if (window.location.hostname === 'localhost') {
+    return BACKEND_URL;
+  }
+  
+  // For production, try CORS proxy
+  return `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(BACKEND_URL)}`;
+};
 
 // API endpoint paths
 const API_ENDPOINTS = {
@@ -35,9 +41,10 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-// Generic API request function
+// Generic API request function with better error handling
 const apiRequest = async (endpoint, options = {}) => {
-  const url = `${BASE_URL}${endpoint}`;
+  const baseUrl = getApiUrl();
+  const url = `${baseUrl}${endpoint}`;
   
   const config = {
     headers: {
@@ -56,17 +63,11 @@ const apiRequest = async (endpoint, options = {}) => {
     headers: config.headers,
     body: config.body 
   });
-  
-  // Log the exact form data being sent
-  if (config.body && typeof config.body === 'string' && config.headers['Content-Type'] === 'application/x-www-form-urlencoded') {
-    console.log('Form data being sent:', config.body);
-  }
 
   try {
     const response = await fetch(url, config);
     
     console.log('Response Status:', response.status);
-    console.log('Response Headers:', Object.fromEntries(response.headers.entries()));
     
     // Handle different response types
     const contentType = response.headers.get('content-type');
@@ -108,22 +109,12 @@ const apiRequest = async (endpoint, options = {}) => {
         data: data
       });
       
-      // Log detailed error information
-      console.error('Full error details:', JSON.stringify(data, null, 2));
-      
       // For 401 errors, check if it's a credential issue
       if (response.status === 401) {
         console.error('Authentication failed - check credentials');
         if (data && data.detail) {
           console.error('Server error message:', data.detail);
         }
-      }
-      
-      // For 500 errors with empty responses, this indicates a server configuration issue
-      if (response.status === 500 && (!data || data === '')) {
-        const errorMsg = `Server Error (500): The server returned an empty response for ${endpoint}. This suggests a server configuration issue or the endpoint may not exist.`;
-        console.error(errorMsg);
-        throw new Error(errorMsg);
       }
       
       // Check if this is a token response with valid data despite error status
@@ -139,6 +130,12 @@ const apiRequest = async (endpoint, options = {}) => {
     return data;
   } catch (error) {
     console.error('API request failed:', error);
+    
+    // Handle specific network errors
+    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      throw new Error('Network error - Unable to connect to server. Please check your internet connection.');
+    }
+    
     throw error;
   }
 };
@@ -223,8 +220,12 @@ export const handleAPIError = (error) => {
     return 'Session expired. Please login again.';
   }
   
-  if (error.message.includes('Network')) {
-    return 'Network error. Please check your connection.';
+  if (error.message.includes('Network error') || error.message.includes('Failed to fetch')) {
+    return 'Unable to connect to server. Please check your internet connection and try again.';
+  }
+  
+  if (error.message.includes('CORS')) {
+    return 'Connection blocked by browser security. Please try refreshing the page.';
   }
   
   return error.message || 'An unexpected error occurred.';

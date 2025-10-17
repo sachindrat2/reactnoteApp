@@ -31,28 +31,27 @@ const notesCache = {
 
 // Notes service functions with local caching
 export const notesService = {
-  // Get all notes - prioritize cache on initial load, API on refresh
+  // Get all notes - always start with cache for better UX, then try API
   fetchNotes: async (forceRefresh = false) => {
-    // If not forcing refresh, try cache first
-    if (!forceRefresh) {
-      const cachedNotes = notesCache.get();
-      if (cachedNotes.length > 0) {
-        console.log('📦 Using cached notes for initial load:', cachedNotes.length);
-        
-        // Try API in background to update cache (but don't throw errors)
-        setTimeout(async () => {
-          try {
-            console.log('📡 Background API sync...');
-            const notes = await notesAPI.getAllNotes();
-            notesCache.set(notes);
-            console.log('📦 Cache updated in background');
-          } catch (error) {
-            console.log('❌ Background sync failed, keeping cache');
-          }
-        }, 1000);
-        
-        return { success: true, data: cachedNotes, fromCache: true };
-      }
+    // Always try cache first for better user experience
+    const cachedNotes = notesCache.get();
+    
+    if (!forceRefresh && cachedNotes.length > 0) {
+      console.log('📦 Using cached notes for immediate display:', cachedNotes.length);
+      
+      // Return cached data immediately, then try to update in background
+      setTimeout(async () => {
+        try {
+          console.log('📡 Background API sync...');
+          const notes = await notesAPI.getAllNotes();
+          notesCache.set(notes);
+          console.log('📦 Cache updated in background');
+        } catch (error) {
+          console.log('❌ Background sync failed, keeping cache:', error.message);
+        }
+      }, 500);
+      
+      return { success: true, data: cachedNotes, fromCache: true };
     }
     
     // No cache or forcing refresh - try API
@@ -65,10 +64,9 @@ export const notesService = {
       
       return { success: true, data: notes };
     } catch (error) {
-      console.log('❌ API failed...');
+      console.log('❌ API failed:', error.message);
       
       // If we have cached data, fall back to it
-      const cachedNotes = notesCache.get();
       if (cachedNotes.length > 0) {
         console.log('📦 Using cached notes as fallback:', cachedNotes.length);
         return { success: true, data: cachedNotes, fromCache: true };
