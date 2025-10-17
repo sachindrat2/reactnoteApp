@@ -27,15 +27,29 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
   };
 
   const getRandomGradient = () => {
-    const gradients = [
-      'from-blue-50 to-indigo-100',
-      'from-purple-50 to-pink-100',
-      'from-green-50 to-emerald-100',
-      'from-yellow-50 to-orange-100',
-      'from-pink-50 to-rose-100',
-      'from-indigo-50 to-blue-100',
+    // Palette of gradients + recommended text color for readability
+    const palette = [
+      { bg: 'from-blue-200 to-indigo-300', text: 'text-slate-900' },
+      { bg: 'from-purple-300 to-pink-300', text: 'text-white' },
+      { bg: 'from-emerald-200 to-green-300', text: 'text-slate-900' },
+      { bg: 'from-yellow-200 to-orange-300', text: 'text-slate-900' },
+      { bg: 'from-pink-200 to-rose-300', text: 'text-slate-900' },
+      { bg: 'from-indigo-300 to-blue-400', text: 'text-white' },
+      { bg: 'from-cyan-200 to-teal-300', text: 'text-slate-900' },
+      { bg: 'from-amber-200 to-amber-300', text: 'text-slate-900' }
     ];
-    return gradients[note.id % gradients.length];
+
+    // Deterministic selection using numeric id or string hash
+    const index = (() => {
+      if (typeof note.id === 'number') return Math.abs(note.id);
+      // simple hash for string ids
+      const s = String(note.id || note.title || '0');
+      let h = 0;
+      for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i) | 0;
+      return Math.abs(h);
+    })();
+
+    return palette[index % palette.length];
   };
 
   return (
@@ -46,7 +60,7 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
       {/* Card Header */}
       <div className="p-4 sm:p-6 pb-3 sm:pb-4">
         <div className="flex items-start justify-between mb-3">
-          <h3 className="font-semibold text-slate-800 text-base sm:text-lg line-clamp-2 flex-1 mr-2">
+          <h3 className={`font-semibold ${getRandomGradient().text} text-base sm:text-lg line-clamp-2 flex-1 mr-2`}>
             {note.title}
           </h3>
           
@@ -74,7 +88,7 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
         </div>
 
         {/* Content Preview */}
-        <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-3">
+        <p className={`leading-relaxed mb-3 sm:mb-4 line-clamp-3 ${getRandomGradient().text === 'text-white' ? 'text-white/90' : 'text-slate-700' } text-xs sm:text-sm`}>
           {getPreview(note.content, window.innerWidth < 640 ? 80 : 120)}
         </p>
 
@@ -85,7 +99,7 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
               <span
                 key={index}
                 className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-medium 
-                         bg-slate-100 text-slate-700 border border-slate-200"
+                         bg-white/60 text-slate-700 border border-white/40 backdrop-blur-sm"
               >
                 #{tag}
               </span>

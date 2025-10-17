@@ -1,15 +1,14 @@
 // API Base Configuration
-// Use different URLs for development vs production to handle CORS
 const BACKEND_URL = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
 
-// Try direct connection first, then fallback to CORS proxy
+// Use a more reliable CORS proxy for production
 const getApiUrl = () => {
   if (window.location.hostname === 'localhost') {
     return BACKEND_URL;
   }
   
-  // For production, try CORS proxy
-  return `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(BACKEND_URL)}`;
+  // Try a simpler CORS proxy approach
+  return `https://cors.bridged.cc/${BACKEND_URL}`;
 };
 
 // API endpoint paths
@@ -41,7 +40,7 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-// Generic API request function with better error handling
+// Generic API request function with better error handling and fallback
 const apiRequest = async (endpoint, options = {}) => {
   const baseUrl = getApiUrl();
   const url = `${baseUrl}${endpoint}`;
@@ -54,14 +53,14 @@ const apiRequest = async (endpoint, options = {}) => {
     },
     mode: 'cors',
     credentials: 'omit',
+    cache: 'no-cache',
     ...options
   };
 
   console.log('API Request Details:', { 
     url, 
-    method: config.method,
-    headers: config.headers,
-    body: config.body 
+    method: config.method || 'GET',
+    headers: config.headers
   });
 
   try {
@@ -78,17 +77,13 @@ const apiRequest = async (endpoint, options = {}) => {
         data = await response.json();
       } else {
         const textData = await response.text();
-        console.log('Raw text response:', `"${textData}"`);
-        
         if (textData && textData.trim() !== '') {
-          // Try to parse as JSON even if content-type is wrong
           try {
             data = JSON.parse(textData);
           } catch {
             data = textData;
           }
         } else {
-          console.log('Empty response body detected');
           data = null;
         }
       }
@@ -105,17 +100,8 @@ const apiRequest = async (endpoint, options = {}) => {
         status: response.status,
         statusText: response.statusText,
         url: url,
-        contentType: contentType,
         data: data
       });
-      
-      // For 401 errors, check if it's a credential issue
-      if (response.status === 401) {
-        console.error('Authentication failed - check credentials');
-        if (data && data.detail) {
-          console.error('Server error message:', data.detail);
-        }
-      }
       
       // Check if this is a token response with valid data despite error status
       if (endpoint === '/token' && data && (data.access_token || (typeof data === 'object' && data !== null && Object.keys(data).length > 0))) {
@@ -131,9 +117,10 @@ const apiRequest = async (endpoint, options = {}) => {
   } catch (error) {
     console.error('API request failed:', error);
     
-    // Handle specific network errors
+    // Handle specific CORS and network errors
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-      throw new Error('Network error - Unable to connect to server. Please check your internet connection.');
+      // If this is a CORS or network error, provide a helpful message
+      throw new Error('Unable to connect to server. This may be due to network issues or server unavailability.');
     }
     
     throw error;
