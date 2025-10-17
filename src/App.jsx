@@ -19,6 +19,7 @@ const ProtectedRoute = ({ children }) => {
 const AppContent = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
+  // Show loading screen while checking authentication
   if (isLoading) {
     return <LoadingScreen />;
   }

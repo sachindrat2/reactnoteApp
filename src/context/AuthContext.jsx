@@ -47,6 +47,21 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(false);
   }, []);
 
+  // Listen for storage changes (e.g., when API error handler clears auth)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const storedUser = localStorage.getItem('notesapp_user');
+      if (!storedUser && isAuthenticated) {
+        console.log('🚫 localStorage cleared, logging out user');
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [isAuthenticated]);
+
   const login = async (email, password) => {
     try {
       setIsLoading(true);
