@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/my-app/', // Replace with your repository name
+  base: '/reactnoteApp/', // Your repository name
   server: {
     port: 3000,
     strictPort: true,

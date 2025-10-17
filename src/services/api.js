@@ -1,6 +1,10 @@
 // API Base Configuration
-// Try direct call with no-cors mode as fallback
-const BASE_URL = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
+// Use different URLs for development vs production to handle CORS
+const BACKEND_URL = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
+
+const BASE_URL = window.location.hostname === 'localhost' 
+  ? BACKEND_URL
+  : `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(BACKEND_URL)}`;
 
 // API endpoint paths
 const API_ENDPOINTS = {
