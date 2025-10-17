@@ -12,84 +12,48 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  console.log('AuthProvider rendering...');
-  
-  // Initialize state directly from localStorage to avoid race conditions
+  // Simple initialization - read localStorage once
   const [user, setUser] = useState(() => {
     try {
       const storedUser = localStorage.getItem('notesapp_user');
       if (storedUser) {
         const userData = JSON.parse(storedUser);
         if (userData.access_token) {
+          console.log('✅ Initial auth: User found with token');
           return userData;
         }
       }
+      console.log('❌ Initial auth: No valid user found');
+      return null;
     } catch (error) {
-      console.error('Error reading initial auth state:', error);
+      console.error('❌ Initial auth: Error reading localStorage:', error);
+      return null;
     }
-    return null;
   });
   
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(!!user);
 
-  // Sync isAuthenticated with user state
+  // Simple effect to sync isAuthenticated with user state
   useEffect(() => {
     setIsAuthenticated(!!user);
+    console.log('🔄 Auth state synced:', { hasUser: !!user, isAuthenticated: !!user });
   }, [user]);
-
-  // Only minimal useEffect for cleanup
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const storedUser = localStorage.getItem('notesapp_user');
-      if (!storedUser && isAuthenticated) {
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [isAuthenticated]);
 
   const login = async (email, password) => {
     try {
       setIsLoading(true);
-      console.log('Attempting login with:', { email });
+      console.log('🔐 Attempting login...');
+      
       const userData = await authAPI.login(email, password);
-      console.log('📥 Login response received:', userData);
-      console.log('📥 Login response keys:', Object.keys(userData || {}));
-      console.log('📥 Access token in response:', userData?.access_token ? 'YES' : 'NO');
+      console.log('✅ Login successful:', userData);
       
       setUser(userData);
-      setIsAuthenticated(true);
       localStorage.setItem('notesapp_user', JSON.stringify(userData));
       
-      // Verify what was actually saved
-      const savedData = JSON.parse(localStorage.getItem('notesapp_user') || '{}');
-      console.log('💾 Data saved to localStorage:', savedData);
-      console.log('💾 Saved data keys:', Object.keys(savedData));
-      
-      console.log('Login successful, user authenticated');
       return { success: true };
     } catch (error) {
-      console.error('Login error:', error);
-      const errorMessage = handleAPIError(error);
-      return { success: false, error: errorMessage };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const register = async (name, email, password) => {
-    try {
-      setIsLoading(true);
-      const userData = await authAPI.register(name, email, password);
-      setUser(userData);
-      setIsAuthenticated(true);
-      localStorage.setItem('notesapp_user', JSON.stringify(userData));
-      return { success: true };
-    } catch (error) {
+      console.error('❌ Login failed:', error);
       const errorMessage = handleAPIError(error);
       return { success: false, error: errorMessage };
     } finally {
@@ -102,13 +66,26 @@ export const AuthProvider = ({ children }) => {
       await authAPI.logout();
     } catch (error) {
       console.error('Logout API error:', error);
-      // Continue with local logout even if API fails
     } finally {
+      console.log('🚪 Logging out user');
       setUser(null);
-      setIsAuthenticated(false);
       localStorage.removeItem('notesapp_user');
-      // Clear any other user data
       localStorage.removeItem('notesapp_notes_cache');
+    }
+  };
+
+  const register = async (name, email, password) => {
+    try {
+      setIsLoading(true);
+      const userData = await authAPI.register(name, email, password);
+      setUser(userData);
+      localStorage.setItem('notesapp_user', JSON.stringify(userData));
+      return { success: true };
+    } catch (error) {
+      const errorMessage = handleAPIError(error);
+      return { success: false, error: errorMessage };
+    } finally {
+      setIsLoading(false);
     }
   };
 
