@@ -9,6 +9,9 @@ import LoadingScreen from './components/LoadingScreen'
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
+  console.log('🛡️ ProtectedRoute check:', { isAuthenticated, isLoading });
+
+  // Only show loading during active operations
   if (isLoading) {
     return <LoadingScreen />;
   }
@@ -21,7 +24,7 @@ const AppContent = () => {
 
   console.log('🎯 AppContent render - Auth state:', { isAuthenticated, isLoading });
 
-  // Show loading screen while checking authentication
+  // Only show loading screen if we're actively loading (like during login)
   if (isLoading) {
     console.log('🎯 AppContent: Showing loading screen');
     return <LoadingScreen />;

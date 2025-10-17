@@ -13,51 +13,63 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   console.log('AuthProvider rendering...');
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Initialize authentication state from localStorage immediately
-  const initializeAuth = () => {
-    console.log('🔍 Initializing authentication state...');
-    
+  
+  // Initialize state from localStorage immediately to avoid race conditions
+  const getInitialAuthState = () => {
     try {
       const storedUser = localStorage.getItem('notesapp_user');
-      console.log('🔍 Raw localStorage value:', storedUser);
-      
       if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        if (userData.access_token) {
+          console.log('🔍 Initial auth state: AUTHENTICATED');
+          return { user: userData, isAuthenticated: true };
+        }
+      }
+    } catch (error) {
+      console.error('Error reading initial auth state:', error);
+    }
+    console.log('🔍 Initial auth state: NOT AUTHENTICATED');
+    return { user: null, isAuthenticated: false };
+  };
+
+  const initialAuthState = getInitialAuthState();
+  
+  const [user, setUser] = useState(initialAuthState.user);
+  const [isLoading, setIsLoading] = useState(false); // Start as false since we read from localStorage immediately
+  const [isAuthenticated, setIsAuthenticated] = useState(initialAuthState.isAuthenticated);
+
+  useEffect(() => {
+    console.log('🔍 AuthProvider useEffect - Double-checking authentication...');
+    
+    // Double-check the authentication state
+    const storedUser = localStorage.getItem('notesapp_user');
+    console.log('🔍 Raw localStorage value:', storedUser);
+    
+    if (storedUser) {
+      try {
         const userData = JSON.parse(storedUser);
         console.log('🔍 Parsed user data:', userData);
         
-        if (userData.access_token) {
-          console.log('✅ Valid token found, setting authenticated state');
+        if (userData.access_token && !isAuthenticated) {
+          console.log('✅ Token found but state not set, updating state');
           setUser(userData);
           setIsAuthenticated(true);
-          return true;
-        } else {
-          console.log('❌ No access token, clearing localStorage');
-          localStorage.removeItem('notesapp_user');
+        } else if (!userData.access_token && isAuthenticated) {
+          console.log('❌ No token but state shows authenticated, clearing state');
+          setUser(null);
+          setIsAuthenticated(false);
         }
-      } else {
-        console.log('🔍 No stored user data found');
+      } catch (error) {
+        console.error('❌ Error parsing stored user data:', error);
+        localStorage.removeItem('notesapp_user');
+        setUser(null);
+        setIsAuthenticated(false);
       }
-    } catch (error) {
-      console.error('❌ Error parsing stored user data:', error);
-      localStorage.removeItem('notesapp_user');
+    } else if (isAuthenticated) {
+      console.log('❌ No stored data but state shows authenticated, clearing state');
+      setUser(null);
+      setIsAuthenticated(false);
     }
-    
-    return false;
-  };
-
-  useEffect(() => {
-    console.log('🔍 AuthProvider useEffect running...');
-    
-    // Initialize auth state
-    const isAuth = initializeAuth();
-    console.log('🔍 Authentication initialized:', isAuth);
-    
-    // Always set loading to false after initialization
-    setIsLoading(false);
   }, []);
 
   // Listen for storage changes (e.g., when API error handler clears auth)
