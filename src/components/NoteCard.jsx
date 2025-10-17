@@ -1,0 +1,129 @@
+import React from 'react';
+
+const NoteCard = ({ note, onEdit, onDelete }) => {
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h ago`;
+    } else if (diffInHours < 48) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+      });
+    }
+  };
+
+  const getPreview = (content, maxLength = 120) => {
+    if (content.length <= maxLength) return content;
+    return content.substring(0, maxLength).trim() + '...';
+  };
+
+  const getRandomGradient = () => {
+    const gradients = [
+      'from-blue-50 to-indigo-100',
+      'from-purple-50 to-pink-100',
+      'from-green-50 to-emerald-100',
+      'from-yellow-50 to-orange-100',
+      'from-pink-50 to-rose-100',
+      'from-indigo-50 to-blue-100',
+    ];
+    return gradients[note.id % gradients.length];
+  };
+
+  return (
+    <div className={`group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-slate-200 
+                    overflow-hidden transition-all duration-300 sm:hover:scale-[1.02] sm:hover:-translate-y-1
+                    bg-gradient-to-br ${getRandomGradient()} animate-fade-in`}>
+      
+      {/* Card Header */}
+      <div className="p-4 sm:p-6 pb-3 sm:pb-4">
+        <div className="flex items-start justify-between mb-3">
+          <h3 className="font-semibold text-slate-800 text-base sm:text-lg line-clamp-2 flex-1 mr-2">
+            {note.title}
+          </h3>
+          
+          {/* Action Buttons - Always visible on mobile, hover on desktop */}
+          <div className="flex items-center space-x-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+            <button
+              onClick={() => onEdit(note)}
+              className="p-1.5 sm:p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+              title="Edit note"
+            >
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => onDelete(note.id)}
+              className="p-1.5 sm:p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+              title="Delete note"
+            >
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Content Preview */}
+        <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-3">
+          {getPreview(note.content, window.innerWidth < 640 ? 80 : 120)}
+        </p>
+
+        {/* Tags */}
+        {note.tags && note.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+            {note.tags.slice(0, window.innerWidth < 640 ? 2 : 3).map((tag, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-medium 
+                         bg-slate-100 text-slate-700 border border-slate-200"
+              >
+                #{tag}
+              </span>
+            ))}
+            {note.tags.length > (window.innerWidth < 640 ? 2 : 3) && (
+              <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-medium 
+                             bg-slate-100 text-slate-500 border border-slate-200">
+                +{note.tags.length - (window.innerWidth < 640 ? 2 : 3)} more
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Card Footer */}
+      <div className="px-4 sm:px-6 py-3 sm:py-4 bg-white/50 border-t border-slate-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 sm:space-x-4 text-xs text-slate-500">
+            <div className="flex items-center space-x-1">
+              <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="hidden sm:inline">Updated {formatDate(note.updatedAt)}</span>
+              <span className="sm:hidden">{formatDate(note.updatedAt)}</span>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => onEdit(note)}
+            className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200"
+          >
+            <span className="hidden sm:inline">Open →</span>
+            <span className="sm:hidden">Open</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default NoteCard;

@@ -1,0 +1,3 @@
+@echo off
+echo Starting Chrome with disabled web security for development...
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --disable-web-security --user-data-dir="c:\temp\chrome-dev-session" --disable-features=VizDisplayCompositor http://localhost:3000
