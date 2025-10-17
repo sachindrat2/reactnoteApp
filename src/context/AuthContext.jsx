@@ -17,33 +17,46 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    // Check for stored user data on app startup
-    console.log('🔍 Checking for stored user data...');
-    const storedUser = localStorage.getItem('notesapp_user');
-    if (storedUser) {
-      try {
+  // Initialize authentication state from localStorage immediately
+  const initializeAuth = () => {
+    console.log('🔍 Initializing authentication state...');
+    
+    try {
+      const storedUser = localStorage.getItem('notesapp_user');
+      console.log('🔍 Raw localStorage value:', storedUser);
+      
+      if (storedUser) {
         const userData = JSON.parse(storedUser);
-        console.log('🔍 Found stored user data:', userData);
-        console.log('🔍 Stored data keys:', Object.keys(userData));
-        console.log('🔍 Has access_token:', userData.access_token ? 'YES' : 'NO');
+        console.log('🔍 Parsed user data:', userData);
         
-        // Only authenticate if we have a valid access_token
         if (userData.access_token) {
+          console.log('✅ Valid token found, setting authenticated state');
           setUser(userData);
           setIsAuthenticated(true);
-          console.log('✅ User authenticated from stored data');
+          return true;
         } else {
-          console.log('❌ No valid access_token found, clearing storage');
+          console.log('❌ No access token, clearing localStorage');
           localStorage.removeItem('notesapp_user');
         }
-      } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        localStorage.removeItem('notesapp_user');
+      } else {
+        console.log('🔍 No stored user data found');
       }
-    } else {
-      console.log('🔍 No stored user data found');
+    } catch (error) {
+      console.error('❌ Error parsing stored user data:', error);
+      localStorage.removeItem('notesapp_user');
     }
+    
+    return false;
+  };
+
+  useEffect(() => {
+    console.log('🔍 AuthProvider useEffect running...');
+    
+    // Initialize auth state
+    const isAuth = initializeAuth();
+    console.log('🔍 Authentication initialized:', isAuth);
+    
+    // Always set loading to false after initialization
     setIsLoading(false);
   }, []);
 
@@ -61,6 +74,16 @@ export const AuthProvider = ({ children }) => {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [isAuthenticated]);
+
+  // Debug state changes
+  useEffect(() => {
+    console.log('🔄 Authentication state changed:', {
+      isAuthenticated,
+      isLoading,
+      hasUser: !!user,
+      timestamp: new Date().toISOString()
+    });
+  }, [isAuthenticated, isLoading, user]);
 
   const login = async (email, password) => {
     try {

@@ -19,10 +19,15 @@ const ProtectedRoute = ({ children }) => {
 const AppContent = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
+  console.log('🎯 AppContent render - Auth state:', { isAuthenticated, isLoading });
+
   // Show loading screen while checking authentication
   if (isLoading) {
+    console.log('🎯 AppContent: Showing loading screen');
     return <LoadingScreen />;
   }
+
+  console.log('🎯 AppContent: Rendering routes with authenticated =', isAuthenticated);
 
   return (
     <Routes>
