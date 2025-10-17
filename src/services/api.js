@@ -1,14 +1,35 @@
 // API Base Configuration
 const BACKEND_URL = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
 
-// Use a more reliable CORS proxy for production
+// Use multiple CORS proxies with fallback for production
+const CORS_PROXIES = [
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  (url) => `https://cors-anywhere.herokuapp.com/${url}`,
+];
+
 const getApiUrl = () => {
   if (window.location.hostname === 'localhost') {
     return BACKEND_URL;
   }
   
-  // Try a simpler CORS proxy approach
-  return `https://cors.bridged.cc/${BACKEND_URL}`;
+  // Try the first proxy by default
+  return CORS_PROXIES[0](BACKEND_URL);
+};
+
+// Store failed proxy attempts to avoid retrying
+let failedProxies = new Set();
+
+const getApiUrlWithFallback = (proxyIndex = 0) => {
+  if (window.location.hostname === 'localhost') {
+    return BACKEND_URL;
+  }
+  
+  if (proxyIndex >= CORS_PROXIES.length) {
+    throw new Error('All CORS proxies failed');
+  }
+  
+  return CORS_PROXIES[proxyIndex](BACKEND_URL);
 };
 
 // API endpoint paths
@@ -42,8 +63,46 @@ const getAuthHeaders = () => {
 
 // Generic API request function with better error handling and fallback
 const apiRequest = async (endpoint, options = {}) => {
-  const baseUrl = getApiUrl();
-  const url = `${baseUrl}${endpoint}`;
+  let lastError;
+  
+  // Try multiple proxies in production
+  if (window.location.hostname !== 'localhost') {
+    for (let proxyIndex = 0; proxyIndex < CORS_PROXIES.length; proxyIndex++) {
+      try {
+        const baseUrl = getApiUrlWithFallback(proxyIndex);
+        const url = `${baseUrl}${endpoint}`;
+        
+        console.log(`Trying proxy ${proxyIndex + 1}/${CORS_PROXIES.length}:`, url);
+        
+        const result = await makeRequest(url, options, endpoint);
+        console.log(`Proxy ${proxyIndex + 1} succeeded`);
+        return result;
+      } catch (error) {
+        console.log(`Proxy ${proxyIndex + 1} failed:`, error.message);
+        lastError = error;
+        
+        // If this is a CORS error, try the next proxy
+        if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+          continue;
+        }
+        
+        // For other errors, don't try more proxies
+        break;
+      }
+    }
+    
+    // If all proxies failed, throw the last error
+    throw new Error(`All CORS proxies failed. Last error: ${lastError?.message || 'Unknown error'}`);
+  } else {
+    // Local development - use direct URL
+    const baseUrl = getApiUrl();
+    const url = `${baseUrl}${endpoint}`;
+    return makeRequest(url, options, endpoint);
+  }
+};
+
+// Extracted request logic
+const makeRequest = async (url, options = {}, endpoint) => {
   
   const config = {
     headers: {
