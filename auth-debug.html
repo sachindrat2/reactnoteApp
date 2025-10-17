@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Debug Test</title>
+</head>
+<body>
+    <h1>Authentication Debug Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            output.innerHTML += '<p>' + new Date().toISOString() + ': ' + message + '</p>';
+            console.log(message);
+        }
+        
+        log('=== Authentication Debug Test ===');
+        
+        // Check localStorage
+        log('localStorage keys: ' + Object.keys(localStorage).join(', '));
+        log('notesapp_user: ' + localStorage.getItem('notesapp_user'));
+        
+        try {
+            const userData = JSON.parse(localStorage.getItem('notesapp_user') || '{}');
+            log('Parsed user data: ' + JSON.stringify(userData, null, 2));
+            log('Has access_token: ' + (!!userData.access_token));
+            if (userData.access_token) {
+                log('Token preview: ' + userData.access_token.substring(0, 30) + '...');
+            }
+        } catch (error) {
+            log('Error parsing user data: ' + error.message);
+        }
+        
+        // Test API call with stored token
+        async function testTokenValidity() {
+            try {
+                const userData = JSON.parse(localStorage.getItem('notesapp_user') || '{}');
+                if (!userData.access_token) {
+                    log('No token to test');
+                    return;
+                }
+                
+                log('Testing token validity...');
+                
+                const response = await fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net') + '/notes', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + userData.access_token,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                log('Token test response status: ' + response.status);
+                
+                if (response.status === 401) {
+                    log('❌ Token is INVALID - this explains the logout on refresh!');
+                } else if (response.ok) {
+                    log('✅ Token is VALID - auth persistence should work');
+                } else {
+                    log('⚠️ Unexpected response: ' + response.status);
+                }
+                
+            } catch (error) {
+                log('Error testing token: ' + error.message);
+            }
+        }
+        
+        // Run token test if we have data
+        if (localStorage.getItem('notesapp_user')) {
+            testTokenValidity();
+        }
+    </script>
+</body>
+</html>

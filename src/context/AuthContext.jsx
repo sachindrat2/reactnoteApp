@@ -83,8 +83,20 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
+    // Listen for auth expiration events
+    const handleAuthExpired = () => {
+      console.log('🚫 Auth expired event received, logging out user');
+      setUser(null);
+      setIsAuthenticated(false);
+    };
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('auth-expired', handleAuthExpired);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-expired', handleAuthExpired);
+    };
   }, [isAuthenticated]);
 
   // Debug state changes

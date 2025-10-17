@@ -217,10 +217,8 @@ export const notesAPI = {
 // Error handling utility
 export const handleAPIError = (error) => {
   if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-    // Token expired or invalid, clear auth data but don't reload
-    // Let the app's routing handle the redirect to login
-    localStorage.removeItem('notesapp_user');
-    localStorage.removeItem('notesapp_notes_cache');
+    // Token expired or invalid
+    console.log('🚫 401 error detected - token may be expired');
     return 'Session expired. Please login again.';
   }
   
