@@ -1,6 +1,9 @@
 // API Base Configuration
 const BACKEND_URL = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
 
+// Version indicator for debugging
+console.log('🔄 API Service loaded - Version: Multi-proxy fallback v2.0');
+
 // Use multiple CORS proxies with fallback for production
 const CORS_PROXIES = [
   (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
