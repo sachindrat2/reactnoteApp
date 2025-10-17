@@ -36,12 +36,7 @@ const NotesApp = () => {
           setError('Using cached data. Some changes may not be synced.');
         }
       } else {
-        // Check if the error is due to authentication
-        if (result.error && result.error.includes('Session expired')) {
-          console.log('🚫 Session expired during notes fetch, logging out');
-          logout();
-          return;
-        }
+        // Don't logout on API errors - just show error message
         setError(result.error);
       }
     } catch (error) {

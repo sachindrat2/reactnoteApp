@@ -214,10 +214,11 @@ export const notesAPI = {
   }
 };
 
-// Error handling utility
+// Error handling utility - DO NOT clear localStorage here
 export const handleAPIError = (error) => {
   if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-    // Token expired or invalid
+    // Token expired or invalid - just return error message
+    // Let the components handle the logout if needed
     console.log('🚫 401 error detected - token may be expired');
     return 'Session expired. Please login again.';
   }

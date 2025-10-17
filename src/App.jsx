@@ -5,7 +5,6 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import NotesApp from './components/NotesApp'
 import LoginScreen from './components/LoginScreen'
 import LoadingScreen from './components/LoadingScreen'
-import AuthDebug from './components/AuthDebug'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -63,7 +62,6 @@ function App() {
   return (
     <AuthProvider>
       <Router basename="/reactnoteApp">
-        <AuthDebug />
         <AppContent />
       </Router>
     </AuthProvider>

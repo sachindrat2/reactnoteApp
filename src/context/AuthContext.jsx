@@ -11,66 +11,39 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
-  console.log('AuthProvider rendering...');
-  
-  // Initialize state directly from localStorage to avoid race conditions
-  const [user, setUser] = useState(() => {
-    try {
-      const storedUser = localStorage.getItem('notesapp_user');
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        if (userData.access_token) {
-          return userData;
-        }
+// Check if user is logged in from localStorage
+const getStoredAuth = () => {
+  try {
+    const storedUser = localStorage.getItem('notesapp_user');
+    if (storedUser) {
+      const userData = JSON.parse(storedUser);
+      if (userData && userData.access_token) {
+        return { user: userData, isAuthenticated: true };
       }
-    } catch (error) {
-      console.error('Error reading initial auth state:', error);
     }
-    return null;
-  });
+  } catch (error) {
+    console.error('Error reading stored auth:', error);
+    localStorage.removeItem('notesapp_user');
+  }
+  return { user: null, isAuthenticated: false };
+};
+
+export const AuthProvider = ({ children }) => {
+  const storedAuth = getStoredAuth();
   
+  const [user, setUser] = useState(storedAuth.user);
+  const [isAuthenticated, setIsAuthenticated] = useState(storedAuth.isAuthenticated);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(!!user);
-
-  // Sync isAuthenticated with user state
-  useEffect(() => {
-    setIsAuthenticated(!!user);
-  }, [user]);
-
-  // Only minimal useEffect for cleanup
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const storedUser = localStorage.getItem('notesapp_user');
-      if (!storedUser && isAuthenticated) {
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [isAuthenticated]);
 
   const login = async (email, password) => {
     try {
       setIsLoading(true);
-      console.log('Attempting login with:', { email });
       const userData = await authAPI.login(email, password);
-      console.log('📥 Login response received:', userData);
-      console.log('📥 Login response keys:', Object.keys(userData || {}));
-      console.log('📥 Access token in response:', userData?.access_token ? 'YES' : 'NO');
       
       setUser(userData);
       setIsAuthenticated(true);
       localStorage.setItem('notesapp_user', JSON.stringify(userData));
       
-      // Verify what was actually saved
-      const savedData = JSON.parse(localStorage.getItem('notesapp_user') || '{}');
-      console.log('💾 Data saved to localStorage:', savedData);
-      console.log('💾 Saved data keys:', Object.keys(savedData));
-      
-      console.log('Login successful, user authenticated');
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
@@ -102,12 +75,10 @@ export const AuthProvider = ({ children }) => {
       await authAPI.logout();
     } catch (error) {
       console.error('Logout API error:', error);
-      // Continue with local logout even if API fails
     } finally {
       setUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem('notesapp_user');
-      // Clear any other user data
       localStorage.removeItem('notesapp_notes_cache');
     }
   };
