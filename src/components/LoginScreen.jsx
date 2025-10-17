@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const LoginScreen = () => {
   const { login, register, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -62,8 +64,10 @@ const LoginScreen = () => {
       if (!result.success) {
         console.log('Login failed with error:', result.error);
         setErrors({ general: result.error });
+      } else {
+        // Navigate to notes page on successful login
+        navigate('/notes');
       }
-      // If successful, the AuthContext will handle the state update
     } catch (error) {
       console.error('Unexpected error in login:', error);
       setErrors({ general: error.message || 'An unexpected error occurred. Please try again.' });

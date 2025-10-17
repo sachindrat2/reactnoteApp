@@ -1,8 +1,15 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 animate-slide-in-left">
       <div className="container mx-auto px-4 py-4">
@@ -35,7 +42,7 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
                     className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
                   />
                   <button
-                    onClick={logout}
+                    onClick={handleLogout}
                     className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
                     title="Logout"
                   >
@@ -122,7 +129,7 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
                   className="w-10 h-10 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform duration-200"
                 />
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
                   title="Logout"
                 >

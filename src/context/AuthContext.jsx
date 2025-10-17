@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       localStorage.removeItem('notesapp_user');
       // Clear any other user data
-      localStorage.removeItem('notesapp_notes');
+      localStorage.removeItem('notesapp_notes_cache');
     }
   };
 
