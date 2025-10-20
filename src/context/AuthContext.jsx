@@ -127,6 +127,16 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('❌ API login failed:', error);
       
+      // Provide specific feedback based on error type
+      let offlineReason = 'Connection failed';
+      if (error.message.includes('CORS')) {
+        offlineReason = 'Server CORS policy blocking connection';
+      } else if (error.message.includes('NETWORK')) {
+        offlineReason = 'Network connection unavailable';
+      } else if (error.message.includes('TIMEOUT')) {
+        offlineReason = 'Server response timeout';
+      }
+      
       // Fall back to offline mode
       console.log('🔄 Creating offline session...');
       const offlineUser = createOfflineSession(email);
@@ -139,7 +149,7 @@ export const AuthProvider = ({ children }) => {
       return { 
         success: true, 
         offline: true,
-        message: 'Logged in offline. Your data will be stored locally.'
+        message: `Logged in offline (${offlineReason}). Your data will be stored locally and sync when connection is available.`
       };
     } finally {
       setIsLoading(false);

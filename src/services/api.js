@@ -2,7 +2,11 @@
 const BACKEND_URL = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
 
 // Version indicator for debugging
-console.log('🔄 API Service loaded - Version: Multi-proxy fallback v4.0 - Build: 1760938197104');
+console.log('🔄 API Service loaded - Version: Enhanced Offline v5.0 - Build: ' + Date.now());
+
+// Global flag to track if we should skip API attempts (for better UX)
+let apiConnectionFailed = false;
+let corsFailureDetected = false;
 
 // Use multiple CORS proxies with fallback for production
 const CORS_PROXIES = [
@@ -48,6 +52,23 @@ const getApiUrl = () => {
   
   // Try the first proxy by default
   return CORS_PROXIES[0](BACKEND_URL);
+};
+
+// Enhanced CORS detection and error handling
+const detectCorsError = (error) => {
+  const corsIndicators = [
+    'CORS',
+    'Cross-Origin',
+    'Access-Control',
+    'No \'Access-Control-Allow-Origin\'',
+    'has been blocked by CORS policy',
+    'preflight'
+  ];
+  
+  const errorString = error.toString().toLowerCase();
+  return corsIndicators.some(indicator => 
+    errorString.includes(indicator.toLowerCase())
+  );
 };
 
 // Store failed proxy attempts to avoid retrying
@@ -256,10 +277,24 @@ const makeRequest = async (url, options = {}, endpoint) => {
   } catch (error) {
     console.error('API request failed:', error);
     
-    // Handle specific CORS and network errors
+    // Detect CORS-specific errors
+    if (detectCorsError(error)) {
+      corsFailureDetected = true;
+      console.error('🚨 CORS Error Detected:', error.message);
+      throw new Error('CORS_ERROR: Unable to connect to server due to CORS policy restrictions. The app will work in offline mode.');
+    }
+    
+    // Handle specific network errors
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-      // If this is a CORS or network error, provide a helpful message
-      throw new Error('Unable to connect to server. This may be due to network issues or server unavailability.');
+      apiConnectionFailed = true;
+      console.error('🌐 Network Error - switching to offline mode');
+      throw new Error('NETWORK_ERROR: Unable to connect to server. The app will work in offline mode.');
+    }
+    
+    // Handle timeout errors
+    if (error.message.includes('timeout')) {
+      console.error('⏰ Request Timeout - server too slow');
+      throw new Error('TIMEOUT_ERROR: Server is not responding. The app will work in offline mode.');
     }
     
     throw error;

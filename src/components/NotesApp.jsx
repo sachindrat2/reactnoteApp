@@ -7,7 +7,7 @@ import { notesService } from '../services/notesService';
 import { useAuth } from '../context/AuthContext';
 
 const NotesApp = () => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [notes, setNotes] = useState([]);
   const [filteredNotes, setFilteredNotes] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
@@ -16,6 +16,14 @@ const NotesApp = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
+
+  // Detect if we're in offline mode
+  useEffect(() => {
+    if (user?.isOffline) {
+      setIsOfflineMode(true);
+    }
+  }, [user]);
 
   // Load notes from API on component mount
   useEffect(() => {
@@ -141,6 +149,34 @@ const NotesApp = () => {
         onSearchChange={setSearchTerm}
         notesCount={notes.length}
       />
+      
+      {/* Offline Mode Indicator */}
+      {isOfflineMode && (
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6 pt-4">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div className="flex-1">
+                <p className="text-yellow-700 text-sm font-medium">Offline Mode</p>
+                <p className="text-yellow-600 text-xs mt-1">
+                  Server connection failed due to CORS policy. Your data is saved locally and will sync when the server enables CORS for this domain.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsOfflineMode(false)}
+                className="ml-2 text-yellow-400 hover:text-yellow-600"
+                title="Dismiss this notice"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Error Display */}
       {error && (
