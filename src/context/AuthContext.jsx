@@ -33,12 +33,23 @@ const createOfflineSession = (email, name = null) => {
 const getStoredAuth = () => {
   try {
     const storedUser = localStorage.getItem('notesapp_user');
+    console.log('🔍 Checking stored auth:', storedUser ? 'Found' : 'Not found');
+    
     if (storedUser) {
       const userData = JSON.parse(storedUser);
+      console.log('📋 Parsed user data:', { 
+        hasToken: !!userData.access_token, 
+        email: userData.user?.email,
+        isOffline: userData.isOffline 
+      });
+      
       if (userData && userData.access_token) {
+        console.log('✅ Valid auth found in storage');
         return { user: userData, isAuthenticated: true };
       }
     }
+    
+    console.log('❌ No valid auth in storage');
   } catch (error) {
     console.error('Error reading stored auth:', error);
     localStorage.removeItem('notesapp_user');
@@ -47,11 +58,23 @@ const getStoredAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
+  console.log('🚀 AuthProvider initializing...');
   const storedAuth = getStoredAuth();
+  
+  console.log('🔑 Initial auth state:', storedAuth);
   
   const [user, setUser] = useState(storedAuth.user);
   const [isAuthenticated, setIsAuthenticated] = useState(storedAuth.isAuthenticated);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Monitor auth state changes for debugging
+  useEffect(() => {
+    console.log('🔄 Auth state changed:', { 
+      isAuthenticated, 
+      userEmail: user?.user?.email || user?.email,
+      hasToken: !!user?.access_token 
+    });
+  }, [isAuthenticated, user]);
 
   const login = async (email, password) => {
     try {
@@ -72,6 +95,7 @@ export const AuthProvider = ({ children }) => {
       console.log('🔄 Creating offline session...');
       const offlineUser = createOfflineSession(email);
       
+      console.log('💾 Offline user created:', offlineUser);
       setUser(offlineUser);
       setIsAuthenticated(true);
       
@@ -119,11 +143,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    console.log('🚪 Logging out...');
     try {
       await authAPI.logout();
     } catch (error) {
       console.error('Logout API error:', error);
     } finally {
+      console.log('🧹 Clearing auth state and localStorage');
       setUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem('notesapp_user');
