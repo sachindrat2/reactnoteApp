@@ -64,7 +64,12 @@ const NotesApp = () => {
       const result = await notesService.createNote(noteData);
       if (result && result.success) {
         setNotes(prev => [result.data, ...prev]);
-        setError(null);
+        
+        if (result.offline) {
+          setError('Note saved locally. Will sync when connection is available.');
+        } else {
+          setError(null);
+        }
       } else {
         setError(result?.error || 'Failed to create note');
       }
@@ -87,7 +92,12 @@ const NotesApp = () => {
         setNotes(prev => prev.map(note =>
           note.id === updatedNote.id ? result.data : note
         ));
-        setError(null);
+        
+        if (result.offline) {
+          setError('Note updated locally. Will sync when connection is available.');
+        } else {
+          setError(null);
+        }
       } else {
         setError(result?.error || 'Failed to update note');
       }
