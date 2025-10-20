@@ -27,7 +27,9 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-800">NotesApp</h1>
-                <p className="text-xs sm:text-sm text-slate-500">{notesCount} notes</p>
+                <p className="text-xs sm:text-sm text-slate-500">
+                  {notesCount} notes for {user?.user?.name || user?.name || user?.user?.email || user?.email || 'User'}
+                </p>
               </div>
             </div>
 
@@ -36,11 +38,11 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
               {/* User Profile - Mobile */}
               {user && (
                 <div className="flex items-center space-x-2">
-                  <img 
-                    src={user.avatar} 
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
-                  />
+                  <div className="w-8 h-8 rounded-full border-2 border-white shadow-sm bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                    <span className="text-white text-sm font-medium">
+                      {(user?.user?.name || user?.name || user?.user?.email || user?.email || 'U').charAt(0).toUpperCase()}
+                    </span>
+                  </div>
                   <button
                     onClick={handleLogout}
                     className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"

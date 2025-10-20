@@ -35,9 +35,11 @@ const NotesApp = () => {
     setError(null);
     
     try {
+      console.log('🔄 Loading notes for user:', user?.user?.email || user?.email);
       const result = await notesService.fetchNotes();
       if (result && result.success) {
         const notesData = Array.isArray(result.data) ? result.data : [];
+        console.log('📋 Loaded notes:', notesData.length, 'notes for user');
         setNotes(notesData);
         setFilteredNotes(notesData);
         

@@ -1,14 +1,53 @@
 import { notesAPI, handleAPIError } from './api.js';
 
-// Local cache key
-const NOTES_CACHE_KEY = 'notesapp_notes_cache';
+// Helper function to get current user info
+const getCurrentUser = () => {
+  try {
+    const userData = localStorage.getItem('notesapp_user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      return {
+        id: user.user?.id || user.id || 'unknown_user',
+        email: user.user?.email || user.email || 'unknown@example.com',
+        name: user.user?.name || user.name || 'Unknown User'
+      };
+    }
+  } catch (error) {
+    console.error('Error getting current user:', error);
+  }
+  return {
+    id: 'unknown_user',
+    email: 'unknown@example.com',
+    name: 'Unknown User'
+  };
+};
 
-// Local cache management
+// Local cache key - make it user-specific
+const getUserCacheKey = () => {
+  const user = getCurrentUser();
+  return `notesapp_notes_cache_${user.id}`;
+};
+
+// Local cache management - user-specific
 const notesCache = {
   get: () => {
     try {
-      const cached = localStorage.getItem(NOTES_CACHE_KEY);
-      return cached ? JSON.parse(cached) : [];
+      const cacheKey = getUserCacheKey();
+      const cached = localStorage.getItem(cacheKey);
+      const notes = cached ? JSON.parse(cached) : [];
+      const user = getCurrentUser();
+      
+      // Filter notes to only include current user's notes
+      const userNotes = notes.filter(note => 
+        note.userId === user.id || 
+        note.user_id === user.id || 
+        note.owner_id === user.id ||
+        // For backward compatibility, include notes without user info if cache is user-specific
+        (!note.userId && !note.user_id && !note.owner_id)
+      );
+      
+      console.log('📦 Loading cached notes for user:', user.email, '- Count:', userNotes.length);
+      return userNotes;
     } catch (error) {
       console.error('Error reading notes cache:', error);
       return [];
@@ -17,15 +56,26 @@ const notesCache = {
   
   set: (notes) => {
     try {
-      localStorage.setItem(NOTES_CACHE_KEY, JSON.stringify(notes));
-      console.log('📦 Notes cached locally:', notes.length, 'notes');
+      const cacheKey = getUserCacheKey();
+      const user = getCurrentUser();
+      
+      // Ensure all notes have user information
+      const notesWithUser = notes.map(note => ({
+        ...note,
+        userId: note.userId || note.user_id || note.owner_id || user.id,
+        userEmail: note.userEmail || note.user_email || user.email
+      }));
+      
+      localStorage.setItem(cacheKey, JSON.stringify(notesWithUser));
+      console.log('📦 Notes cached locally for user:', user.email, '- Count:', notesWithUser.length);
     } catch (error) {
       console.error('Error saving notes cache:', error);
     }
   },
   
   clear: () => {
-    localStorage.removeItem(NOTES_CACHE_KEY);
+    const cacheKey = getUserCacheKey();
+    localStorage.removeItem(cacheKey);
   }
 };
 
@@ -79,16 +129,21 @@ export const notesService = {
 
   // Create a new note - update both API and cache
   createNote: async (noteData) => {
-    console.log('📝 Creating note...', noteData);
+    const currentUser = getCurrentUser();
+    console.log('📝 Creating note for user:', currentUser.email, noteData);
     
-    // Prepare note data with defaults
+    // Prepare note data with defaults and user information
     const noteToCreate = {
       title: noteData.title || 'Untitled',
       content: noteData.content || '',
       category: noteData.category || 'General',
       color: noteData.color || '#ffffff',
       tags: Array.isArray(noteData.tags) ? noteData.tags : [],
-      isPinned: noteData.isPinned || false
+      isPinned: noteData.isPinned || false,
+      // Add user information
+      userId: currentUser.id,
+      userEmail: currentUser.email,
+      userName: currentUser.name
     };
     
     try {
@@ -106,13 +161,17 @@ export const notesService = {
     } catch (error) {
       console.log('❌ API creation failed, saving locally:', error.message);
       
-      // Create note locally with temporary ID
+      // Create note locally with temporary ID and user info
       const tempNote = {
         ...noteToCreate,
         id: 'temp_' + Date.now(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        isOffline: true
+        isOffline: true,
+        // Ensure user info is preserved
+        userId: currentUser.id,
+        userEmail: currentUser.email,
+        userName: currentUser.name
       };
       
       // Update local cache
@@ -128,16 +187,23 @@ export const notesService = {
 
   // Update an existing note
   updateNote: async (noteId, noteData) => {
+    const currentUser = getCurrentUser();
+    
     try {
-      console.log('✏️ Updating note via API...', noteId);
-      const updatedNote = await notesAPI.updateNote(noteId, {
+      console.log('✏️ Updating note via API for user:', currentUser.email, noteId);
+      const updateData = {
         title: noteData.title || 'Untitled',
         content: noteData.content || '',
         category: noteData.category || 'General',
         color: noteData.color || '#ffffff',
         tags: noteData.tags || [],
-        isPinned: noteData.isPinned || false
-      });
+        isPinned: noteData.isPinned || false,
+        // Preserve user information
+        userId: currentUser.id,
+        userEmail: currentUser.email
+      };
+      
+      const updatedNote = await notesAPI.updateNote(noteId, updateData);
       
       // Update local cache
       const cachedNotes = notesCache.get();
@@ -151,10 +217,18 @@ export const notesService = {
     } catch (error) {
       console.log('❌ Update API failed, updating cache only');
       
-      // Update cache even if API fails
+      // Update cache even if API fails - preserve user info
       const cachedNotes = notesCache.get();
       const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
-      const updatedNote = { ...noteData, id: noteId, updated_at: new Date().toISOString(), isOffline: true };
+      const updatedNote = { 
+        ...noteData, 
+        id: noteId, 
+        updated_at: new Date().toISOString(), 
+        isOffline: true,
+        userId: currentUser.id,
+        userEmail: currentUser.email,
+        userName: currentUser.name
+      };
       const updatedNotes = safeNotes.map(note => 
         note.id === noteId ? updatedNote : note
       );
@@ -166,11 +240,13 @@ export const notesService = {
 
   // Delete a note
   deleteNote: async (noteId) => {
+    const currentUser = getCurrentUser();
+    
     try {
-      console.log('🗑️ Deleting note via API...', noteId);
+      console.log('🗑️ Deleting note via API for user:', currentUser.email, noteId);
       await notesAPI.deleteNote(noteId);
       
-      // Remove from local cache
+      // Remove from local cache (only current user's notes)
       const cachedNotes = notesCache.get();
       const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
       const updatedNotes = safeNotes.filter(note => note.id !== noteId);
@@ -180,7 +256,7 @@ export const notesService = {
     } catch (error) {
       console.log('❌ Delete API failed, removing from cache only');
       
-      // Remove from cache even if API fails
+      // Remove from cache even if API fails (only current user's notes)
       const cachedNotes = notesCache.get();
       const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
       const updatedNotes = safeNotes.filter(note => note.id !== noteId);

@@ -190,6 +190,10 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     console.log('🚪 Logging out...');
+    
+    // Get current user before clearing auth
+    const currentUser = user;
+    
     try {
       await authAPI.logout();
     } catch (error) {
@@ -199,6 +203,15 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem('notesapp_user');
+      
+      // Clear user-specific notes cache
+      if (currentUser?.user?.id || currentUser?.id) {
+        const userId = currentUser.user?.id || currentUser.id;
+        localStorage.removeItem(`notesapp_notes_cache_${userId}`);
+        console.log('🧹 Cleared notes cache for user:', userId);
+      }
+      
+      // Also clear legacy cache key
       localStorage.removeItem('notesapp_notes_cache');
     }
   };
