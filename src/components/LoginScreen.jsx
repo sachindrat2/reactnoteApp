@@ -65,6 +65,11 @@ const LoginScreen = () => {
         console.log('Login failed with error:', result.error);
         setErrors({ general: result.error });
       } else {
+        // Show offline message if applicable
+        if (result.offline) {
+          console.log('💾 Logged in offline mode');
+          // You could show a temporary success message here
+        }
         // Navigate to notes page on successful login
         navigate('/notes');
       }
