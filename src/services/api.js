@@ -2,13 +2,18 @@
 const BACKEND_URL = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
 
 // Version indicator for debugging
-console.log('🔄 API Service loaded - Version: Multi-proxy fallback v2.0');
+console.log('🔄 API Service loaded - Version: Multi-proxy fallback v3.0');
 
 // Use multiple CORS proxies with fallback for production
 const CORS_PROXIES = [
+  // Try direct connection first (may work if CORS is fixed server-side)
+  (url) => url,
+  // More reliable CORS proxies
+  (url) => `https://cors-anywhere.herokuapp.com/${url}`,
+  (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  (url) => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`,
   (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  (url) => `https://cors-anywhere.herokuapp.com/${url}`,
 ];
 
 const getApiUrl = () => {
@@ -22,6 +27,9 @@ const getApiUrl = () => {
 
 // Store failed proxy attempts to avoid retrying
 let failedProxies = new Set();
+
+// Store working proxy index to try successful ones first
+let workingProxyIndex = 0;
 
 const getApiUrlWithFallback = (proxyIndex = 0) => {
   if (window.location.hostname === 'localhost') {
@@ -70,32 +78,49 @@ const apiRequest = async (endpoint, options = {}) => {
   
   // Try multiple proxies in production
   if (window.location.hostname !== 'localhost') {
-    for (let proxyIndex = 0; proxyIndex < CORS_PROXIES.length; proxyIndex++) {
+    // Start with the last working proxy if we have one
+    const tryOrder = [...Array(CORS_PROXIES.length).keys()];
+    if (workingProxyIndex > 0) {
+      tryOrder.splice(workingProxyIndex, 1);
+      tryOrder.unshift(workingProxyIndex);
+    }
+    
+    for (let i = 0; i < tryOrder.length; i++) {
+      const proxyIndex = tryOrder[i];
       try {
         const baseUrl = getApiUrlWithFallback(proxyIndex);
         const url = `${baseUrl}${endpoint}`;
         
-        console.log(`Trying proxy ${proxyIndex + 1}/${CORS_PROXIES.length}:`, url);
+        console.log(`Trying proxy ${proxyIndex + 1}/${CORS_PROXIES.length} (${proxyIndex === 0 ? 'direct' : 'proxy'}):`, url);
         
         const result = await makeRequest(url, options, endpoint);
-        console.log(`Proxy ${proxyIndex + 1} succeeded`);
+        console.log(`Proxy ${proxyIndex + 1} succeeded - caching for future use`);
+        workingProxyIndex = proxyIndex; // Cache successful proxy
         return result;
       } catch (error) {
         console.log(`Proxy ${proxyIndex + 1} failed:`, error.message);
         lastError = error;
         
-        // If this is a CORS error, try the next proxy
-        if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+        // For production, be aggressive about trying next proxy for any network-related error
+        if (error.message.includes('CORS') || 
+            error.message.includes('Failed to fetch') ||
+            error.message.includes('timeout') ||
+            error.message.includes('ERR_FAILED') ||
+            error.message.includes('net::') ||
+            error.name === 'TypeError') {
           continue;
         }
         
-        // For other errors, don't try more proxies
+        // For authentication or API errors, don't try more proxies
         break;
       }
     }
     
-    // If all proxies failed, throw the last error
-    throw new Error(`All CORS proxies failed. Last error: ${lastError?.message || 'Unknown error'}`);
+    // If all proxies failed, show a helpful error message
+    console.error('🚨 All proxy attempts failed. This is likely due to CORS restrictions.');
+    console.log('💡 To fix this permanently, the backend server needs to add CORS headers for:', window.location.origin);
+    
+    throw new Error(`Connection failed: Unable to reach the server through any available proxy. The backend server may need to enable CORS for this domain.`);
   } else {
     // Local development - use direct URL
     const baseUrl = getApiUrl();
@@ -104,9 +129,8 @@ const apiRequest = async (endpoint, options = {}) => {
   }
 };
 
-// Extracted request logic
+// Extracted request logic with timeout
 const makeRequest = async (url, options = {}, endpoint) => {
-  
   const config = {
     headers: {
       ...getAuthHeaders(),
@@ -125,8 +149,16 @@ const makeRequest = async (url, options = {}, endpoint) => {
     headers: config.headers
   });
 
+  // Add timeout wrapper
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Request timeout')), 15000); // 15 second timeout
+  });
+
   try {
-    const response = await fetch(url, config);
+    const response = await Promise.race([
+      fetch(url, config),
+      timeoutPromise
+    ]);
     
     console.log('Response Status:', response.status);
     
