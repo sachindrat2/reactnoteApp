@@ -92,7 +92,8 @@ export const notesService = {
       
       // Update local cache with the new note
       const cachedNotes = notesCache.get();
-      const updatedNotes = [newNote, ...cachedNotes];
+      const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
+      const updatedNotes = [newNote, ...safeNotes];
       notesCache.set(updatedNotes);
       
       return { success: true, data: newNote };
@@ -112,10 +113,75 @@ export const notesService = {
       };
       
       const cachedNotes = notesCache.get();
-      const updatedNotes = [tempNote, ...cachedNotes];
+      const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
+      const updatedNotes = [tempNote, ...safeNotes];
       notesCache.set(updatedNotes);
       
       return { success: true, data: tempNote, offline: true };
+    }
+  },
+
+  // Update an existing note
+  updateNote: async (noteId, noteData) => {
+    try {
+      console.log('✏️ Updating note via API...', noteId);
+      const updatedNote = await notesAPI.updateNote(noteId, {
+        title: noteData.title || 'Untitled',
+        content: noteData.content || '',
+        category: noteData.category || 'General',
+        color: noteData.color || '#ffffff',
+        tags: noteData.tags || [],
+        isPinned: noteData.isPinned || false
+      });
+      
+      // Update local cache
+      const cachedNotes = notesCache.get();
+      const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
+      const updatedNotes = safeNotes.map(note => 
+        note.id === noteId ? updatedNote : note
+      );
+      notesCache.set(updatedNotes);
+      
+      return { success: true, data: updatedNote };
+    } catch (error) {
+      console.log('❌ Update API failed, updating cache only');
+      
+      // Update cache even if API fails
+      const cachedNotes = notesCache.get();
+      const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
+      const updatedNote = { ...noteData, id: noteId, updated_at: new Date().toISOString(), isOffline: true };
+      const updatedNotes = safeNotes.map(note => 
+        note.id === noteId ? updatedNote : note
+      );
+      notesCache.set(updatedNotes);
+      
+      return { success: true, data: updatedNote, offline: true };
+    }
+  },
+
+  // Delete a note
+  deleteNote: async (noteId) => {
+    try {
+      console.log('🗑️ Deleting note via API...', noteId);
+      await notesAPI.deleteNote(noteId);
+      
+      // Remove from local cache
+      const cachedNotes = notesCache.get();
+      const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
+      const updatedNotes = safeNotes.filter(note => note.id !== noteId);
+      notesCache.set(updatedNotes);
+      
+      return { success: true };
+    } catch (error) {
+      console.log('❌ Delete API failed, removing from cache only');
+      
+      // Remove from cache even if API fails
+      const cachedNotes = notesCache.get();
+      const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
+      const updatedNotes = safeNotes.filter(note => note.id !== noteId);
+      notesCache.set(updatedNotes);
+      
+      return { success: true, offline: true };
     }
   },
 
