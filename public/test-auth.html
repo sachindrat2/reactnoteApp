@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Persistence Test</title>
+</head>
+<body>
+    <h1>Authentication Persistence Test</h1>
+    <div id="output"></div>
+    
+    <button onclick="createTestAuth()">Create Test Auth</button>
+    <button onclick="checkAuth()">Check Auth</button>
+    <button onclick="clearAuth()">Clear Auth</button>
+    <button onclick="refreshPage()">Refresh Page</button>
+    
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            output.innerHTML += '<p>' + new Date().toISOString() + ': ' + message + '</p>';
+        }
+        
+        function createTestAuth() {
+            const testUser = {
+                access_token: 'test_token_' + Date.now(),
+                token_type: 'Bearer',
+                user: {
+                    id: 'test_user',
+                    email: 'test@example.com',
+                    name: 'Test User',
+                    created_at: new Date().toISOString()
+                },
+                isOffline: true
+            };
+            
+            localStorage.setItem('notesapp_user', JSON.stringify(testUser));
+            log('✅ Test auth created: ' + JSON.stringify(testUser, null, 2));
+        }
+        
+        function checkAuth() {
+            try {
+                const stored = localStorage.getItem('notesapp_user');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    log('📋 Found auth data: ' + JSON.stringify(parsed, null, 2));
+                } else {
+                    log('❌ No auth data found');
+                }
+            } catch (error) {
+                log('🚨 Error checking auth: ' + error.message);
+            }
+        }
+        
+        function clearAuth() {
+            localStorage.removeItem('notesapp_user');
+            log('🧹 Auth data cleared');
+        }
+        
+        function refreshPage() {
+            window.location.reload();
+        }
+        
+        // Check auth on page load
+        window.onload = function() {
+            log('🚀 Page loaded, checking auth...');
+            checkAuth();
+        };
+    </script>
+</body>
+</html>

@@ -76,15 +76,31 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize auth state from localStorage on mount
   useEffect(() => {
-    console.log('� Initializing auth state from storage...');
-    const storedAuth = getStoredAuth();
-    console.log('🔑 Retrieved auth state:', storedAuth);
+    console.log('🔄 Initializing auth state from storage...');
     
-    setUser(storedAuth.user);
-    setIsAuthenticated(storedAuth.isAuthenticated);
-    setIsLoading(false);
+    // Add a small delay to ensure DOM is ready and localStorage is accessible
+    const initializeAuth = async () => {
+      try {
+        // Wait a tick to ensure localStorage is fully accessible
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        const storedAuth = getStoredAuth();
+        console.log('🔑 Retrieved auth state:', storedAuth);
+        
+        setUser(storedAuth.user);
+        setIsAuthenticated(storedAuth.isAuthenticated);
+        setIsLoading(false);
+        
+        console.log('✅ Auth state initialized:', storedAuth);
+      } catch (error) {
+        console.error('🚨 Error initializing auth:', error);
+        setUser(null);
+        setIsAuthenticated(false);
+        setIsLoading(false);
+      }
+    };
     
-    console.log('✅ Auth state initialized:', storedAuth);
+    initializeAuth();
   }, []);
 
   // Monitor auth state changes for debugging
