@@ -121,14 +121,17 @@ export const notesService = {
 
   // Search notes locally (no API call needed)
   searchNotes: (searchTerm, allNotes) => {
+    // Ensure allNotes is always an array
+    const safeNotes = Array.isArray(allNotes) ? allNotes : [];
+    
     if (!searchTerm || searchTerm.trim() === '') {
-      return allNotes;
+      return safeNotes;
     }
     
     console.log('🔍 Searching locally for:', searchTerm);
     const term = searchTerm.toLowerCase();
     
-    const filtered = allNotes.filter(note => {
+    const filtered = safeNotes.filter(note => {
       if (note.isDeleted) return false; // Don't show deleted notes
       
       return (

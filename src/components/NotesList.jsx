@@ -2,7 +2,10 @@ import React from 'react';
 import NoteCard from './NoteCard';
 
 const NotesList = ({ notes, onEditNote, onDeleteNote, searchTerm }) => {
-  if (notes.length === 0) {
+  // Ensure notes is always an array
+  const safeNotes = Array.isArray(notes) ? notes : [];
+  
+  if (safeNotes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <div className="w-24 h-24 bg-gradient-to-r from-slate-200 to-slate-300 rounded-full flex items-center justify-center mb-6">
@@ -57,7 +60,7 @@ const NotesList = ({ notes, onEditNote, onDeleteNote, searchTerm }) => {
 
       {/* Notes Grid - Improved responsive breakpoints */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
-        {notes.map((note, index) => (
+        {safeNotes.map((note, index) => (
           <div 
             key={note.id}
             className="animate-fade-in"

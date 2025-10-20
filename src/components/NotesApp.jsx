@@ -29,8 +29,9 @@ const NotesApp = () => {
     try {
       const result = await notesService.fetchNotes();
       if (result.success) {
-        setNotes(result.data);
-        setFilteredNotes(result.data);
+        const notesData = Array.isArray(result.data) ? result.data : [];
+        setNotes(notesData);
+        setFilteredNotes(notesData);
         
         if (result.fromCache) {
           setError('Using cached data. Some changes may not be synced.');
@@ -53,7 +54,8 @@ const NotesApp = () => {
     
     // Use the local search function from notesService
     const filtered = notesService.searchNotes(searchTerm, notes);
-    setFilteredNotes(filtered);
+    // Ensure filtered is always an array
+    setFilteredNotes(Array.isArray(filtered) ? filtered : []);
     
   }, [searchTerm, notes]);
 
