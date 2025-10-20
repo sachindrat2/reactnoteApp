@@ -28,7 +28,7 @@ const NotesApp = () => {
     
     try {
       const result = await notesService.fetchNotes();
-      if (result.success) {
+      if (result && result.success) {
         const notesData = Array.isArray(result.data) ? result.data : [];
         setNotes(notesData);
         setFilteredNotes(notesData);
@@ -38,7 +38,7 @@ const NotesApp = () => {
         }
       } else {
         // Don't logout on API errors - just show error message
-        setError(result.error);
+        setError(result?.error || 'Failed to load notes');
       }
     } catch (error) {
       console.error('Failed to load notes:', error);
@@ -62,11 +62,11 @@ const NotesApp = () => {
   const handleAddNote = async (noteData) => {
     try {
       const result = await notesService.createNote(noteData);
-      if (result.success) {
+      if (result && result.success) {
         setNotes(prev => [result.data, ...prev]);
         setError(null);
       } else {
-        setError(result.error);
+        setError(result?.error || 'Failed to create note');
       }
     } catch (error) {
       console.error('Failed to create note:', error);
@@ -83,13 +83,13 @@ const NotesApp = () => {
   const handleSaveNote = async (updatedNote) => {
     try {
       const result = await notesService.updateNote(updatedNote.id, updatedNote);
-      if (result.success) {
+      if (result && result.success) {
         setNotes(prev => prev.map(note =>
           note.id === updatedNote.id ? result.data : note
         ));
         setError(null);
       } else {
-        setError(result.error);
+        setError(result?.error || 'Failed to update note');
       }
     } catch (error) {
       console.error('Failed to update note:', error);
@@ -102,7 +102,7 @@ const NotesApp = () => {
   const handleDeleteNote = async (noteId) => {
     try {
       const result = await notesService.deleteNote(noteId);
-      if (result.success) {
+      if (result && result.success) {
         setNotes(prev => prev.filter(note => note.id !== noteId));
         if (selectedNote && selectedNote.id === noteId) {
           setSelectedNote(null);
@@ -110,7 +110,7 @@ const NotesApp = () => {
         }
         setError(null);
       } else {
-        setError(result.error);
+        setError(result?.error || 'Failed to delete note');
       }
     } catch (error) {
       console.error('Failed to delete note:', error);
