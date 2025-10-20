@@ -79,16 +79,21 @@ export const notesService = {
 
   // Create a new note - update both API and cache
   createNote: async (noteData) => {
+    console.log('📝 Creating note...', noteData);
+    
+    // Prepare note data with defaults
+    const noteToCreate = {
+      title: noteData.title || 'Untitled',
+      content: noteData.content || '',
+      category: noteData.category || 'General',
+      color: noteData.color || '#ffffff',
+      tags: Array.isArray(noteData.tags) ? noteData.tags : [],
+      isPinned: noteData.isPinned || false
+    };
+    
     try {
-      console.log('📝 Creating note via API...');
-      const newNote = await notesAPI.createNote({
-        title: noteData.title || 'Untitled',
-        content: noteData.content || '',
-        category: noteData.category || 'General',
-        color: noteData.color || '#ffffff',
-        tags: noteData.tags || [],
-        isPinned: noteData.isPinned || false
-      });
+      console.log('📝 Attempting API creation...');
+      const newNote = await notesAPI.createNote(noteToCreate);
       
       // Update local cache with the new note
       const cachedNotes = notesCache.get();
@@ -96,27 +101,27 @@ export const notesService = {
       const updatedNotes = [newNote, ...safeNotes];
       notesCache.set(updatedNotes);
       
+      console.log('✅ Note created via API');
       return { success: true, data: newNote };
     } catch (error) {
-      // If API fails, add to cache with temporary ID
-      console.log('❌ API failed, saving to cache only');
+      console.log('❌ API creation failed, saving locally:', error.message);
+      
+      // Create note locally with temporary ID
       const tempNote = {
+        ...noteToCreate,
         id: 'temp_' + Date.now(),
-        title: noteData.title || 'Untitled',
-        content: noteData.content || '',
-        category: noteData.category || 'General',
-        color: noteData.color || '#ffffff',
-        tags: noteData.tags || [],
-        isPinned: noteData.isPinned || false,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         isOffline: true
       };
       
+      // Update local cache
       const cachedNotes = notesCache.get();
       const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
       const updatedNotes = [tempNote, ...safeNotes];
       notesCache.set(updatedNotes);
       
+      console.log('💾 Note saved locally with temp ID:', tempNote.id);
       return { success: true, data: tempNote, offline: true };
     }
   },

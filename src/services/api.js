@@ -2,7 +2,7 @@
 const BACKEND_URL = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
 
 // Version indicator for debugging
-console.log('🔄 API Service loaded - Version: Multi-proxy fallback v3.0');
+console.log('🔄 API Service loaded - Version: Multi-proxy fallback v4.0 - Build: 1760938197104');
 
 // Use multiple CORS proxies with fallback for production
 const CORS_PROXIES = [
