@@ -1,10 +1,40 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import './App.css'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import NotesApp from './components/NotesApp'
 import LoginScreen from './components/LoginScreen'
 import LoadingScreen from './components/LoadingScreen'
+
+// Version for cache busting
+const APP_VERSION = '2.0.0-dark-theme';
+const BUILD_TIMESTAMP = Date.now();
+
+// Cache busting utility
+const checkForUpdates = () => {
+  const storedVersion = localStorage.getItem('app_version');
+  const storedTimestamp = localStorage.getItem('build_timestamp');
+  
+  if (storedVersion !== APP_VERSION || !storedTimestamp) {
+    // Clear all cache
+    localStorage.setItem('app_version', APP_VERSION);
+    localStorage.setItem('build_timestamp', BUILD_TIMESTAMP.toString());
+    
+    // Force reload if this is a significant version change
+    if (storedVersion && storedVersion !== APP_VERSION) {
+      console.log('🔄 New version detected, clearing cache...');
+      // Clear service worker cache if exists
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => registration.unregister());
+        });
+      }
+      
+      // Force hard reload
+      window.location.reload(true);
+    }
+  }
+};
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -21,6 +51,11 @@ const ProtectedRoute = ({ children }) => {
 
 const AppContent = () => {
   const { isAuthenticated, isLoading } = useAuth();
+
+  // Check for app updates and clear cache if needed
+  useEffect(() => {
+    checkForUpdates();
+  }, []);
 
   console.log('🎯 AppContent render - Auth state:', { isAuthenticated, isLoading });
 
