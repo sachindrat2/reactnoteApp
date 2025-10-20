@@ -32,21 +32,31 @@ const createOfflineSession = (email, name = null) => {
 // Check if user is logged in from localStorage
 const getStoredAuth = () => {
   try {
+    console.log('🔍 Getting stored auth from localStorage...');
     const storedUser = localStorage.getItem('notesapp_user');
-    console.log('🔍 Checking stored auth:', storedUser ? 'Found' : 'Not found');
+    console.log('� Raw stored data:', storedUser ? 'Found' : 'Not found');
     
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      console.log('📋 Parsed user data:', { 
-        hasToken: !!userData.access_token, 
-        email: userData.user?.email,
-        isOffline: userData.isOffline 
-      });
-      
-      if (userData && userData.access_token) {
-        console.log('✅ Valid auth found in storage');
-        return { user: userData, isAuthenticated: true };
-      }
+    if (!storedUser) {
+      console.log('❌ No stored auth data found');
+      return { user: null, isAuthenticated: false };
+    }
+    
+    const userData = JSON.parse(storedUser);
+    console.log('📋 Parsed user data:', { 
+      hasToken: !!userData.access_token, 
+      email: userData.user?.email,
+      isOffline: userData.isOffline,
+      tokenType: userData.token_type
+    });
+    
+    // Validate required fields
+    if (userData && userData.access_token && userData.user) {
+      console.log('✅ Valid auth found in storage');
+      return { user: userData, isAuthenticated: true };
+    } else {
+      console.log('⚠️ Invalid auth data structure, removing...');
+      localStorage.removeItem('notesapp_user');
+      return { user: null, isAuthenticated: false };
     }
     
     console.log('❌ No valid auth in storage');
@@ -59,13 +69,23 @@ const getStoredAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   console.log('🚀 AuthProvider initializing...');
-  const storedAuth = getStoredAuth();
   
-  console.log('🔑 Initial auth state:', storedAuth);
-  
-  const [user, setUser] = useState(storedAuth.user);
-  const [isAuthenticated, setIsAuthenticated] = useState(storedAuth.isAuthenticated);
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Initialize auth state from localStorage on mount
+  useEffect(() => {
+    console.log('� Initializing auth state from storage...');
+    const storedAuth = getStoredAuth();
+    console.log('🔑 Retrieved auth state:', storedAuth);
+    
+    setUser(storedAuth.user);
+    setIsAuthenticated(storedAuth.isAuthenticated);
+    setIsLoading(false);
+    
+    console.log('✅ Auth state initialized:', storedAuth);
+  }, []);
 
   // Monitor auth state changes for debugging
   useEffect(() => {
