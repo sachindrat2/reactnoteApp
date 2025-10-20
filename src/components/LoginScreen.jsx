@@ -117,30 +117,36 @@ const LoginScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-800 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-4 -left-4 w-72 h-72 bg-white/10 rounded-full animate-pulse"></div>
-        <div className="absolute top-1/2 -right-8 w-96 h-96 bg-white/5 rounded-full animate-bounce" style={{ animationDuration: '3s' }}></div>
-        <div className="absolute bottom-10 left-1/3 w-48 h-48 bg-white/10 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+        {/* Floating orbs with enhanced animations */}
+        <div className="absolute -top-4 -left-4 w-72 h-72 bg-purple-500/20 rounded-full animate-glow-pulse blur-3xl"></div>
+        <div className="absolute top-1/2 -right-8 w-96 h-96 bg-pink-500/15 rounded-full animate-float-slow blur-4xl"></div>
+        <div className="absolute bottom-10 left-1/3 w-48 h-48 bg-blue-500/25 rounded-full animate-pulse blur-2xl"></div>
+        <div className="absolute top-20 right-1/4 w-64 h-64 bg-indigo-500/10 rounded-full animate-bounce blur-3xl" style={{ animationDuration: '4s' }}></div>
+        
+        {/* Moving gradient lines */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent animate-slide-x"></div>
+        <div className="absolute bottom-0 right-0 w-full h-1 bg-gradient-to-l from-transparent via-pink-500/50 to-transparent animate-slide-x-reverse"></div>
       </div>
 
       {/* Login Card */}
       <div className={`relative z-10 w-full max-w-md transform transition-all duration-1000 ${
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
       }`}>
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20">
+        <div className="bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-gray-700/50">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl mb-4 transform hover:scale-110 transition-transform duration-300">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl mb-4 transform hover:scale-110 transition-transform duration-300 shadow-lg">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            <h1 className="text-3xl font-bold text-white mb-2">
               {isRegisterMode ? 'Create Account' : 'Welcome Back'}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-300">
               {isRegisterMode ? 'Create your NotesApp account' : 'Sign in to your NotesApp account'}
             </p>
           </div>
@@ -149,7 +155,7 @@ const LoginScreen = () => {
           <button
             onClick={demoLogin}
             className="w-full mb-6 py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-xl
-                     hover:from-emerald-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2
+                     hover:from-emerald-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-800
                      transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             🚀 Try Demo Login
@@ -169,12 +175,12 @@ const LoginScreen = () => {
             {/* Name Input - Only for Registration */}
             {isRegisterMode && (
               <div className="group">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
                   Full Name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5 text-gray-400 group-focus-within:text-purple-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
@@ -184,10 +190,10 @@ const LoginScreen = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className={`block w-full pl-10 pr-3 py-3 border rounded-xl text-gray-900 placeholder-gray-500
-                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                    className={`block w-full pl-10 pr-3 py-3 border rounded-xl text-white placeholder-gray-400 bg-gray-700/50
+                             focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm
                              transition-all duration-200 ${
-                               errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white/50'
+                               errors.name ? 'border-red-400 bg-red-900/30' : 'border-gray-600'
                              }`}
                     placeholder="Enter your full name"
                   />
@@ -200,12 +206,12 @@ const LoginScreen = () => {
 
             {/* Email Input */}
             <div className="group">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                 Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-5 w-5 text-gray-400 group-focus-within:text-purple-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                   </svg>
                 </div>
@@ -215,22 +221,22 @@ const LoginScreen = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-xl text-gray-900 placeholder-gray-500
-                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-xl text-white placeholder-gray-400 bg-gray-700/50
+                           focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm
                            transition-all duration-200 ${
-                             errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white/50'
+                             errors.email ? 'border-red-400 bg-red-900/30' : 'border-gray-600'
                            }`}
                   placeholder="Enter your email"
                 />
               </div>
               {errors.email && (
-                <p className="mt-2 text-sm text-red-600 animate-fade-in">{errors.email}</p>
+                <p className="mt-2 text-sm text-red-400 animate-fade-in">{errors.email}</p>
               )}
             </div>
 
             {/* Password Input */}
             <div className="group">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -245,17 +251,17 @@ const LoginScreen = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-12 py-3 border rounded-xl text-gray-900 placeholder-gray-500
-                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                  className={`block w-full pl-10 pr-12 py-3 border rounded-xl text-white placeholder-gray-400 bg-gray-700/50
+                           focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm
                            transition-all duration-200 ${
-                             errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white/50'
+                             errors.password ? 'border-red-400 bg-red-900/30' : 'border-gray-600'
                            }`}
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300 transition-colors duration-200"
                 >
                   {showPassword ? (
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -270,7 +276,7 @@ const LoginScreen = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-2 text-sm text-red-600 animate-fade-in">{errors.password}</p>
+                <p className="mt-2 text-sm text-red-400 animate-fade-in">{errors.password}</p>
               )}
             </div>
 
