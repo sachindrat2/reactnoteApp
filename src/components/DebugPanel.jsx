@@ -106,6 +106,21 @@ const DebugPanel = () => {
               Test Service Call
             </button>
             <button
+              onClick={() => {
+                // Clear caches for debugging
+                for (let i = 0; i < localStorage.length; i++) {
+                  const key = localStorage.key(i);
+                  if (key && key.startsWith('notesapp_notes_cache')) {
+                    localStorage.removeItem(key);
+                  }
+                }
+                gatherDebugInfo();
+              }}
+              className="bg-red-500 text-white px-4 py-2 rounded text-sm"
+            >
+              Clear Caches
+            </button>
+            <button
               onClick={gatherDebugInfo}
               className="bg-purple-500 text-white px-4 py-2 rounded text-sm"
             >

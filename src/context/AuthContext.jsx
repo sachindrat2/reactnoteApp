@@ -52,6 +52,13 @@ const getStoredAuth = () => {
       tokenType: userData.token_type
     });
     
+    // Check if we have a corrupt opaque response stored
+    if (userData && userData.opaque === true) {
+      console.log('⚠️ Found corrupt opaque response in storage, clearing...');
+      localStorage.removeItem('notesapp_user');
+      return { user: null, isAuthenticated: false };
+    }
+    
     // Validate required fields
     if (userData && userData.access_token && userData.user) {
       console.log('✅ Valid auth found in storage');
@@ -125,14 +132,14 @@ export const AuthProvider = ({ children }) => {
       if (userData && (userData.opaque === true || !userData.access_token || !userData.user)) {
         console.warn('⚠️ Received opaque/incomplete auth response, creating offline session instead', userData);
         const offlineUser = createOfflineSession(email);
-        setUser(offlineUser);
+        setUser(offlineUser.user);  // Set the user object, not the full auth response
         setIsAuthenticated(true);
         // already persisted inside createOfflineSession
         console.log('💾 Offline session stored for user:', offlineUser.user.id);
         return { success: true, offline: true, message: 'Logged in offline (opaque/incomplete auth response)' };
       }
 
-      setUser(userData);
+      setUser(userData.user || userData);  // Handle both formats
       setIsAuthenticated(true);
       localStorage.setItem('notesapp_user', JSON.stringify(userData));
 

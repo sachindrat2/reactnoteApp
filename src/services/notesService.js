@@ -3,14 +3,53 @@ import { notesAPI, handleAPIError } from './api.js';
 // Helper function to get current user info
 const getCurrentUser = () => {
   try {
-    const userData = localStorage.getItem('notesapp_user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      return {
-        id: user.user?.id || user.id || 'unknown_user',
-        email: user.user?.email || user.email || 'unknown@example.com',
-        name: user.user?.name || user.name || 'Unknown User'
-      };
+    const userDataStr = localStorage.getItem('notesapp_user');
+    if (userDataStr) {
+      try {
+        const parsed = JSON.parse(userDataStr);
+
+        // If storage contains an opaque/malformed response (from no-cors fallback)
+        // create a deterministic offline session so cache keys are user-specific.
+        if (parsed && (parsed.opaque === true || (!parsed.access_token && !parsed.user))) {
+          console.warn('Detected opaque/malformed auth object in storage, creating offline session for user');
+          const email = parsed.user?.email || parsed.email || null;
+          const sanitized = (email || 'unknown').toString().toLowerCase().replace(/[^a-z0-9]/g, '_');
+          const offlineId = `offline_${sanitized}_${Date.now()}`;
+          const offlineUser = {
+            access_token: 'offline_token_' + Date.now(),
+            token_type: 'Bearer',
+            user: {
+              id: offlineId,
+              email: email || `offline@${sanitized}`,
+              name: parsed.user?.name || parsed.name || (email ? email.split('@')[0] : 'offline')
+            },
+            isOffline: true
+          };
+          localStorage.setItem('notesapp_user', JSON.stringify(offlineUser));
+          return {
+            id: offlineUser.user.id,
+            email: offlineUser.user.email,
+            name: offlineUser.user.name
+          };
+        }
+
+        // Handle different auth response formats
+        const user = parsed;
+        const userId = user.user?.id || user.id;
+        const userEmail = user.user?.email || user.email;
+        
+        // If we still don't have a proper user ID, create one from email
+        const finalUserId = userId || (userEmail ? `user_${userEmail.toLowerCase().replace(/[^a-z0-9]/g, '_')}` : 'unknown_user');
+        
+        return {
+          id: finalUserId,
+          email: userEmail || 'unknown@example.com',
+          name: user.user?.name || user.name || (userEmail ? userEmail.split('@')[0] : 'Unknown User')
+        };
+      } catch (parseError) {
+        console.error('Error parsing notesapp_user from localStorage, clearing key:', parseError);
+        localStorage.removeItem('notesapp_user');
+      }
     }
   } catch (error) {
     console.error('Error getting current user:', error);

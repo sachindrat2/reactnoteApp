@@ -67,9 +67,12 @@ self.addEventListener('fetch', (event) => {
         .then((cache) => {
           return fetch(request)
             .then((response) => {
+              // Clone response before any operations to avoid body consumption
+              const responseClone = response.clone();
+              
               // Cache successful API responses
               if (response.ok) {
-                cache.put(request, response.clone());
+                cache.put(request, responseClone);
               }
               return response;
             })
@@ -89,10 +92,13 @@ self.addEventListener('fetch', (event) => {
         // Return cached version or fetch from network
         return response || fetch(request)
           .then((networkResponse) => {
+            // Clone response before any operations
+            const responseClone = networkResponse.clone();
+            
             // Cache new requests
             if (networkResponse.ok) {
-              const cache = caches.open(STATIC_CACHE);
-              cache.then((c) => c.put(request, networkResponse.clone()));
+              caches.open(STATIC_CACHE)
+                .then((c) => c.put(request, responseClone));
             }
             return networkResponse;
           });
