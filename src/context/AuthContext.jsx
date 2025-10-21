@@ -13,13 +13,16 @@ export const useAuth = () => {
 
 // Offline authentication helper
 const createOfflineSession = (email, name = null) => {
+  // generate a deterministic offline id per email so caches are user-specific
+  const sanitized = (email || 'offline').toString().toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const offlineId = `offline_${sanitized}`;
   const offlineUser = {
     access_token: 'offline_token_' + Date.now(),
     token_type: 'Bearer',
     user: {
-      id: 'offline_user',
+      id: offlineId,
       email: email,
-      name: name || email.split('@')[0],
+      name: name || (email ? email.split('@')[0] : 'offline'),
       created_at: new Date().toISOString()
     },
     isOffline: true
@@ -117,11 +120,22 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
       console.log('🔐 Attempting login...');
       const userData = await authAPI.login(email, password);
-      
+
+      // Handle opaque/no-cors or incomplete responses from the auth endpoint
+      if (userData && (userData.opaque === true || !userData.access_token || !userData.user)) {
+        console.warn('⚠️ Received opaque/incomplete auth response, creating offline session instead', userData);
+        const offlineUser = createOfflineSession(email);
+        setUser(offlineUser);
+        setIsAuthenticated(true);
+        // already persisted inside createOfflineSession
+        console.log('💾 Offline session stored for user:', offlineUser.user.id);
+        return { success: true, offline: true, message: 'Logged in offline (opaque/incomplete auth response)' };
+      }
+
       setUser(userData);
       setIsAuthenticated(true);
       localStorage.setItem('notesapp_user', JSON.stringify(userData));
-      
+
       console.log('✅ Login successful via API');
       return { success: true };
     } catch (error) {
