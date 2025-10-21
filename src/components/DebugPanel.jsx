@@ -34,6 +34,32 @@ const DebugPanel = () => {
     });
   };
 
+  const populateTestNotes = () => {
+    // Your known good notes from the API response
+    const testNotes = [
+      {
+        "title": "new note added",
+        "content": "string",
+        "id": 2,
+        "created_at": "2025-09-30 02:29:30"
+      },
+      {
+        "title": "hello its sunday",
+        "content": "string",
+        "id": 1,
+        "created_at": "2025-09-29 07:12:32"
+      }
+    ];
+    
+    console.log('🧪 Debug: Populating cache with test notes...');
+    const result = notesService.populateCache(testNotes);
+    console.log('🧪 Debug: Cache population result:', result);
+    gatherDebugInfo(); // Refresh debug info
+    
+    // Trigger a re-fetch to see if notes appear
+    window.location.reload();
+  };
+
   const testAPICall = async () => {
     try {
       console.log('🧪 Debug: Testing direct API call...');
@@ -104,6 +130,12 @@ const DebugPanel = () => {
               className="bg-green-500 text-white px-4 py-2 rounded text-sm"
             >
               Test Service Call
+            </button>
+            <button
+              onClick={populateTestNotes}
+              className="bg-orange-500 text-white px-4 py-2 rounded text-sm"
+            >
+              Populate Test Notes
             </button>
             <button
               onClick={() => {

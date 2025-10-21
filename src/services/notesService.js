@@ -120,6 +120,16 @@ const notesCache = {
 
 // Notes service functions with local caching
 export const notesService = {
+  // Manual cache population - useful when API returns data but fails due to auth
+  populateCache: (notes) => {
+    if (notes && Array.isArray(notes)) {
+      console.log('📦 Manually populating cache with notes:', notes.length);
+      notesCache.set(notes);
+      return { success: true, data: notes, cached: true };
+    }
+    return { success: false, error: 'Invalid notes data provided' };
+  },
+
   // Get all notes - with reduced retry for better performance
   fetchNotes: async (forceRefresh = false, retryCount = 0) => {
     const maxRetries = 1; // Reduced from 2 to 1 for faster response
@@ -201,7 +211,7 @@ export const notesService = {
     } catch (error) {
       console.log('❌ API failed:', error.message);
       
-      // Handle specific network errors more gracefully
+      // Handle specific error types more gracefully
       const isNetworkError = error.message.includes('Failed to fetch') || 
                            error.message.includes('ERR_FAILED') ||
                            error.message.includes('net::') ||
@@ -212,16 +222,27 @@ export const notesService = {
       const isCorsError = error.message.includes('CORS') || 
                          error.message.includes('CORS_ERROR');
       
-      if (isNetworkError || isCorsError) {
-        console.log('🌐 Network/CORS error detected, using offline mode');
+      const isAuthError = error.message.includes('401') ||
+                         error.message.includes('Unauthorized') ||
+                         error.message.includes('Invalid authentication') ||
+                         error.message.includes('Authentication failed');
+      
+      if (isNetworkError || isCorsError || isAuthError) {
+        console.log(`🌐 ${isAuthError ? 'Authentication' : 'Network/CORS'} error detected, using offline mode`);
         
         // If we have cached data, use it
         if (cachedNotes.length > 0) {
-          console.log('📦 Using cached notes (network unavailable):', cachedNotes.length);
+          console.log('📦 Using cached notes (API unavailable):', cachedNotes.length);
           return { success: true, data: cachedNotes, fromCache: true, offline: true };
         } else {
           console.log('📦 No cached notes available, starting with empty list');
-          return { success: true, data: [], fromCache: false, offline: true };
+          
+          // For auth errors, suggest re-login, but still work offline
+          const offlineMessage = isAuthError ? 
+            'Authentication expired. Working in offline mode.' : 
+            'Network unavailable. Working in offline mode.';
+            
+          return { success: true, data: [], fromCache: false, offline: true, message: offlineMessage };
         }
       }
       
