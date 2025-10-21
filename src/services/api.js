@@ -371,9 +371,19 @@ export const authAPI = {
 export const notesAPI = {
   getAllNotes: async () => {
     console.log('📋 Fetching all notes...');
-    return apiRequest(API_ENDPOINTS.NOTES, {
+    const user = JSON.parse(localStorage.getItem('notesapp_user') || '{}');
+    console.log('👤 Current user for notes fetch:', {
+      email: user.user?.email || user.email,
+      id: user.user?.id || user.id,
+      hasToken: !!(user.access_token || user.token)
+    });
+    
+    const result = await apiRequest(API_ENDPOINTS.NOTES, {
       method: 'GET'
     });
+    
+    console.log('📋 getAllNotes API result:', result);
+    return result;
   },
 
   createNote: async (noteData) => {

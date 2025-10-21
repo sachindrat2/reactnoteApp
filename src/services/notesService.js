@@ -84,9 +84,12 @@ export const notesService = {
   // Get all notes - with reduced retry for better performance
   fetchNotes: async (forceRefresh = false, retryCount = 0) => {
     const maxRetries = 1; // Reduced from 2 to 1 for faster response
+    const currentUser = getCurrentUser();
+    console.log('🔄 fetchNotes called for user:', currentUser);
     
     // Always try cache first for better user experience
     const cachedNotes = notesCache.get();
+    console.log('📦 Cache check result:', cachedNotes.length, 'notes');
     
     if (!forceRefresh && cachedNotes.length > 0) {
       console.log('📦 Using cached notes for immediate display:', cachedNotes.length);
@@ -96,8 +99,13 @@ export const notesService = {
         try {
           console.log('📡 Background API sync...');
           const notes = await notesAPI.getAllNotes();
-          notesCache.set(notes);
-          console.log('📦 Cache updated in background');
+          console.log('📡 API returned notes:', notes?.length || 'undefined', 'notes');
+          if (notes && Array.isArray(notes)) {
+            notesCache.set(notes);
+            console.log('📦 Cache updated in background');
+          } else {
+            console.log('⚠️ API returned invalid notes data:', notes);
+          }
         } catch (error) {
           console.log('❌ Background sync failed, keeping cache:', error.message);
         }
@@ -110,11 +118,35 @@ export const notesService = {
     try {
       console.log(`📡 Fetching notes from API... (attempt ${retryCount + 1}/${maxRetries + 1})`);
       const notes = await notesAPI.getAllNotes();
+      console.log('📡 API getAllNotes response:', notes);
       
-      // Cache the notes locally
-      notesCache.set(notes);
-      
-      return { success: true, data: notes };
+      if (notes && Array.isArray(notes)) {
+        console.log('📋 Raw notes from API:', notes.length, 'notes');
+        
+        // Filter notes for current user
+        const userNotes = notes.filter(note => {
+          const isUserNote = note.userId === currentUser.id || 
+                           note.user_id === currentUser.id || 
+                           note.owner_id === currentUser.id;
+          console.log('🔍 Note filter check:', {
+            noteId: note.id,
+            noteUserId: note.userId || note.user_id || note.owner_id,
+            currentUserId: currentUser.id,
+            isUserNote
+          });
+          return isUserNote;
+        });
+        
+        console.log('👤 Filtered notes for user:', userNotes.length, 'notes');
+        
+        // Cache the filtered notes
+        notesCache.set(userNotes);
+        
+        return { success: true, data: userNotes };
+      } else {
+        console.log('⚠️ API returned invalid notes format:', notes);
+        return { success: false, error: 'Invalid notes data received from server' };
+      }
     } catch (error) {
       console.log('❌ API failed:', error.message);
       
