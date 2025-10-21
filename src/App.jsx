@@ -6,8 +6,8 @@ import NotesApp from './components/NotesApp'
 import LoginScreen from './components/LoginScreen'
 import LoadingScreen from './components/LoadingScreen'
 
-// Version for cache busting
-const APP_VERSION = '2.0.0-dark-theme';
+// Version for cache busting - Updated for deployment test
+const APP_VERSION = '2.0.1-production';
 const BUILD_TIMESTAMP = Date.now();
 
 // Cache busting utility
