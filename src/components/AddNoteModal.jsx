@@ -50,10 +50,10 @@ const AddNoteModal = ({ onAdd, onClose }) => {
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-fade-in"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6 animate-fade-in"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto animate-scale-in">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto animate-scale-in my-auto">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200">
           <div>
@@ -118,7 +118,7 @@ const AddNoteModal = ({ onAdd, onClose }) => {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Start writing your note..."
-              rows={window.innerWidth < 640 ? 6 : 8}
+              rows={window.innerWidth < 640 ? 5 : 6}
               className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-500
                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                        transition-all duration-200 resize-y text-sm sm:text-base"
