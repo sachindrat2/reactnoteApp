@@ -61,109 +61,18 @@ const getCurrentUser = () => {
   };
 };
 
-// Local cache key - make it user-specific
-const getUserCacheKey = () => {
-  const user = getCurrentUser();
-  return `notesapp_notes_cache_${user.id}`;
-};
+// Local cache management - REMOVED - API only now
+// All cache functions removed to use API directly
 
-// Local cache management - user-specific
-const notesCache = {
-  get: () => {
-    try {
-      const cacheKey = getUserCacheKey();
-      const cached = localStorage.getItem(cacheKey);
-      const notes = cached ? JSON.parse(cached) : [];
-      const user = getCurrentUser();
-      
-      // Filter notes to only include current user's notes
-      const userNotes = notes.filter(note => 
-        note.userId === user.id || 
-        note.user_id === user.id || 
-        note.owner_id === user.id ||
-        // For backward compatibility, include notes without user info if cache is user-specific
-        (!note.userId && !note.user_id && !note.owner_id)
-      );
-      
-      console.log('📦 Loading cached notes for user:', user.email, '- Count:', userNotes.length);
-      return userNotes;
-    } catch (error) {
-      console.error('Error reading notes cache:', error);
-      return [];
-    }
-  },
-  
-  set: (notes) => {
-    try {
-      const cacheKey = getUserCacheKey();
-      const user = getCurrentUser();
-      
-      // Ensure all notes have user information
-      const notesWithUser = notes.map(note => ({
-        ...note,
-        userId: note.userId || note.user_id || note.owner_id || user.id,
-        userEmail: note.userEmail || note.user_email || user.email
-      }));
-      
-      localStorage.setItem(cacheKey, JSON.stringify(notesWithUser));
-      console.log('📦 Notes cached locally for user:', user.email, '- Count:', notesWithUser.length);
-    } catch (error) {
-      console.error('Error saving notes cache:', error);
-    }
-  },
-  
-  clear: () => {
-    const cacheKey = getUserCacheKey();
-    localStorage.removeItem(cacheKey);
-  }
-};
-
-// Notes service functions with local caching
+// Notes service functions - Direct API only (no caching)
 export const notesService = {
-  // Manual cache population - useful when API returns data but fails due to auth
-  populateCache: (notes) => {
-    if (notes && Array.isArray(notes)) {
-      console.log('📦 Manually populating cache with notes:', notes.length);
-      notesCache.set(notes);
-      return { success: true, data: notes, cached: true };
-    }
-    return { success: false, error: 'Invalid notes data provided' };
-  },
-
-  // Get all notes - with reduced retry for better performance
+  // Get all notes - Direct from API only
   fetchNotes: async (forceRefresh = false, retryCount = 0) => {
-    const maxRetries = 1; // Reduced from 2 to 1 for faster response
+    const maxRetries = 1;
     const currentUser = getCurrentUser();
-    console.log('🔄 fetchNotes called for user:', currentUser);
+    console.log('🔄 fetchNotes called for user (API only):', currentUser);
     
-    // Always try cache first for better user experience
-    const cachedNotes = notesCache.get();
-    console.log('📦 Cache check result:', cachedNotes.length, 'notes');
-    
-    if (!forceRefresh && cachedNotes.length > 0) {
-      console.log('📦 Using cached notes for immediate display:', cachedNotes.length);
-      
-      // Return cached data immediately, then try to update in background (reduced frequency)
-      setTimeout(async () => {
-        try {
-          console.log('📡 Background API sync...');
-          const notes = await notesAPI.getAllNotes();
-          console.log('📡 API returned notes:', notes?.length || 'undefined', 'notes');
-          if (notes && Array.isArray(notes)) {
-            notesCache.set(notes);
-            console.log('📦 Cache updated in background');
-          } else {
-            console.log('⚠️ API returned invalid notes data:', notes);
-          }
-        } catch (error) {
-          console.log('❌ Background sync failed, keeping cache:', error.message);
-        }
-      }, 2000); // Increased delay to reduce immediate load
-      
-      return { success: true, data: cachedNotes, fromCache: true };
-    }
-    
-    // No cache or forcing refresh - try API with retry logic
+    // Always fetch from API - no cache
     try {
       console.log(`📡 Fetching notes from API... (attempt ${retryCount + 1}/${maxRetries + 1})`);
       const notes = await notesAPI.getAllNotes();
@@ -200,9 +109,6 @@ export const notesService = {
         
         console.log('👤 Filtered notes for user:', userNotes.length, 'notes');
         
-        // Cache the filtered notes
-        notesCache.set(userNotes);
-        
         return { success: true, data: userNotes };
       } else {
         console.log('⚠️ API returned invalid notes format:', notes);
@@ -211,7 +117,7 @@ export const notesService = {
     } catch (error) {
       console.log('❌ API failed:', error.message);
       
-      // Handle specific error types more gracefully
+      // Handle specific error types
       const isNetworkError = error.message.includes('Failed to fetch') || 
                            error.message.includes('ERR_FAILED') ||
                            error.message.includes('net::') ||
@@ -228,43 +134,28 @@ export const notesService = {
                          error.message.includes('Authentication failed');
       
       if (isNetworkError || isCorsError || isAuthError) {
-        console.log(`🌐 ${isAuthError ? 'Authentication' : 'Network/CORS'} error detected, using offline mode`);
+        console.log(`🌐 ${isAuthError ? 'Authentication' : 'Network/CORS'} error detected, no cache available`);
         
-        // If we have cached data, use it
-        if (cachedNotes.length > 0) {
-          console.log('📦 Using cached notes (API unavailable):', cachedNotes.length);
-          return { success: true, data: cachedNotes, fromCache: true, offline: true };
-        } else {
-          console.log('📦 No cached notes available, starting with empty list');
+        const offlineMessage = isAuthError ? 
+          'Authentication expired. Please log in again.' : 
+          'Network unavailable. Unable to fetch notes.';
           
-          // For auth errors, suggest re-login, but still work offline
-          const offlineMessage = isAuthError ? 
-            'Authentication expired. Working in offline mode.' : 
-            'Network unavailable. Working in offline mode.';
-            
-          return { success: true, data: [], fromCache: false, offline: true, message: offlineMessage };
-        }
+        return { success: false, error: offlineMessage, data: [] };
       }
       
       // Retry on timeout errors with shorter delay
       if (error.message.includes('timeout') && retryCount < maxRetries) {
         console.log(`🔄 Retrying due to timeout... (${retryCount + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced from 2s to 1s
+        await new Promise(resolve => setTimeout(resolve, 1000));
         return notesService.fetchNotes(forceRefresh, retryCount + 1);
       }
       
-      // If we have cached data, fall back to it
-      if (cachedNotes.length > 0) {
-        console.log('📦 Using cached notes as fallback:', cachedNotes.length);
-        return { success: true, data: cachedNotes, fromCache: true };
-      }
-      
       const errorMessage = handleAPIError(error);
-      return { success: false, error: errorMessage };
+      return { success: false, error: errorMessage, data: [] };
     }
   },
 
-  // Create a new note - update both API and cache
+  // Create a new note - API only
   createNote: async (noteData) => {
     const currentUser = getCurrentUser();
     console.log('📝 Creating note for user:', currentUser.email, noteData);
@@ -284,41 +175,15 @@ export const notesService = {
     };
     
     try {
-      console.log('📝 Attempting API creation...');
+      console.log('📝 Creating note via API...');
       const newNote = await notesAPI.createNote(noteToCreate);
-      
-      // Update local cache with the new note
-      const cachedNotes = notesCache.get();
-      const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
-      const updatedNotes = [newNote, ...safeNotes];
-      notesCache.set(updatedNotes);
       
       console.log('✅ Note created via API');
       return { success: true, data: newNote };
     } catch (error) {
-      console.log('❌ API creation failed, saving locally:', error.message);
-      
-      // Create note locally with temporary ID and user info
-      const tempNote = {
-        ...noteToCreate,
-        id: 'temp_' + Date.now(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        isOffline: true,
-        // Ensure user info is preserved
-        userId: currentUser.id,
-        userEmail: currentUser.email,
-        userName: currentUser.name
-      };
-      
-      // Update local cache
-      const cachedNotes = notesCache.get();
-      const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
-      const updatedNotes = [tempNote, ...safeNotes];
-      notesCache.set(updatedNotes);
-      
-      console.log('💾 Note saved locally with temp ID:', tempNote.id);
-      return { success: true, data: tempNote, offline: true };
+      console.log('❌ API creation failed:', error.message);
+      const errorMessage = handleAPIError(error);
+      return { success: false, error: errorMessage };
     }
   },
 
@@ -375,7 +240,35 @@ export const notesService = {
     }
   },
 
-  // Delete a note
+  // Update an existing note - API only
+  updateNote: async (noteId, noteData) => {
+    const currentUser = getCurrentUser();
+    
+    try {
+      console.log('✏️ Updating note via API for user:', currentUser.email, noteId);
+      const updateData = {
+        title: noteData.title || 'Untitled',
+        content: noteData.content || '',
+        category: noteData.category || 'General',
+        color: noteData.color || '#ffffff',
+        tags: noteData.tags || [],
+        isPinned: noteData.isPinned || false,
+        // Preserve user information
+        userId: currentUser.id,
+        userEmail: currentUser.email
+      };
+      
+      const updatedNote = await notesAPI.updateNote(noteId, updateData);
+      
+      return { success: true, data: updatedNote };
+    } catch (error) {
+      console.log('❌ Update API failed:', error.message);
+      const errorMessage = handleAPIError(error);
+      return { success: false, error: errorMessage };
+    }
+  },
+
+  // Delete a note - API only
   deleteNote: async (noteId) => {
     const currentUser = getCurrentUser();
     
@@ -383,23 +276,11 @@ export const notesService = {
       console.log('🗑️ Deleting note via API for user:', currentUser.email, noteId);
       await notesAPI.deleteNote(noteId);
       
-      // Remove from local cache (only current user's notes)
-      const cachedNotes = notesCache.get();
-      const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
-      const updatedNotes = safeNotes.filter(note => note.id !== noteId);
-      notesCache.set(updatedNotes);
-      
       return { success: true };
     } catch (error) {
-      console.log('❌ Delete API failed, removing from cache only');
-      
-      // Remove from cache even if API fails (only current user's notes)
-      const cachedNotes = notesCache.get();
-      const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
-      const updatedNotes = safeNotes.filter(note => note.id !== noteId);
-      notesCache.set(updatedNotes);
-      
-      return { success: true, offline: true };
+      console.log('❌ Delete API failed:', error.message);
+      const errorMessage = handleAPIError(error);
+      return { success: false, error: errorMessage };
     }
   },
 
@@ -412,12 +293,10 @@ export const notesService = {
       return safeNotes;
     }
     
-    console.log('🔍 Searching locally for:', searchTerm);
+    console.log('🔍 Searching for:', searchTerm);
     const term = searchTerm.toLowerCase();
     
     const filtered = safeNotes.filter(note => {
-      if (note.isDeleted) return false; // Don't show deleted notes
-      
       return (
         note.title?.toLowerCase().includes(term) ||
         note.content?.toLowerCase().includes(term) ||
@@ -426,15 +305,7 @@ export const notesService = {
       );
     });
     
-    console.log('🔍 Local search results:', filtered.length);
+    console.log('🔍 Search results:', filtered.length);
     return filtered;
-  },
-
-  // Clear local cache (for logout)
-  clearCache: () => {
-    notesCache.clear();
-    console.log('🧹 Notes cache cleared');
   }
 };
-
-export default notesService;
