@@ -67,18 +67,27 @@ self.addEventListener('fetch', (event) => {
         .then((cache) => {
           return fetch(request)
             .then((response) => {
-              // Clone response before any operations to avoid body consumption
-              const responseClone = response.clone();
-              
-              // Cache successful API responses
-              if (response.ok) {
-                cache.put(request, responseClone);
+              // Only cache GET requests and successful responses
+              if (request.method === 'GET' && response.ok && response.status < 400) {
+                try {
+                  // Clone response before caching to avoid body consumption
+                  const responseClone = response.clone();
+                  cache.put(request, responseClone).catch(err => {
+                    console.warn('Failed to cache response:', err);
+                  });
+                } catch (cacheError) {
+                  console.warn('Error cloning response for cache:', cacheError);
+                }
               }
               return response;
             })
             .catch(() => {
-              // Return cached response if network fails
-              return cache.match(request);
+              // Return cached response if network fails (only for GET requests)
+              if (request.method === 'GET') {
+                return cache.match(request);
+              }
+              // For non-GET requests, just reject
+              throw new Error('Network request failed');
             });
         })
     );
@@ -92,13 +101,20 @@ self.addEventListener('fetch', (event) => {
         // Return cached version or fetch from network
         return response || fetch(request)
           .then((networkResponse) => {
-            // Clone response before any operations
-            const responseClone = networkResponse.clone();
-            
-            // Cache new requests
-            if (networkResponse.ok) {
-              caches.open(STATIC_CACHE)
-                .then((c) => c.put(request, responseClone));
+            // Only cache successful GET requests for static files
+            if (request.method === 'GET' && networkResponse.ok && networkResponse.status < 400) {
+              try {
+                // Clone response before caching
+                const responseClone = networkResponse.clone();
+                
+                caches.open(STATIC_CACHE)
+                  .then((c) => c.put(request, responseClone))
+                  .catch(err => {
+                    console.warn('Failed to cache static file:', err);
+                  });
+              } catch (cloneError) {
+                console.warn('Error cloning response for static cache:', cloneError);
+              }
             }
             return networkResponse;
           });

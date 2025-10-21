@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { notesAPI } from '../services/api.js';
 import { notesService } from '../services/notesService.js';
+import { clearAllAppData } from '../utils/clearAppData.js';
 
 const DebugPanel = () => {
   const [debugInfo, setDebugInfo] = useState({});
@@ -104,6 +105,15 @@ const DebugPanel = () => {
               className="bg-green-500 text-white px-4 py-2 rounded text-sm"
             >
               Test Service Call
+            </button>
+            <button
+              onClick={() => {
+                clearAllAppData();
+                setTimeout(() => window.location.reload(), 1000);
+              }}
+              className="bg-red-600 text-white px-4 py-2 rounded text-sm font-medium"
+            >
+              Clear All Data & Reload
             </button>
             <button
               onClick={() => {

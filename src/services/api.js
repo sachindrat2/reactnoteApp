@@ -112,6 +112,8 @@ const getAuthHeaders = () => {
     user = JSON.parse(userDataStr);
   } catch (error) {
     console.error('Error parsing user data from localStorage:', error);
+    // Clear corrupted data
+    localStorage.removeItem('notesapp_user');
     user = {};
   }
   
@@ -123,40 +125,17 @@ const getAuthHeaders = () => {
     token = user.access_token;
   } else if (user.token) {
     token = user.token;
-  } else if (user.opaque === true || user.success === true) {
-    // This is an opaque/invalid response, try to create a valid session
-    console.warn('🔑 Found opaque auth response, attempting to fix authentication...');
-    
-    // For now, use a temporary offline token to prevent 401 errors
-    // The app should work in offline mode with cached data
-    token = 'offline_token_' + Date.now();
-    
-    // Try to fix the auth data
-    const offlineUser = {
-      access_token: token,
-      token_type: 'Bearer',
-      user: {
-        id: 'offline_user_' + Date.now(),
-        email: 'offline@example.com',
-        name: 'Offline User'
-      },
-      isOffline: true
-    };
-    
-    // Update localStorage with proper format
-    try {
-      localStorage.setItem('notesapp_user', JSON.stringify(offlineUser));
-      console.log('🔑 Fixed auth data in localStorage');
-    } catch (error) {
-      console.error('Error updating localStorage:', error);
-    }
+  } else if (user.opaque === true || user.success === true || !user.access_token) {
+    // This is an opaque/invalid response, clear it and don't use authentication
+    console.warn('🔑 Found opaque/invalid auth response, clearing authentication...');
+    localStorage.removeItem('notesapp_user');
+    token = null; // Don't send any token for invalid auth
   }
   
   console.log('🔑 Getting auth headers:');
   console.log('   - User data keys:', Object.keys(user));
   console.log('   - Token found:', token ? 'YES' : 'NO');
   console.log('   - Token preview:', token ? token.substring(0, 20) + '...' : 'None');
-  console.log('   - Is offline token:', token && token.startsWith('offline_token_') ? 'YES' : 'NO');
   
   const headers = {
     'Content-Type': 'application/json',
