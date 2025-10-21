@@ -1,14 +1,21 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ConnectionStatus from './ConnectionStatus';
 
 const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+    console.log('🚪 Logout button clicked');
+    try {
+      await logout();
+      console.log('✅ Logout successful, navigating to login');
+      navigate('/login');
+    } catch (error) {
+      console.error('❌ Logout failed:', error);
+    }
   };
   return (
     <header className="bg-gray-900/80 backdrop-blur-md border-b border-gray-700 sticky top-0 z-50 animate-slide-in-left shadow-2xl">
@@ -30,6 +37,7 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
                 <p className="text-xs sm:text-sm text-gray-300">
                   {notesCount} notes for {user?.user?.name || user?.name || user?.user?.email || user?.email || 'User'}
                 </p>
+                <ConnectionStatus />
               </div>
             </div>
 

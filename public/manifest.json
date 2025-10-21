@@ -1,0 +1,79 @@
+{
+  "name": "NotesApp - Personal Note Taking",
+  "short_name": "NotesApp",
+  "description": "A modern, responsive note-taking application with offline support",
+  "version": "2.0.0",
+  "start_url": "/reactnoteApp/",
+  "display": "standalone",
+  "background_color": "#1f2937",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "scope": "/reactnoteApp/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities", "lifestyle"],
+  "icons": [
+    {
+      "src": "/reactnoteApp/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/reactnoteApp/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/reactnoteApp/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/reactnoteApp/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/reactnoteApp/screenshot-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Note",
+      "short_name": "New",
+      "description": "Create a new note",
+      "url": "/reactnoteApp/?action=new",
+      "icons": [
+        {
+          "src": "/reactnoteApp/icon-96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Search Notes",
+      "short_name": "Search",
+      "description": "Search through your notes",
+      "url": "/reactnoteApp/?action=search",
+      "icons": [
+        {
+          "src": "/reactnoteApp/icon-96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+}

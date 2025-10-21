@@ -81,15 +81,17 @@ const notesCache = {
 
 // Notes service functions with local caching
 export const notesService = {
-  // Get all notes - always start with cache for better UX, then try API
-  fetchNotes: async (forceRefresh = false) => {
+  // Get all notes - with reduced retry for better performance
+  fetchNotes: async (forceRefresh = false, retryCount = 0) => {
+    const maxRetries = 1; // Reduced from 2 to 1 for faster response
+    
     // Always try cache first for better user experience
     const cachedNotes = notesCache.get();
     
     if (!forceRefresh && cachedNotes.length > 0) {
       console.log('📦 Using cached notes for immediate display:', cachedNotes.length);
       
-      // Return cached data immediately, then try to update in background
+      // Return cached data immediately, then try to update in background (reduced frequency)
       setTimeout(async () => {
         try {
           console.log('📡 Background API sync...');
@@ -99,14 +101,14 @@ export const notesService = {
         } catch (error) {
           console.log('❌ Background sync failed, keeping cache:', error.message);
         }
-      }, 500);
+      }, 2000); // Increased delay to reduce immediate load
       
       return { success: true, data: cachedNotes, fromCache: true };
     }
     
-    // No cache or forcing refresh - try API
+    // No cache or forcing refresh - try API with retry logic
     try {
-      console.log('📡 Fetching notes from API...');
+      console.log(`📡 Fetching notes from API... (attempt ${retryCount + 1}/${maxRetries + 1})`);
       const notes = await notesAPI.getAllNotes();
       
       // Cache the notes locally
@@ -115,6 +117,13 @@ export const notesService = {
       return { success: true, data: notes };
     } catch (error) {
       console.log('❌ API failed:', error.message);
+      
+      // Retry on timeout errors with shorter delay
+      if (error.message.includes('timeout') && retryCount < maxRetries) {
+        console.log(`🔄 Retrying due to timeout... (${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced from 2s to 1s
+        return notesService.fetchNotes(forceRefresh, retryCount + 1);
+      }
       
       // If we have cached data, fall back to it
       if (cachedNotes.length > 0) {

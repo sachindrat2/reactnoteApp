@@ -1,17 +1,26 @@
 {
-  "name": "my-app",
+  "name": "notesapp",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
   "type": "module",
   "homepage": "https://sachindrat2.github.io/reactnoteApp",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:prod": "vite build --mode production",
     "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "preview:dist": "vite preview --port 4173",
+    "predeploy": "npm run build:prod",
+    "deploy": "gh-pages -d dist",
+    "deploy:prod": "npm run build:prod && npm run deploy",
+    "analyze": "npm run build && npx vite-bundle-analyzer dist/assets/*.js",
+    "clean": "rm -rf dist node_modules/.vite",
+    "test:build": "npm run build && npm run preview"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "http-proxy-middleware": "^3.0.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.9.4"
@@ -24,6 +33,7 @@
     "gh-pages": "^6.3.0",
     "postcss": "^8.4.27",
     "tailwindcss": "^3.3.3",
+    "terser": "^5.44.0",
     "vite": "^4.4.5"
   }
 }

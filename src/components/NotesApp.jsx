@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import NotesHeader from './NotesHeader';
 import NotesList from './NotesList';
 import NoteEditor from './NoteEditor';
@@ -9,7 +9,6 @@ import { useAuth } from '../context/AuthContext';
 const NotesApp = () => {
   const { logout, user } = useAuth();
   const [notes, setNotes] = useState([]);
-  const [filteredNotes, setFilteredNotes] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -20,17 +19,21 @@ const NotesApp = () => {
 
   // Detect if we're in offline mode
   useEffect(() => {
-    if (user?.isOffline) {
-      setIsOfflineMode(true);
-    }
+    // Only show offline mode if user is explicitly marked as offline
+    // and we're not on localhost with CORS proxy available
+    const shouldShowOfflineMode = user?.isOffline && 
+      !(window.location.hostname === 'localhost');
+    
+    setIsOfflineMode(shouldShowOfflineMode);
   }, [user]);
 
-  // Load notes from API on component mount
-  useEffect(() => {
-    loadNotes();
-  }, []);
-
-  const loadNotes = async () => {
+  // Memoize loadNotes function to prevent unnecessary re-renders
+  const loadNotes = useCallback(async () => {
+    if (!user) {
+      console.log('⏸️ No user available, skipping notes load');
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
     
@@ -41,14 +44,25 @@ const NotesApp = () => {
         const notesData = Array.isArray(result.data) ? result.data : [];
         console.log('📋 Loaded notes:', notesData.length, 'notes for user');
         setNotes(notesData);
-        setFilteredNotes(notesData);
         
         if (result.fromCache) {
-          setError('Using cached data. Some changes may not be synced.');
+          // Commented out cache warning to reduce UI clutter
+          // setError('Using cached data. Some changes may not be synced.');
         }
       } else {
-        // Don't logout on API errors - just show error message
-        setError(result?.error || 'Failed to load notes');
+        // Provide specific error messages based on error type
+        let errorMessage = result?.error || 'Failed to load notes';
+        
+        if (errorMessage.includes('TIMEOUT_ERROR')) {
+          errorMessage = 'Server is taking too long to respond. Your cached notes are displayed below.';
+        } else if (errorMessage.includes('CORS_ERROR')) {
+          errorMessage = 'Connection blocked by browser security. Using cached data.';
+        } else if (errorMessage.includes('NETWORK_ERROR')) {
+          errorMessage = 'No internet connection. Using cached data.';
+        }
+        
+        // Only show error if this is the initial load (no cached data)
+        setError(errorMessage);
       }
     } catch (error) {
       console.error('Failed to load notes:', error);
@@ -56,21 +70,29 @@ const NotesApp = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]); // Removed notes.length dependency to avoid circular dependency
 
-  // Filter notes based on search term - now using local search
+  // Load notes from API on component mount
   useEffect(() => {
+    loadNotes();
+  }, [loadNotes]);
+
+  // Memoize filtered notes to avoid unnecessary recalculations
+  const filteredNotes = useMemo(() => {
+    if (!searchTerm.trim()) return notes;
+    
     console.log('🔍 Search filter running:', { searchTerm, notesCount: notes.length });
-    
-    // Use the local search function from notesService
-    const filtered = notesService.searchNotes(searchTerm, notes);
-    // Ensure filtered is always an array
-    setFilteredNotes(Array.isArray(filtered) ? filtered : []);
-    
+    return notesService.searchNotes(searchTerm, notes);
   }, [searchTerm, notes]);
 
-  const handleAddNote = async (noteData) => {
+  const handleAddNote = useCallback(async (noteData) => {
+    if (!user) {
+      setError('Please login to create notes');
+      return;
+    }
+    
     try {
+      console.log('📝 Creating note:', noteData);
       const result = await notesService.createNote(noteData);
       if (result && result.success) {
         setNotes(prev => [result.data, ...prev]);
@@ -80,7 +102,9 @@ const NotesApp = () => {
         } else {
           setError(null);
         }
+        console.log('✅ Note created successfully');
       } else {
+        console.error('❌ Note creation failed:', result?.error);
         setError(result?.error || 'Failed to create note');
       }
     } catch (error) {
@@ -88,7 +112,7 @@ const NotesApp = () => {
       setError('Failed to create note. Please try again.');
     }
     setIsAddModalOpen(false);
-  };
+  }, [user]);
 
   const handleEditNote = (note) => {
     setSelectedNote(note);
@@ -207,10 +231,23 @@ const NotesApp = () => {
               <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p className="text-red-300 text-sm">{error}</p>
+              <div className="flex-1">
+                <p className="text-red-300 text-sm">{error}</p>
+                {error.includes('taking too long') && (
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      loadNotes();
+                    }}
+                    className="text-red-200 hover:text-white text-xs underline mt-1"
+                  >
+                    Try again
+                  </button>
+                )}
+              </div>
               <button
                 onClick={() => setError(null)}
-                className="ml-auto text-red-400 hover:text-red-300"
+                className="ml-2 text-red-400 hover:text-red-300"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

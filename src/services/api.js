@@ -1,8 +1,11 @@
 // API Base Configuration
-const BACKEND_URL = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
 
 // Version indicator for debugging
-console.log('🔄 API Service loaded - Version: Enhanced Offline v5.0 - Build: ' + Date.now());
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || '2.0.0';
+const IS_PRODUCTION = import.meta.env.PROD;
+
+console.log(`🔄 API Service loaded - Version: ${APP_VERSION} - Environment: ${IS_PRODUCTION ? 'Production' : 'Development'}`);
 
 // Global flag to track if we should skip API attempts (for better UX)
 let apiConnectionFailed = false;
@@ -12,12 +15,13 @@ let corsFailureDetected = false;
 const CORS_PROXIES = [
   // Try direct connection first (may work if CORS is fixed server-side)
   (url) => url,
-  // More reliable CORS proxies
-  (url) => `https://cors-anywhere.herokuapp.com/${url}`,
+  // Reliable CORS proxies for production
   (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-  (url) => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`,
   (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  // Backup proxies
+  (url) => `https://cors-anywhere.herokuapp.com/${url}`,
+  (url) => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`,
 ];
 
 // Final fallback: try direct connection with no-cors mode
@@ -47,7 +51,8 @@ const tryNoCorsRequest = async (url, options = {}) => {
 
 const getApiUrl = () => {
   if (window.location.hostname === 'localhost') {
-    return BACKEND_URL;
+    // Use local CORS proxy when on localhost
+    return 'http://localhost:3001/api';
   }
   
   // Try the first proxy by default
@@ -79,7 +84,8 @@ let workingProxyIndex = 0;
 
 const getApiUrlWithFallback = (proxyIndex = 0) => {
   if (window.location.hostname === 'localhost') {
-    return BACKEND_URL;
+    // Use local CORS proxy when on localhost
+    return 'http://localhost:3001/api';
   }
   
   if (proxyIndex >= CORS_PROXIES.length) {
@@ -188,10 +194,33 @@ const apiRequest = async (endpoint, options = {}) => {
     
     throw new Error(`Connection failed: Unable to reach the server through any available proxy. The backend server may need to enable CORS for this domain.`);
   } else {
-    // Local development - use direct URL
-    const baseUrl = getApiUrl();
-    const url = `${baseUrl}${endpoint}`;
-    return makeRequest(url, options, endpoint);
+    // Local development - try CORS proxy first, then fallback to production proxies
+    try {
+      const baseUrl = getApiUrl();
+      const url = `${baseUrl}${endpoint}`;
+      console.log('🏠 Localhost request:', { baseUrl, endpoint, url });
+      return await makeRequest(url, options, endpoint);
+    } catch (localError) {
+      console.log('❌ Local CORS proxy failed, trying production proxies:', localError.message);
+      
+      // Fallback to production proxy logic if local proxy fails
+      for (let i = 0; i < CORS_PROXIES.length; i++) {
+        try {
+          const baseUrl = getApiUrlWithFallback(i);
+          const url = `${baseUrl}${endpoint}`;
+          console.log(`🔄 Trying fallback proxy ${i + 1}:`, url);
+          
+          const result = await makeRequest(url, options, endpoint);
+          console.log(`✅ Fallback proxy ${i + 1} succeeded`);
+          return result;
+        } catch (proxyError) {
+          console.log(`❌ Fallback proxy ${i + 1} failed:`, proxyError.message);
+          lastError = proxyError;
+        }
+      }
+      
+      throw lastError || localError;
+    }
   }
 };
 
@@ -209,13 +238,16 @@ const makeRequest = async (url, options = {}, endpoint) => {
     ...options
   };
 
-  console.log('API Request Details:', { 
-    url, 
-    method: config.method || 'GET',
-    headers: config.headers
-  });
+  // Optimized logging for production
+  if (!IS_PRODUCTION) {
+    console.log('API Request:', { 
+      url: url.split('?')[0], // Hide query params for cleaner logs
+      method: config.method || 'GET',
+      isLocalhost: window.location.hostname === 'localhost'
+    });
+  }
 
-  // Add timeout wrapper
+  // Add timeout wrapper - reduced for better responsiveness
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => reject(new Error('Request timeout')), 15000); // 15 second timeout
   });
@@ -294,7 +326,7 @@ const makeRequest = async (url, options = {}, endpoint) => {
     // Handle timeout errors
     if (error.message.includes('timeout')) {
       console.error('⏰ Request Timeout - server too slow');
-      throw new Error('TIMEOUT_ERROR: Server is not responding. The app will work in offline mode.');
+      throw new Error('TIMEOUT_ERROR: Server is taking too long to respond (>30 seconds). Please check your connection or try again later.');
     }
     
     throw error;

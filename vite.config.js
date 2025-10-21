@@ -5,13 +5,26 @@ export default defineConfig({
   plugins: [react()],
   base: '/reactnoteApp/', // Your repository name
   build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false, // Disable source maps for production
+    minify: 'terser', // Better minification
     rollupOptions: {
       output: {
-        entryFileNames: `assets/[name]-${Date.now()}.js`,
-        chunkFileNames: `assets/[name]-${Date.now()}.js`,
-        assetFileNames: `assets/[name]-${Date.now()}.[ext]`
+        entryFileNames: `assets/[name]-[hash].js`,
+        chunkFileNames: `assets/[name]-[hash].js`,
+        assetFileNames: `assets/[name]-[hash].[ext]`,
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          utils: ['src/utils/performance.js', 'src/services/api.js']
+        }
       }
-    }
+    },
+    chunkSizeWarningLimit: 600,
+    // Optimize for production
+    target: 'es2015',
+    reportCompressedSize: true
   },
   server: {
     port: 3000,
