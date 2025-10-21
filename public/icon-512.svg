@@ -1,6 +1,0 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" fill="#3B82F6" rx="64"/>
-  <path d="M128 192h256v24H128zm0 48h256v24H128zm0 48h256v24H128zm0 48h192v24H128z" fill="white"/>
-  <circle cx="384" cy="128" r="48" fill="white"/>
-  <text x="256" y="380" font-family="Arial, sans-serif" font-size="36" font-weight="bold" text-anchor="middle" fill="white">Notes App</text>
-</svg>

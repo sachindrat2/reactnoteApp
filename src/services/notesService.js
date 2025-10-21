@@ -164,16 +164,28 @@ export const notesService = {
         
         // Filter notes for current user
         const userNotes = notes.filter(note => {
-          const isUserNote = note.userId === currentUser.id || 
-                           note.user_id === currentUser.id || 
-                           note.owner_id === currentUser.id;
-          console.log('🔍 Note filter check:', {
-            noteId: note.id,
-            noteUserId: note.userId || note.user_id || note.owner_id,
-            currentUserId: currentUser.id,
-            isUserNote
-          });
-          return isUserNote;
+          // If note has explicit user association, check it
+          if (note.userId || note.user_id || note.owner_id) {
+            const isUserNote = note.userId === currentUser.id || 
+                             note.user_id === currentUser.id || 
+                             note.owner_id === currentUser.id;
+            console.log('🔍 Note filter check (with user fields):', {
+              noteId: note.id,
+              noteUserId: note.userId || note.user_id || note.owner_id,
+              currentUserId: currentUser.id,
+              isUserNote
+            });
+            return isUserNote;
+          } else {
+            // If note has no user association fields, assume it belongs to current user
+            // This is common when API returns only the authenticated user's notes
+            console.log('🔍 Note filter check (no user fields, assuming belongs to current user):', {
+              noteId: note.id,
+              currentUserId: currentUser.id,
+              assumeUserNote: true
+            });
+            return true;
+          }
         });
         
         console.log('👤 Filtered notes for user:', userNotes.length, 'notes');
@@ -188,6 +200,30 @@ export const notesService = {
       }
     } catch (error) {
       console.log('❌ API failed:', error.message);
+      
+      // Handle specific network errors more gracefully
+      const isNetworkError = error.message.includes('Failed to fetch') || 
+                           error.message.includes('ERR_FAILED') ||
+                           error.message.includes('net::') ||
+                           error.message.includes('NETWORK_ERROR') ||
+                           error.message.includes('404') ||
+                           error.name === 'TypeError';
+      
+      const isCorsError = error.message.includes('CORS') || 
+                         error.message.includes('CORS_ERROR');
+      
+      if (isNetworkError || isCorsError) {
+        console.log('🌐 Network/CORS error detected, using offline mode');
+        
+        // If we have cached data, use it
+        if (cachedNotes.length > 0) {
+          console.log('📦 Using cached notes (network unavailable):', cachedNotes.length);
+          return { success: true, data: cachedNotes, fromCache: true, offline: true };
+        } else {
+          console.log('📦 No cached notes available, starting with empty list');
+          return { success: true, data: [], fromCache: false, offline: true };
+        }
+      }
       
       // Retry on timeout errors with shorter delay
       if (error.message.includes('timeout') && retryCount < maxRetries) {
