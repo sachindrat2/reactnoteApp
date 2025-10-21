@@ -3,6 +3,7 @@ import NotesHeader from './NotesHeader';
 import NotesList from './NotesList';
 import NoteEditor from './NoteEditor';
 import AddNoteModal from './AddNoteModal';
+import DebugPanel from './DebugPanel';
 import { notesService } from '../services/notesService';
 import { useAuth } from '../context/AuthContext';
 
@@ -294,6 +295,9 @@ const NotesApp = () => {
           onClose={() => setIsAddModalOpen(false)}
         />
       )}
+
+      {/* Debug panel for troubleshooting */}
+      <DebugPanel />
       </div>
     </div>
   );
