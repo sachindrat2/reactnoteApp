@@ -29,7 +29,8 @@ const getStoredAuth = () => {
     console.log('📋 Parsed user data:', { 
       hasToken: !!userData.access_token, 
       email: userData.user?.email,
-      tokenType: userData.token_type
+      tokenType: userData.token_type,
+      keys: Object.keys(userData)
     });
     
     // Check if we have a corrupt opaque response stored
@@ -39,12 +40,13 @@ const getStoredAuth = () => {
       return { user: null, isAuthenticated: false };
     }
     
-    // Validate required fields
-    if (userData && userData.access_token && userData.user) {
+    // Validate required fields - be more flexible with user structure
+    if (userData && userData.access_token) {
       console.log('✅ Valid auth found in storage');
       return { user: userData, isAuthenticated: true };
     } else {
       console.log('⚠️ Invalid auth data structure, removing...');
+      console.log('📋 Debug - userData structure:', userData);
       localStorage.removeItem('notesapp_user');
       return { user: null, isAuthenticated: false };
     }
@@ -134,13 +136,40 @@ export const AuthProvider = ({ children }) => {
 
       // Validate that we got a proper access token
       if (!userData || !userData.access_token) {
+        console.error('❌ Missing access_token in response:', userData);
         throw new Error('Login response missing access_token');
       }
 
-      // Store the complete user data with access token
-      setUser(userData);
-      setIsAuthenticated(true);
-      localStorage.setItem('notesapp_user', JSON.stringify(userData));
+      // Extract user info from JWT token
+      try {
+        const tokenPayload = JSON.parse(atob(userData.access_token.split('.')[1]));
+        console.log('🔍 JWT payload:', tokenPayload);
+        
+        // Create enhanced user data with decoded info
+        const enhancedUserData = {
+          ...userData,
+          user: {
+            email: tokenPayload.sub, // JWT subject is usually the email
+            id: tokenPayload.sub,
+            exp: tokenPayload.exp
+          }
+        };
+        
+        console.log('📝 Enhanced user data:', enhancedUserData);
+        
+        // Store the enhanced user data
+        setUser(enhancedUserData);
+        setIsAuthenticated(true);
+        localStorage.setItem('notesapp_user', JSON.stringify(enhancedUserData));
+        
+        console.log('💾 Stored in localStorage with user info');
+      } catch (jwtError) {
+        console.error('❌ Failed to decode JWT:', jwtError);
+        // Fallback: store as-is without user object
+        setUser(userData);
+        setIsAuthenticated(true);
+        localStorage.setItem('notesapp_user', JSON.stringify(userData));
+      }
 
       console.log('✅ Login successful - access token received:', userData.access_token.substring(0, 20) + '...');
       return { success: true };
@@ -185,9 +214,31 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Registration response missing access_token');
       }
       
-      setUser(userData);
-      setIsAuthenticated(true);
-      localStorage.setItem('notesapp_user', JSON.stringify(userData));
+      // Extract user info from JWT token for registration too
+      try {
+        const tokenPayload = JSON.parse(atob(userData.access_token.split('.')[1]));
+        console.log('🔍 Registration JWT payload:', tokenPayload);
+        
+        // Create enhanced user data with decoded info
+        const enhancedUserData = {
+          ...userData,
+          user: {
+            email: tokenPayload.sub,
+            id: tokenPayload.sub,
+            exp: tokenPayload.exp
+          }
+        };
+        
+        setUser(enhancedUserData);
+        setIsAuthenticated(true);
+        localStorage.setItem('notesapp_user', JSON.stringify(enhancedUserData));
+      } catch (jwtError) {
+        console.error('❌ Failed to decode JWT during registration:', jwtError);
+        // Fallback: store as-is
+        setUser(userData);
+        setIsAuthenticated(true);
+        localStorage.setItem('notesapp_user', JSON.stringify(userData));
+      }
       
       console.log('✅ Registration successful - access token received');
       return { success: true };
