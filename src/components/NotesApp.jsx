@@ -15,7 +15,7 @@ const NotesApp = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Start with false, set to true when actually loading
   const [error, setError] = useState(null);
   // Removed offline mode - only using real API authentication
 
@@ -74,22 +74,18 @@ const NotesApp = () => {
     }
   }, [user]); // Remove isLoading from deps to prevent recreation issues
 
-  // Load notes from API on component mount - use a ref to prevent multiple calls
+  // Load notes from API on component mount - simplified approach
   const hasLoadedRef = React.useRef(false);
-  const loadingRef = React.useRef(false);
   
   useEffect(() => {
-    if (user && !hasLoadedRef.current && !loadingRef.current) {
+    if (user && !hasLoadedRef.current) {
       console.log('🚀 Initial notes load for authenticated user');
       hasLoadedRef.current = true;
-      loadingRef.current = true;
-      
-      loadNotes().finally(() => {
-        loadingRef.current = false;
-      });
+      loadNotes();
     } else if (!user) {
       hasLoadedRef.current = false;
-      loadingRef.current = false;
+      console.log('🔄 User logged out, resetting loading state');
+      setIsLoading(true); // Reset loading state when user logs out
     }
   }, [user, loadNotes]);
 
@@ -102,6 +98,26 @@ const NotesApp = () => {
       userEmail: user?.user?.email || user?.email 
     });
   }, [isLoading, notes.length, user]);
+
+  // Ensure loading is cleared when notes are loaded
+  useEffect(() => {
+    if (notes.length > 0 && isLoading) {
+      console.log('📋 Notes loaded, clearing loading state');
+      setIsLoading(false);
+    }
+  }, [notes.length, isLoading]);
+
+  // Failsafe: Clear loading state after 10 seconds
+  useEffect(() => {
+    if (isLoading) {
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Loading timeout - force clearing loading state');
+        setIsLoading(false);
+      }, 10000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isLoading]);
 
   // Memoize filtered notes to avoid unnecessary recalculations
   const filteredNotes = useMemo(() => {
