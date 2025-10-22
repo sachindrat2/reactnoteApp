@@ -26,14 +26,24 @@
       var l = window.location;
       console.log('404.html redirect - Original URL:', l.href);
       
-      var redirectUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
-        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
-        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-        l.hash;
+      // For GitHub Pages project sites, redirect SPA routes properly
+      var redirectPath = l.pathname.slice(1); // Remove leading slash
+      var segments = redirectPath.split('/');
       
-      console.log('404.html redirect - Redirect URL:', redirectUrl);
-      l.replace(redirectUrl);
+      // Remove the repo name (first segment) to get the route
+      if (segments.length > 1) {
+        segments.shift(); // Remove 'reactnoteApp'
+        var route = '/' + segments.join('/');
+        
+        var redirectUrl = l.protocol + '//' + l.hostname + '/reactnoteApp/?p=' + 
+          encodeURIComponent(route) + 
+          (l.search ? '&' + l.search.slice(1) : '') + 
+          l.hash;
+        
+        console.log('404.html redirect - Route:', route);
+        console.log('404.html redirect - Redirect URL:', redirectUrl);
+        l.replace(redirectUrl);
+      }
 
     </script>
   </head>

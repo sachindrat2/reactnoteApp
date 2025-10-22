@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import './App.css'
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import NotesApp from './components/NotesApp'
 import LoginScreen from './components/LoginScreen'
