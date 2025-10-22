@@ -4,9 +4,12 @@ import { notesAPI, handleAPIError } from './api.js';
 const getCurrentUser = () => {
   try {
     const userDataStr = localStorage.getItem('notesapp_user');
+    console.log('🔍 getCurrentUser - raw data:', userDataStr);
+    
     if (userDataStr) {
       try {
         const parsed = JSON.parse(userDataStr);
+        console.log('🔍 getCurrentUser - parsed data:', parsed);
 
         // If storage contains an opaque/malformed response (from no-cors fallback)
         // create a deterministic offline session so cache keys are user-specific.
@@ -38,14 +41,19 @@ const getCurrentUser = () => {
         const userId = user.user?.id || user.id;
         const userEmail = user.user?.email || user.email;
         
+        console.log('🔍 getCurrentUser - extracted:', { userId, userEmail });
+        
         // If we still don't have a proper user ID, create one from email
         const finalUserId = userId || (userEmail ? `user_${userEmail.toLowerCase().replace(/[^a-z0-9]/g, '_')}` : 'unknown_user');
         
-        return {
+        const result = {
           id: finalUserId,
           email: userEmail || 'unknown@example.com',
           name: user.user?.name || user.name || (userEmail ? userEmail.split('@')[0] : 'Unknown User')
         };
+        
+        console.log('🔍 getCurrentUser - result:', result);
+        return result;
       } catch (parseError) {
         console.error('Error parsing notesapp_user from localStorage, clearing key:', parseError);
         localStorage.removeItem('notesapp_user');
@@ -134,13 +142,42 @@ export const notesService = {
                          error.message.includes('Authentication failed');
       
       if (isNetworkError || isCorsError || isAuthError) {
-        console.log(`🌐 ${isAuthError ? 'Authentication' : 'Network/CORS'} error detected, no cache available`);
+        console.log(`🌐 ${isAuthError ? 'Authentication' : 'Network/CORS'} error detected, showing demo notes`);
         
-        const offlineMessage = isAuthError ? 
-          'Authentication expired. Please log in again.' : 
-          'Network unavailable. Unable to fetch notes.';
-          
-        return { success: false, error: offlineMessage, data: [] };
+        // Show demo notes when API is unavailable
+        const demoNotes = [
+          {
+            id: 'demo-1',
+            title: 'Welcome to NotesApp! 📝',
+            content: `This is a demo note shown while the API server is unavailable due to CORS restrictions. 
+
+Your app is working correctly, but the backend server needs to enable CORS headers for this domain (${window.location.origin}) to allow API access.
+
+Once CORS is configured on the server, your real notes will appear here.`,
+            created_at: new Date().toISOString(),
+            tags: ['demo', 'welcome'],
+            isDemo: true
+          },
+          {
+            id: 'demo-2', 
+            title: 'API Connection Issue 🌐',
+            content: `The app is trying to connect to your API server but encountering CORS (Cross-Origin Resource Sharing) restrictions.
+
+Error: "${error.message}"
+
+To fix this, the backend server at 'ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net' needs to add CORS headers allowing requests from '${window.location.origin}'.`,
+            created_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+            tags: ['demo', 'cors', 'troubleshooting'],
+            isDemo: true
+          }
+        ];
+        
+        return { 
+          success: true, 
+          data: demoNotes, 
+          isDemo: true,
+          message: isCorsError ? 'Showing demo notes - API unavailable due to CORS restrictions' : 'Showing demo notes - API connection failed'
+        };
       }
       
       // Retry on timeout errors with shorter delay

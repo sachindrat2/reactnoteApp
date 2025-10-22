@@ -46,7 +46,10 @@ const NotesApp = () => {
         console.log('📋 Loaded notes:', notesData.length, 'notes for user');
         setNotes(notesData);
         
-        if (result.fromCache) {
+        if (result.isDemo) {
+          // Show a subtle banner for demo mode
+          setError(result.message || 'Showing demo notes - API connection unavailable');
+        } else if (result.fromCache) {
           // Commented out cache warning to reduce UI clutter
           // setError('Using cached data. Some changes may not be synced.');
         }
@@ -227,13 +230,32 @@ const NotesApp = () => {
       {/* Error Display */}
       {error && (
         <div className="container mx-auto px-3 sm:px-4 lg:px-6 pt-4">
-          <div className="bg-red-900/50 border border-red-500/50 rounded-lg p-4 mb-4 backdrop-blur-sm">
+          <div className={`${
+            error.includes('demo notes') || error.includes('API connection unavailable') 
+              ? 'bg-blue-900/30 border border-blue-400/30' 
+              : 'bg-red-900/50 border border-red-500/50'
+          } rounded-lg p-4 mb-4 backdrop-blur-sm`}>
             <div className="flex items-center">
-              <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              {error.includes('demo notes') || error.includes('API connection unavailable') ? (
+                <svg className="w-5 h-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
               <div className="flex-1">
-                <p className="text-red-300 text-sm">{error}</p>
+                <p className={`${
+                  error.includes('demo notes') || error.includes('API connection unavailable') 
+                    ? 'text-blue-300' 
+                    : 'text-red-300'
+                } text-sm`}>{error}</p>
+                {error.includes('demo notes') && (
+                  <p className="text-blue-200/70 text-xs mt-1">
+                    Configure your backend server with CORS headers for: https://s-thakur00.github.io
+                  </p>
+                )}
                 {error.includes('taking too long') && (
                   <button
                     onClick={() => {

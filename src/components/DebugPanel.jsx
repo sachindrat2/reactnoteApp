@@ -20,10 +20,18 @@ const DebugPanel = () => {
       }
     }
 
+    // Get the current user using the same logic as notesService
+    let currentUserId = 'unknown_user';
+    if (user) {
+      const userId = user.user?.id || user.id;
+      const userEmail = user.user?.email || user.email;
+      currentUserId = userId || (userEmail ? `user_${userEmail.toLowerCase().replace(/[^a-z0-9]/g, '_')}` : 'unknown_user');
+    }
+
     setDebugInfo({
       userRaw: userStr,
       user: user,
-      userId: user?.user?.id || user?.id,
+      userId: currentUserId,
       userEmail: user?.user?.email || user?.email,
       hasToken: !!(user?.access_token || user?.token),
       tokenPreview: user?.access_token?.substring(0, 20) || user?.token?.substring(0, 20) || 'None',
@@ -31,7 +39,8 @@ const DebugPanel = () => {
       cacheKeysCounts: cacheKeys.map(key => ({
         key,
         count: JSON.parse(localStorage.getItem(key) || '[]').length
-      }))
+      })),
+      expectedCacheKey: `notesapp_notes_cache_${currentUserId}`
     });
   };
 
