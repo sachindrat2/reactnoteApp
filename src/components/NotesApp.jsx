@@ -26,6 +26,12 @@ const NotesApp = () => {
       return;
     }
     
+    // Prevent multiple simultaneous calls
+    if (isLoading) {
+      console.log('⏸️ Already loading notes, skipping duplicate call');
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
     
@@ -65,12 +71,20 @@ const NotesApp = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user]); // Removed notes.length dependency to avoid circular dependency
+  }, [user, isLoading]); // Include isLoading in deps to prevent multiple calls
 
-  // Load notes from API on component mount
+  // Load notes from API on component mount - use a ref to prevent multiple calls
+  const hasLoadedRef = React.useRef(false);
+  
   useEffect(() => {
-    loadNotes();
-  }, [loadNotes]);
+    if (user && !hasLoadedRef.current) {
+      console.log('🚀 Initial notes load for authenticated user');
+      hasLoadedRef.current = true;
+      loadNotes();
+    } else if (!user) {
+      hasLoadedRef.current = false;
+    }
+  }, [user, loadNotes]);
 
   // Memoize filtered notes to avoid unnecessary recalculations
   const filteredNotes = useMemo(() => {
