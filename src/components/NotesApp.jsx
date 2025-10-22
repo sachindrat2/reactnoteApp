@@ -26,21 +26,18 @@ const NotesApp = () => {
       return;
     }
     
-    // Prevent multiple simultaneous calls
-    if (isLoading) {
-      console.log('⏸️ Already loading notes, skipping duplicate call');
-      return;
-    }
-    
+    console.log('🚀 Starting loadNotes - isLoading:', isLoading);
     setIsLoading(true);
     setError(null);
     
     try {
       console.log('🔄 Loading notes for user:', user?.user?.email || user?.email);
       const result = await notesService.fetchNotes();
+      console.log('📦 fetchNotes result:', result);
+      
       if (result && result.success) {
         const notesData = Array.isArray(result.data) ? result.data : [];
-        console.log('📋 Loaded notes:', notesData.length, 'notes for user');
+        console.log('📋 Setting notes data:', notesData.length, 'notes');
         setNotes(notesData);
         
         if (result.isDemo) {
@@ -50,7 +47,10 @@ const NotesApp = () => {
           // Commented out cache warning to reduce UI clutter
           // setError('Using cached data. Some changes may not be synced.');
         }
+        
+        console.log('✅ Notes loaded successfully');
       } else {
+        console.log('❌ Notes loading failed:', result?.error);
         // Provide specific error messages based on error type
         let errorMessage = result?.error || 'Failed to load notes';
         
@@ -69,20 +69,27 @@ const NotesApp = () => {
       console.error('Failed to load notes:', error);
       setError('Failed to load notes. Please try again.');
     } finally {
+      console.log('🏁 Setting isLoading to false');
       setIsLoading(false);
     }
-  }, [user, isLoading]); // Include isLoading in deps to prevent multiple calls
+  }, [user]); // Remove isLoading from deps to prevent recreation issues
 
   // Load notes from API on component mount - use a ref to prevent multiple calls
   const hasLoadedRef = React.useRef(false);
+  const loadingRef = React.useRef(false);
   
   useEffect(() => {
-    if (user && !hasLoadedRef.current) {
+    if (user && !hasLoadedRef.current && !loadingRef.current) {
       console.log('🚀 Initial notes load for authenticated user');
       hasLoadedRef.current = true;
-      loadNotes();
+      loadingRef.current = true;
+      
+      loadNotes().finally(() => {
+        loadingRef.current = false;
+      });
     } else if (!user) {
       hasLoadedRef.current = false;
+      loadingRef.current = false;
     }
   }, [user, loadNotes]);
 
