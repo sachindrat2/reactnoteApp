@@ -465,9 +465,21 @@ export const authAPI = {
   },
 
   register: async (name, email, password) => {
+    console.log('Register attempt with:', { name, email, password: password ? '[HIDDEN]' : 'EMPTY' });
+    
+    // Server expects username and password format (email as username)
+    const payload = { 
+      username: email,  // Use email as username
+      password: password 
+    };
+    console.log('Registration payload:', { username: payload.username, password: '[HIDDEN]' });
+    
     return apiRequest(API_ENDPOINTS.REGISTER, {
       method: 'POST',
-      body: JSON.stringify({ name, email, password })
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
     });
   },
 
