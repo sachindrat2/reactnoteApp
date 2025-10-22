@@ -277,6 +277,8 @@ const makeRequest = async (url, options = {}, endpoint) => {
     headers: {
       ...getAuthHeaders(),
       'Accept': 'application/json',
+      // Set Content-Type for requests with body (unless overridden)
+      ...(options.body && !options.headers?.['Content-Type'] ? { 'Content-Type': 'application/json' } : {}),
       ...options.headers,  // Allow options to override headers
     },
     mode: 'cors',
