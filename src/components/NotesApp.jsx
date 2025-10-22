@@ -3,7 +3,6 @@ import NotesHeader from './NotesHeader';
 import NotesList from './NotesList';
 import NoteEditor from './NoteEditor';
 import AddNoteModal from './AddNoteModal';
-import DebugPanel from './DebugPanel';
 import AuthHealthChecker from './AuthHealthChecker';
 import { notesService } from '../services/notesService';
 import { useAuth } from '../context/AuthContext';
@@ -325,8 +324,6 @@ const NotesApp = () => {
         />
       )}
 
-      {/* Debug panel for troubleshooting */}
-      <DebugPanel />
       </div>
     </div>
   );
