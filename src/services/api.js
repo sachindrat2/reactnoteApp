@@ -1,5 +1,13 @@
-// API Base Configuration
+// API Base Configuration - ALWAYS use absolute URL
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
+
+// Force absolute URL to prevent relative resolution issues
+const getAbsoluteBackendUrl = () => {
+  // Ensure we always return an absolute URL
+  const url = BACKEND_URL.startsWith('http') ? BACKEND_URL : `https://${BACKEND_URL}`;
+  console.log('🔗 Backend URL:', url);
+  return url;
+};
 
 // Version indicator for debugging
 const APP_VERSION = import.meta.env.VITE_APP_VERSION || '2.0.0';
@@ -14,7 +22,11 @@ let corsFailureDetected = false;
 // Use multiple CORS proxies with fallback for production
 const CORS_PROXIES = [
   // Try direct connection first (may work if CORS is fixed server-side)
-  (url) => url,
+  (url) => {
+    const absoluteUrl = url.startsWith('http') ? url : `https://${url}`;
+    console.log('🎯 Direct connection to:', absoluteUrl);
+    return absoluteUrl;
+  },
   // Reliable CORS proxies for production
   (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
   (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
@@ -92,7 +104,18 @@ const getApiUrlWithFallback = (proxyIndex = 0) => {
     throw new Error('All CORS proxies failed');
   }
   
-  return CORS_PROXIES[proxyIndex](BACKEND_URL);
+  const absoluteBackendUrl = getAbsoluteBackendUrl();
+  const result = CORS_PROXIES[proxyIndex](absoluteBackendUrl);
+  
+  console.log(`🌐 getApiUrlWithFallback(${proxyIndex}):`, {
+    originalBackendUrl: BACKEND_URL,
+    absoluteBackendUrl,
+    proxyIndex,
+    result,
+    currentLocation: window.location.href
+  });
+  
+  return result;
 };
 
 // API endpoint paths
@@ -162,7 +185,12 @@ const apiRequest = async (endpoint, options = {}) => {
         const baseUrl = getApiUrlWithFallback(proxyIndex);
         const url = `${baseUrl}${endpoint}`;
         
-        console.log(`Trying proxy ${proxyIndex + 1}/${CORS_PROXIES.length} (${proxyIndex === 0 ? 'direct' : 'proxy'}):`, url);
+        console.log(`🔄 Trying proxy ${proxyIndex + 1}/${CORS_PROXIES.length} (${proxyIndex === 0 ? 'direct' : 'proxy'}):`, {
+          baseUrl,
+          endpoint,
+          finalUrl: url,
+          currentLocation: window.location.href
+        });
         
         const result = await makeRequest(url, options, endpoint);
         console.log(`Proxy ${proxyIndex + 1} succeeded - caching for future use`);
