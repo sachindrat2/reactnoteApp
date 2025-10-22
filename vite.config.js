@@ -1,8 +1,24 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Plugin to add build timestamp to HTML and asset URLs
+const timestampPlugin = () => {
+  return {
+    name: 'timestamp-plugin',
+    transformIndexHtml(html) {
+      const timestamp = Date.now();
+      return html
+        .replace('BUILD_TIME', timestamp)
+        .replace('BUILD_TIMESTAMP', new Date().toISOString())
+        // Add timestamp query params to asset URLs for cache busting
+        .replace(/href="([^"]*\/assets\/[^"]*\.(css|js))"/g, `href="$1?v=${timestamp}"`)
+        .replace(/src="([^"]*\/assets\/[^"]*\.(js|css))"/g, `src="$1?v=${timestamp}"`);
+    }
+  };
+};
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), timestampPlugin()],
   base: '/reactnoteApp/', // Your repository name
   build: {
     outDir: 'dist',

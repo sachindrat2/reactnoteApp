@@ -29,7 +29,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <meta name="version" content="2.0.2-<?= time() ?>" />
+    <meta name="version" content="2.0.3-BUILD_TIME" />
+    <meta name="build-timestamp" content="BUILD_TIMESTAMP" />
     
     <!-- Start Single Page Apps for GitHub Pages -->
     <script type="text/javascript">
@@ -65,6 +66,80 @@
           console.error('Failed to load resource:', e.target.src || e.target.href, e);
         }
       }, true);
+      
+      // Advanced Cache-Busting and Auto-Refresh Logic
+      let assetLoadFailures = 0;
+      const MAX_ASSET_FAILURES = 2;
+      
+      // Detect asset loading failures and auto-refresh
+      window.addEventListener('error', (e) => {
+        if (e.target !== window && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+          assetLoadFailures++;
+          console.warn(`Asset load failure ${assetLoadFailures}/${MAX_ASSET_FAILURES}:`, e.target.src || e.target.href);
+          
+          if (assetLoadFailures >= MAX_ASSET_FAILURES) {
+            console.warn('Multiple asset failures detected. Forcing cache refresh...');
+            
+            // Clear all caches and reload
+            if ('caches' in window) {
+              caches.keys().then(cacheNames => {
+                return Promise.all(
+                  cacheNames.map(cacheName => {
+                    console.log('Clearing cache:', cacheName);
+                    return caches.delete(cacheName);
+                  })
+                );
+              }).then(() => {
+                console.log('All caches cleared. Reloading with cache bypass...');
+                window.location.reload(true);
+              });
+            } else {
+              // Fallback: reload with cache bypass
+              window.location.reload(true);
+            }
+          }
+        }
+      }, true);
+      
+      // Check if we're loading the correct assets
+      window.addEventListener('DOMContentLoaded', () => {
+        const scripts = document.querySelectorAll('script[src]');
+        const stylesheets = document.querySelectorAll('link[rel="stylesheet"]');
+        
+        let assetsToCheck = Array.from(scripts).concat(Array.from(stylesheets));
+        let checkedAssets = 0;
+        let failedAssets = 0;
+        
+        assetsToCheck.forEach(asset => {
+          const url = asset.src || asset.href;
+          if (url && url.includes('/assets/')) {
+            fetch(url, { method: 'HEAD' })
+              .then(response => {
+                checkedAssets++;
+                if (!response.ok) {
+                  failedAssets++;
+                  console.error('Asset check failed:', url, response.status);
+                }
+                
+                // If all assets checked and we have failures, refresh
+                if (checkedAssets === assetsToCheck.length && failedAssets > 0) {
+                  console.warn(`${failedAssets} assets failed. Auto-refreshing...`);
+                  setTimeout(() => window.location.reload(true), 1000);
+                }
+              })
+              .catch(() => {
+                checkedAssets++;
+                failedAssets++;
+                console.error('Asset check network error:', url);
+                
+                if (checkedAssets === assetsToCheck.length && failedAssets > 0) {
+                  console.warn(`${failedAssets} assets failed. Auto-refreshing...`);
+                  setTimeout(() => window.location.reload(true), 1000);
+                }
+              });
+          }
+        });
+      });
       
       if (false && 'serviceWorker' in navigator && window.location.hostname !== 'localhost') {
         window.addEventListener('load', () => {
