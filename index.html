@@ -57,8 +57,17 @@
     
     <!-- Service Worker Registration -->
     <script>
-      // Register service worker for PWA functionality
-      if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
+      // Service Worker temporarily disabled to fix 404 errors
+      console.log('Service Worker registration disabled to prevent 404 errors');
+      
+      // Debug: Log all failed resource loads
+      window.addEventListener('error', (e) => {
+        if (e.target !== window) {
+          console.error('Failed to load resource:', e.target.src || e.target.href, e);
+        }
+      }, true);
+      
+      if (false && 'serviceWorker' in navigator && window.location.hostname !== 'localhost') {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/reactnoteApp/sw.js', {
             scope: '/reactnoteApp/'

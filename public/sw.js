@@ -3,13 +3,12 @@ const CACHE_NAME = 'notesapp-v2.1.0';
 const STATIC_CACHE = 'notesapp-static-v2.1.0';
 const API_CACHE = 'notesapp-api-v2.1.0';
 
-// Files to cache immediately
+// Files to cache immediately - Updated for Vite build output
 const STATIC_FILES = [
-  '/',
-  '/index.html',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/manifest.json'
+  '/reactnoteApp/',
+  '/reactnoteApp/index.html',
+  '/reactnoteApp/manifest.json',
+  // Note: Vite generates hashed filenames, so we'll cache them dynamically
 ];
 
 // Install event - cache static files
