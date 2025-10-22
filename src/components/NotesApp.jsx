@@ -48,12 +48,7 @@ const NotesApp = () => {
         // Provide specific error messages based on error type
         let errorMessage = result?.error || 'Failed to load notes';
         
-        if (result?.requiresLogin) {
-          console.log('🚪 API requires re-authentication, logging out user');
-          // Auto-logout when session expired
-          logout();
-          return;
-        } else if (errorMessage.includes('TIMEOUT_ERROR')) {
+        if (errorMessage.includes('TIMEOUT_ERROR')) {
           errorMessage = 'Server is taking too long to respond. Your cached notes are displayed below.';
         } else if (errorMessage.includes('CORS_ERROR')) {
           errorMessage = 'Connection blocked by browser security. Using cached data.';
