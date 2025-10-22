@@ -379,14 +379,14 @@ const makeRequest = async (url, options = {}, endpoint) => {
     if (detectCorsError(error)) {
       corsFailureDetected = true;
       console.error('🚨 CORS Error Detected:', error.message);
-      throw new Error('CORS_ERROR: Unable to connect to server due to CORS policy restrictions. The app will work in offline mode.');
+      throw new Error('CORS_ERROR: Unable to connect to server due to CORS policy restrictions. Please check your network connection and try again.');
     }
     
     // Handle specific network errors
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
       apiConnectionFailed = true;
-      console.error('🌐 Network Error - switching to offline mode');
-      throw new Error('NETWORK_ERROR: Unable to connect to server. The app will work in offline mode.');
+      console.error('🌐 Network Error - unable to connect to server');
+      throw new Error('NETWORK_ERROR: Unable to connect to server. Please check your internet connection and try again.');
     }
     
     // Handle timeout errors
