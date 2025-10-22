@@ -17,17 +17,7 @@ const NotesApp = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isOfflineMode, setIsOfflineMode] = useState(false);
-
-  // Detect if we're in offline mode
-  useEffect(() => {
-    // Only show offline mode if user is explicitly marked as offline
-    // and we're not on localhost with CORS proxy available
-    const shouldShowOfflineMode = user?.isOffline && 
-      !(window.location.hostname === 'localhost');
-    
-    setIsOfflineMode(shouldShowOfflineMode);
-  }, [user]);
+  // Removed offline mode - only using real API authentication
 
   // Memoize loadNotes function to prevent unnecessary re-renders
   const loadNotes = useCallback(async () => {
@@ -107,11 +97,7 @@ const NotesApp = () => {
       if (result && result.success) {
         setNotes(prev => [result.data, ...prev]);
         
-        if (result.offline) {
-          setError('Note saved locally. Will sync when connection is available.');
-        } else {
-          setError(null);
-        }
+        setError(null);
         console.log('✅ Note created successfully');
       } else {
         console.error('❌ Note creation failed:', result?.error);
@@ -137,11 +123,7 @@ const NotesApp = () => {
           note.id === updatedNote.id ? result.data : note
         ));
         
-        if (result.offline) {
-          setError('Note updated locally. Will sync when connection is available.');
-        } else {
-          setError(null);
-        }
+        setError(null);
       } else {
         setError(result?.error || 'Failed to update note');
       }
@@ -208,33 +190,7 @@ const NotesApp = () => {
         notesCount={notes.length}
       />
       
-      {/* Offline Mode Indicator */}
-      {isOfflineMode && (
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 pt-4">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-              <div className="flex-1">
-                <p className="text-yellow-700 text-sm font-medium">Offline Mode</p>
-                <p className="text-yellow-600 text-xs mt-1">
-                  Server connection failed due to CORS policy. Your data is saved locally and will sync when the server enables CORS for this domain.
-                </p>
-              </div>
-              <button
-                onClick={() => setIsOfflineMode(false)}
-                className="ml-2 text-yellow-400 hover:text-yellow-600"
-                title="Dismiss this notice"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Removed offline mode indicator - only using real API authentication now */}
       
       {/* Error Display */}
       {error && (

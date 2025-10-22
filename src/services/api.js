@@ -105,49 +105,45 @@ const API_ENDPOINTS = {
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
-  const userDataStr = localStorage.getItem('notesapp_user') || '{}';
-  let user;
+  const userDataStr = localStorage.getItem('notesapp_user');
   
+  if (!userDataStr) {
+    console.log('🔑 No authentication data found');
+    return {
+      'Content-Type': 'application/json'
+    };
+  }
+
+  let user;
   try {
     user = JSON.parse(userDataStr);
   } catch (error) {
     console.error('Error parsing user data from localStorage:', error);
     // Clear corrupted data
     localStorage.removeItem('notesapp_user');
-    user = {};
+    return {
+      'Content-Type': 'application/json'
+    };
   }
-  
-  // Handle different possible user data formats
-  let token = null;
-  
-  // Check for direct token fields
-  if (user.access_token) {
-    token = user.access_token;
-  } else if (user.token) {
-    token = user.token;
-  } else if (user.opaque === true || user.success === true || !user.access_token) {
-    // This is an opaque/invalid response, clear it and don't use authentication
-    console.warn('🔑 Found opaque/invalid auth response, clearing authentication...');
-    localStorage.removeItem('notesapp_user');
-    token = null; // Don't send any token for invalid auth
-  }
-  
-  console.log('🔑 Getting auth headers:');
-  console.log('   - User data keys:', Object.keys(user));
-  console.log('   - Token found:', token ? 'YES' : 'NO');
-  console.log('   - Token preview:', token ? token.substring(0, 20) + '...' : 'None');
-  
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
-  };
-  
-  console.log('   - Headers:', Object.keys(headers));
-  
-  return headers;
-};
 
-// Generic API request function with better error handling and fallback
+  // Get the access token
+  const token = user.access_token;
+  
+  if (!token) {
+    console.warn('� No access token found in user data');
+    return {
+      'Content-Type': 'application/json'
+    };
+  }
+
+  console.log('🔑 Using access token for authentication');
+  console.log('   - Token preview:', token.substring(0, 30) + '...');
+  
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+};// Generic API request function with better error handling and fallback
 const apiRequest = async (endpoint, options = {}) => {
   let lastError;
   

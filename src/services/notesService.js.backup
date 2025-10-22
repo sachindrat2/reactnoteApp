@@ -1,0 +1,416 @@
+import { notesAPI, handleAPIError } from './api.js';
+
+// Helper function to get current user info
+const getCurrentUser = () => {
+  try {
+    const userDataStr = localStorage.getItem('notesapp_user');
+    
+    if (!userDataStr) {
+      console.log('🔍 No user data found in localStorage');
+      return null;
+    }
+    
+    const userData = JSON.parse(userDataStr);
+    console.log('🔍 getCurrentUser - parsed data:', userData);
+
+    // Extract user info from the auth response
+    const user = userData.user || userData;
+    const userId = user.id;
+    const userEmail = user.email;
+    const userName = user.name;
+    
+    if (!userId || !userEmail) {
+      console.warn('🔍 Invalid user data structure');
+      return null;
+    }
+    
+    const result = {
+      id: userId,
+      email: userEmail,
+      name: userName || userEmail.split('@')[0]
+    };
+    
+    console.log('🔍 getCurrentUser - result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    localStorage.removeItem('notesapp_user');
+    return null;
+  }
+};
+
+// Local cache management - REMOVED - API only now
+// All cache functions removed to use API directly
+
+// Notes service functions - Direct API only (no caching)
+export const notesService = {
+  // Get all notes from API
+  fetchNotes: async (forceRefresh = false, retryCount = 0) => {
+    const maxRetries = 1;
+    const currentUser = getCurrentUser();
+    console.log('🔄 fetchNotes called for user:', currentUser);
+    
+    try {
+      console.log(`📡 Fetching notes from API... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+      const notes = await notesAPI.getAllNotes();
+      console.log('📡 API getAllNotes response:', notes);
+      
+      if (notes && Array.isArray(notes)) {
+        console.log('📋 Raw notes from API:', notes.length, 'notes');
+        
+        // Filter notes for current user
+        const userNotes = notes.filter(note => {
+          // If note has explicit user association, check it
+          if (note.userId || note.user_id || note.owner_id) {
+            const isUserNote = note.userId === currentUser.id || 
+                             note.user_id === currentUser.id || 
+                             note.owner_id === currentUser.id;
+            console.log('🔍 Note filter check (with user fields):', {
+              noteId: note.id,
+              noteUserId: note.userId || note.user_id || note.owner_id,
+              currentUserId: currentUser.id,
+              isUserNote
+            });
+            return isUserNote;
+          } else {
+            // If note has no user association fields, assume it belongs to current user
+            // This is common when API returns only the authenticated user's notes
+            console.log('🔍 Note filter check (no user fields, assuming belongs to current user):', {
+              noteId: note.id,
+              currentUserId: currentUser.id,
+              assumeUserNote: true
+            });
+            return true;
+          }
+        });
+        
+        console.log('👤 Filtered notes for user:', userNotes.length, 'notes');
+        
+        return { success: true, data: userNotes };
+      } else {
+        console.log('⚠️ API returned invalid notes format:', notes);
+        return { success: false, error: 'Invalid notes data received from server' };
+      }
+    } catch (error) {
+      console.log('❌ API failed:', error.message);
+      
+      // Handle specific error types
+      const isNetworkError = error.message.includes('Failed to fetch') || 
+                           error.message.includes('ERR_FAILED') ||
+                           error.message.includes('net::') ||
+                           error.message.includes('NETWORK_ERROR') ||
+                           error.message.includes('404') ||
+                           error.name === 'TypeError';
+      
+      const isCorsError = error.message.includes('CORS') || 
+                         error.message.includes('CORS_ERROR');
+      
+      const isAuthError = error.message.includes('401') ||
+                         error.message.includes('Unauthorized') ||
+                         error.message.includes('Invalid authentication') ||
+                         error.message.includes('Authentication failed');
+      
+      if (isAuthError) {
+        console.log('🚫 Authentication error detected - user needs to re-login');
+        
+        // For auth errors, return error requiring login
+        return { 
+          success: false, 
+          error: 'Your session has expired. Please login again to access your notes.',
+          requiresLogin: true
+        };
+      }
+      
+      if (isNetworkError || isCorsError) {
+        console.log(`🌐 ${isCorsError ? 'CORS' : 'Network'} error detected`);
+        
+        // Return error without demo notes
+        return { 
+          success: false, 
+          error: 'Unable to connect to server. Please check your internet connection and try again.'
+        };
+      }
+      
+      // Generic error handling
+      return { 
+        success: false, 
+        error: error.message || 'Failed to load notes. Please try again.'
+      };
+    }
+  },
+
+  // Create a new note
+  createNote: async (noteData) => {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      console.log('📝 Creating note via API:', noteData);
+      const newNote = await notesAPI.createNote(noteData);
+      console.log('📝 Note created successfully:', newNote);
+      
+      return { success: true, data: newNote };
+    } catch (error) {
+      console.error('❌ Failed to create note:', error);
+      return { 
+        success: false, 
+        error: handleAPIError(error)
+      };
+    }
+  },
+
+  // Update an existing note
+  updateNote: async (noteId, noteData) => {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      console.log('📝 Updating note via API:', { noteId, noteData });
+      const updatedNote = await notesAPI.updateNote(noteId, noteData);
+      console.log('📝 Note updated successfully:', updatedNote);
+      
+      return { success: true, data: updatedNote };
+    } catch (error) {
+      console.error('❌ Failed to update note:', error);
+      return { 
+        success: false, 
+        error: handleAPIError(error)
+      };
+    }
+  },
+
+  // Delete a note
+  deleteNote: async (noteId) => {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      console.log('🗑️ Deleting note via API:', noteId);
+      await notesAPI.deleteNote(noteId);
+      console.log('🗑️ Note deleted successfully');
+      
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Failed to delete note:', error);
+      return { 
+        success: false, 
+        error: handleAPIError(error)
+      };
+    }
+  },
+
+  // Search notes (client-side filtering)
+  searchNotes: (searchTerm, notes) => {
+    if (!searchTerm || !notes) return notes || [];
+    
+    const term = searchTerm.toLowerCase();
+    return notes.filter(note => 
+      note.title?.toLowerCase().includes(term) || 
+      note.content?.toLowerCase().includes(term)
+    );
+  }
+};
+            title: 'Welcome to NotesApp! 📝',
+            content: `This is a demo note shown while the API server is unavailable due to CORS restrictions. 
+
+Your app is working correctly, but the backend server needs to enable CORS headers for this domain (${window.location.origin}) to allow API access.
+
+Once CORS is configured on the server, your real notes will appear here.`,
+            created_at: new Date().toISOString(),
+            tags: ['demo', 'welcome'],
+            isDemo: true
+          },
+          {
+            id: 'demo-2', 
+            title: 'API Connection Issue 🌐',
+            content: `The app is trying to connect to your API server but encountering CORS (Cross-Origin Resource Sharing) restrictions.
+
+Error: "${error.message}"
+
+To fix this, the backend server at 'ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net' needs to add CORS headers allowing requests from '${window.location.origin}'.`,
+            created_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+            tags: ['demo', 'cors', 'troubleshooting'],
+            isDemo: true
+          }
+        ];
+        
+        return { 
+          success: true, 
+          data: demoNotes, 
+          isDemo: true,
+          message: isCorsError ? 'Showing demo notes - API unavailable due to CORS restrictions' : 'Showing demo notes - API connection failed'
+        };
+      }
+      
+      // Retry on timeout errors with shorter delay
+      if (error.message.includes('timeout') && retryCount < maxRetries) {
+        console.log(`🔄 Retrying due to timeout... (${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return notesService.fetchNotes(forceRefresh, retryCount + 1);
+      }
+      
+      const errorMessage = handleAPIError(error);
+      return { success: false, error: errorMessage, data: [] };
+    }
+  },
+
+  // Create a new note - API only
+  createNote: async (noteData) => {
+    const currentUser = getCurrentUser();
+    console.log('📝 Creating note for user:', currentUser.email, noteData);
+    
+    // Prepare note data with defaults and user information
+    const noteToCreate = {
+      title: noteData.title || 'Untitled',
+      content: noteData.content || '',
+      category: noteData.category || 'General',
+      color: noteData.color || '#ffffff',
+      tags: Array.isArray(noteData.tags) ? noteData.tags : [],
+      isPinned: noteData.isPinned || false,
+      // Add user information
+      userId: currentUser.id,
+      userEmail: currentUser.email,
+      userName: currentUser.name
+    };
+    
+    try {
+      console.log('📝 Creating note via API...');
+      const newNote = await notesAPI.createNote(noteToCreate);
+      
+      console.log('✅ Note created via API');
+      return { success: true, data: newNote };
+    } catch (error) {
+      console.log('❌ API creation failed:', error.message);
+      const errorMessage = handleAPIError(error);
+      return { success: false, error: errorMessage };
+    }
+  },
+
+  // Update an existing note
+  updateNote: async (noteId, noteData) => {
+    const currentUser = getCurrentUser();
+    
+    try {
+      console.log('✏️ Updating note via API for user:', currentUser.email, noteId);
+      const updateData = {
+        title: noteData.title || 'Untitled',
+        content: noteData.content || '',
+        category: noteData.category || 'General',
+        color: noteData.color || '#ffffff',
+        tags: noteData.tags || [],
+        isPinned: noteData.isPinned || false,
+        // Preserve user information
+        userId: currentUser.id,
+        userEmail: currentUser.email
+      };
+      
+      const updatedNote = await notesAPI.updateNote(noteId, updateData);
+      
+      // Update local cache
+      const cachedNotes = notesCache.get();
+      const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
+      const updatedNotes = safeNotes.map(note => 
+        note.id === noteId ? updatedNote : note
+      );
+      notesCache.set(updatedNotes);
+      
+      return { success: true, data: updatedNote };
+    } catch (error) {
+      console.log('❌ Update API failed, updating cache only');
+      
+      // Update cache even if API fails - preserve user info
+      const cachedNotes = notesCache.get();
+      const safeNotes = Array.isArray(cachedNotes) ? cachedNotes : [];
+      const updatedNote = { 
+        ...noteData, 
+        id: noteId, 
+        updated_at: new Date().toISOString(), 
+        isOffline: true,
+        userId: currentUser.id,
+        userEmail: currentUser.email,
+        userName: currentUser.name
+      };
+      const updatedNotes = safeNotes.map(note => 
+        note.id === noteId ? updatedNote : note
+      );
+      notesCache.set(updatedNotes);
+      
+      return { success: true, data: updatedNote, offline: true };
+    }
+  },
+
+  // Update an existing note - API only
+  updateNote: async (noteId, noteData) => {
+    const currentUser = getCurrentUser();
+    
+    try {
+      console.log('✏️ Updating note via API for user:', currentUser.email, noteId);
+      const updateData = {
+        title: noteData.title || 'Untitled',
+        content: noteData.content || '',
+        category: noteData.category || 'General',
+        color: noteData.color || '#ffffff',
+        tags: noteData.tags || [],
+        isPinned: noteData.isPinned || false,
+        // Preserve user information
+        userId: currentUser.id,
+        userEmail: currentUser.email
+      };
+      
+      const updatedNote = await notesAPI.updateNote(noteId, updateData);
+      
+      return { success: true, data: updatedNote };
+    } catch (error) {
+      console.log('❌ Update API failed:', error.message);
+      const errorMessage = handleAPIError(error);
+      return { success: false, error: errorMessage };
+    }
+  },
+
+  // Delete a note - API only
+  deleteNote: async (noteId) => {
+    const currentUser = getCurrentUser();
+    
+    try {
+      console.log('🗑️ Deleting note via API for user:', currentUser.email, noteId);
+      await notesAPI.deleteNote(noteId);
+      
+      return { success: true };
+    } catch (error) {
+      console.log('❌ Delete API failed:', error.message);
+      const errorMessage = handleAPIError(error);
+      return { success: false, error: errorMessage };
+    }
+  },
+
+  // Search notes locally (no API call needed)
+  searchNotes: (searchTerm, allNotes) => {
+    // Ensure allNotes is always an array
+    const safeNotes = Array.isArray(allNotes) ? allNotes : [];
+    
+    if (!searchTerm || searchTerm.trim() === '') {
+      return safeNotes;
+    }
+    
+    console.log('🔍 Searching for:', searchTerm);
+    const term = searchTerm.toLowerCase();
+    
+    const filtered = safeNotes.filter(note => {
+      return (
+        note.title?.toLowerCase().includes(term) ||
+        note.content?.toLowerCase().includes(term) ||
+        note.category?.toLowerCase().includes(term) ||
+        note.tags?.some(tag => tag.toLowerCase().includes(term))
+      );
+    });
+    
+    console.log('🔍 Search results:', filtered.length);
+    return filtered;
+  }
+};

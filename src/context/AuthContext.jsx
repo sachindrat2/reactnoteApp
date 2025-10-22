@@ -11,26 +11,7 @@ export const useAuth = () => {
   return context;
 };
 
-// Offline authentication helper
-const createOfflineSession = (email, name = null) => {
-  // generate a deterministic offline id per email so caches are user-specific
-  const sanitized = (email || 'offline').toString().toLowerCase().replace(/[^a-z0-9]/g, '_');
-  const offlineId = `offline_${sanitized}`;
-  const offlineUser = {
-    access_token: 'offline_token_' + Date.now(),
-    token_type: 'Bearer',
-    user: {
-      id: offlineId,
-      email: email,
-      name: name || (email ? email.split('@')[0] : 'offline'),
-      created_at: new Date().toISOString()
-    },
-    isOffline: true
-  };
-  
-  localStorage.setItem('notesapp_user', JSON.stringify(offlineUser));
-  return offlineUser;
-};
+// Removed offline authentication helper - only using real tokens now
 
 // Check if user is logged in from localStorage
 const getStoredAuth = () => {
@@ -48,7 +29,6 @@ const getStoredAuth = () => {
     console.log('📋 Parsed user data:', { 
       hasToken: !!userData.access_token, 
       email: userData.user?.email,
-      isOffline: userData.isOffline,
       tokenType: userData.token_type
     });
     
@@ -150,49 +130,43 @@ export const AuthProvider = ({ children }) => {
       console.log('🔐 Attempting login...');
       const userData = await authAPI.login(email, password);
 
-      // Handle opaque/no-cors or incomplete responses from the auth endpoint
-      if (userData && (userData.opaque === true || !userData.access_token || !userData.user)) {
-        console.warn('⚠️ Received opaque/incomplete auth response, creating offline session instead', userData);
-        const offlineUser = createOfflineSession(email);
-        setUser(offlineUser.user);  // Set the user object, not the full auth response
-        setIsAuthenticated(true);
-        // already persisted inside createOfflineSession
-        console.log('💾 Offline session stored for user:', offlineUser.user.id);
-        return { success: true, offline: true, message: 'Logged in offline (opaque/incomplete auth response)' };
+      console.log('📊 Login API response:', userData);
+
+      // Validate that we got a proper access token
+      if (!userData || !userData.access_token) {
+        throw new Error('Login response missing access_token');
       }
 
-      setUser(userData.user || userData);  // Handle both formats
+      // Store the complete user data with access token
+      setUser(userData);
       setIsAuthenticated(true);
       localStorage.setItem('notesapp_user', JSON.stringify(userData));
 
-      console.log('✅ Login successful via API');
+      console.log('✅ Login successful - access token received:', userData.access_token.substring(0, 20) + '...');
       return { success: true };
     } catch (error) {
-      console.error('❌ API login failed:', error);
+      console.error('❌ Login failed:', error);
       
-      // Provide specific feedback based on error type
-      let offlineReason = 'Connection failed';
+      // Clear any auth state on failure
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('notesapp_user');
+      
+      let errorMessage = 'Login failed. Please check your credentials and try again.';
+      
       if (error.message.includes('CORS')) {
-        offlineReason = 'Server CORS policy blocking connection';
-      } else if (error.message.includes('NETWORK')) {
-        offlineReason = 'Network connection unavailable';
+        errorMessage = 'Connection blocked by browser security. Please try again or contact support.';
+      } else if (error.message.includes('NETWORK') || error.message.includes('Failed to fetch')) {
+        errorMessage = 'Network connection failed. Please check your internet connection and try again.';
       } else if (error.message.includes('TIMEOUT')) {
-        offlineReason = 'Server response timeout';
+        errorMessage = 'Server is taking too long to respond. Please try again later.';
+      } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        errorMessage = 'Invalid email or password. Please check your credentials.';
       }
       
-      // Fall back to offline mode
-      console.log('🔄 Creating offline session...');
-      const offlineUser = createOfflineSession(email);
-      
-      console.log('💾 Offline user created:', offlineUser);
-      setUser(offlineUser);
-      setIsAuthenticated(true);
-      
-      console.log('✅ Login successful in offline mode');
       return { 
-        success: true, 
-        offline: true,
-        message: `Logged in offline (${offlineReason}). Your data will be stored locally and sync when connection is available.`
+        success: false, 
+        error: errorMessage
       };
     } finally {
       setIsLoading(false);
@@ -204,27 +178,39 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
       console.log('📝 Attempting registration...');
       const userData = await authAPI.register(name, email, password);
+      
+      // Validate that we got a proper access token
+      if (!userData || !userData.access_token) {
+        throw new Error('Registration response missing access_token');
+      }
+      
       setUser(userData);
       setIsAuthenticated(true);
       localStorage.setItem('notesapp_user', JSON.stringify(userData));
       
-      console.log('✅ Registration successful via API');
+      console.log('✅ Registration successful - access token received');
       return { success: true };
     } catch (error) {
-      console.error('❌ API registration failed:', error);
+      console.error('❌ Registration failed:', error);
       
-      // Fall back to offline mode
-      console.log('🔄 Creating offline registration...');
-      const offlineUser = createOfflineSession(email, name);
+      // Clear any auth state on failure
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('notesapp_user');
       
-      setUser(offlineUser);
-      setIsAuthenticated(true);
+      let errorMessage = 'Registration failed. Please try again.';
       
-      console.log('✅ Registration successful in offline mode');
+      if (error.message.includes('CORS')) {
+        errorMessage = 'Connection blocked by browser security. Please try again or contact support.';
+      } else if (error.message.includes('NETWORK') || error.message.includes('Failed to fetch')) {
+        errorMessage = 'Network connection failed. Please check your internet connection and try again.';
+      } else if (error.message.includes('409') || error.message.includes('already exists')) {
+        errorMessage = 'An account with this email already exists. Please login instead.';
+      }
+      
       return { 
-        success: true, 
-        offline: true,
-        message: 'Registered offline. Your data will be stored locally.'
+        success: false, 
+        error: errorMessage
       };
     } finally {
       setIsLoading(false);
