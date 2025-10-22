@@ -33,13 +33,14 @@ const AuthHealthChecker = () => {
               console.log('🚨 AuthHealthChecker: Token expired', { expDate, now });
               setHealthStatus('token-expired');
               
-              // Auto-fix: logout user
-              if (autoFixAttempts < 1) {
-                console.log('🔧 Auto-fixing expired token by logging out');
-                setAutoFixAttempts(prev => prev + 1);
-                await logout();
-                return;
-              }
+              // Auto-fix disabled - let user stay logged in to debug
+              console.log('🔧 Auto-logout disabled for debugging - token appears expired but keeping user logged in');
+              // if (autoFixAttempts < 1) {
+              //   console.log('🔧 Auto-fixing expired token by logging out');
+              //   setAutoFixAttempts(prev => prev + 1);
+              //   await logout();
+              //   return;
+              // }
             }
           }
         } catch (e) {
@@ -65,13 +66,14 @@ const AuthHealthChecker = () => {
         console.log('🚨 AuthHealthChecker: API returned 401');
         setHealthStatus('api-rejected');
         
-        // Auto-fix: logout user
-        if (autoFixAttempts < 1) {
-          console.log('🔧 Auto-fixing 401 error by logging out');
-          setAutoFixAttempts(prev => prev + 1);
-          await logout();
-          return;
-        }
+        // Auto-fix disabled - let user stay logged in to debug  
+        console.log('🔧 Auto-logout disabled for debugging - API returned 401 but keeping user logged in');
+        // if (autoFixAttempts < 1) {
+        //   console.log('🔧 Auto-fixing 401 error by logging out');
+        //   setAutoFixAttempts(prev => prev + 1);
+        //   await logout();
+        //   return;
+        // }
       } else if (response.ok) {
         setHealthStatus('healthy');
       } else {

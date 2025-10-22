@@ -49,10 +49,11 @@ const NotesApp = () => {
         let errorMessage = result?.error || 'Failed to load notes';
         
         if (result?.requiresLogin) {
-          console.log('🚪 API requires re-authentication, logging out user');
-          // Auto-logout when session expired
-          logout();
-          return;
+          console.log('🚪 API requires re-authentication - auto-logout disabled for debugging');
+          console.log('🔧 Keeping user logged in to debug authentication issue');
+          // Auto-logout when session expired - DISABLED FOR DEBUGGING
+          // logout();
+          // return;
         } else if (errorMessage.includes('TIMEOUT_ERROR')) {
           errorMessage = 'Server is taking too long to respond. Your cached notes are displayed below.';
         } else if (errorMessage.includes('CORS_ERROR')) {
