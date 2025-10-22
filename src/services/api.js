@@ -348,17 +348,19 @@ const makeRequest = async (url, options = {}, endpoint) => {
       if (response.status === 401) {
         console.log('🚫 401 Unauthorized - clearing auth and triggering event');
         
-        // Clear any stored auth immediately
-        localStorage.removeItem('notesapp_user');
+        // Clear any stored auth immediately - DISABLED FOR DEBUGGING
+        console.log('🔧 Keeping auth token in localStorage for debugging');
+        // localStorage.removeItem('notesapp_user');
         
-        // Dispatch event for components to handle
-        window.dispatchEvent(new CustomEvent('auth:token-expired', {
-          detail: { 
-            reason: 'API returned 401 Unauthorized',
-            endpoint: endpoint,
-            url: url
-          }
-        }));
+        // Dispatch event for components to handle - DISABLED FOR DEBUGGING
+        console.log('🔧 Token expiration event disabled for debugging - keeping user logged in');
+        // window.dispatchEvent(new CustomEvent('auth:token-expired', {
+        //   detail: { 
+        //     reason: 'API returned 401 Unauthorized',
+        //     endpoint: endpoint,
+        //     url: url
+        //   }
+        // }));
         
         throw new Error('401: Unauthorized - Session expired');
       }
@@ -497,13 +499,14 @@ export const handleAPIError = (error) => {
         const token = userData.access_token || userData.token;
         
         if (token) {
-          console.log('🧹 Clearing expired/invalid token from localStorage');
-          localStorage.removeItem('notesapp_user');
+          console.log('🧹 Token clearing disabled for debugging');
+          // localStorage.removeItem('notesapp_user');
           
-          // Trigger a custom event that components can listen to
-          window.dispatchEvent(new CustomEvent('auth:token-expired', {
-            detail: { reason: 'Token expired or invalid (401 error)' }
-          }));
+          // Trigger a custom event that components can listen to - DISABLED FOR DEBUGGING
+          console.log('🔧 Token expiration event disabled for debugging - keeping user logged in');
+          // window.dispatchEvent(new CustomEvent('auth:token-expired', {
+          //   detail: { reason: 'Token expired or invalid (401 error)' }
+          // }));
         }
       } catch (e) {
         console.error('Error parsing stored user data during 401 handling:', e);
