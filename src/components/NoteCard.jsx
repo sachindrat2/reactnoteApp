@@ -26,17 +26,17 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
     return content.substring(0, maxLength).trim() + '...';
   };
 
-  const getRandomGradient = () => {
-    // Palette of gradients + recommended text color for readability
+  const getCardStyle = () => {
+    // Palette of solid background colors with excellent readability
     const palette = [
-      { bg: 'from-blue-200 to-indigo-300', text: 'text-slate-900' },
-      { bg: 'from-purple-300 to-pink-300', text: 'text-white' },
-      { bg: 'from-emerald-200 to-green-300', text: 'text-slate-900' },
-      { bg: 'from-yellow-200 to-orange-300', text: 'text-slate-900' },
-      { bg: 'from-pink-200 to-rose-300', text: 'text-slate-900' },
-      { bg: 'from-indigo-300 to-blue-400', text: 'text-white' },
-      { bg: 'from-cyan-200 to-teal-300', text: 'text-slate-900' },
-      { bg: 'from-amber-200 to-amber-300', text: 'text-slate-900' }
+      { bg: 'bg-blue-50 border-blue-200', text: 'text-slate-800', headerBg: 'bg-blue-100/50' },
+      { bg: 'bg-purple-50 border-purple-200', text: 'text-slate-800', headerBg: 'bg-purple-100/50' },
+      { bg: 'bg-emerald-50 border-emerald-200', text: 'text-slate-800', headerBg: 'bg-emerald-100/50' },
+      { bg: 'bg-amber-50 border-amber-200', text: 'text-slate-800', headerBg: 'bg-amber-100/50' },
+      { bg: 'bg-rose-50 border-rose-200', text: 'text-slate-800', headerBg: 'bg-rose-100/50' },
+      { bg: 'bg-indigo-50 border-indigo-200', text: 'text-slate-800', headerBg: 'bg-indigo-100/50' },
+      { bg: 'bg-teal-50 border-teal-200', text: 'text-slate-800', headerBg: 'bg-teal-100/50' },
+      { bg: 'bg-orange-50 border-orange-200', text: 'text-slate-800', headerBg: 'bg-orange-100/50' }
     ];
 
     // Deterministic selection using numeric id or string hash
@@ -52,15 +52,17 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
     return palette[index % palette.length];
   };
 
+  const cardStyle = getCardStyle();
+
   return (
-    <div className={`group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-slate-200 
+    <div className={`group rounded-2xl shadow-sm hover:shadow-xl border 
                     overflow-hidden transition-all duration-300 sm:hover:scale-[1.02] sm:hover:-translate-y-1
-                    bg-gradient-to-br ${getRandomGradient()} animate-fade-in`}>
+                    ${cardStyle.bg} animate-fade-in`}>
       
       {/* Card Header */}
       <div className="p-4 sm:p-6 pb-3 sm:pb-4">
         <div className="flex items-start justify-between mb-3">
-          <h3 className={`font-semibold ${getRandomGradient().text} text-base sm:text-lg line-clamp-2 flex-1 mr-2`}>
+          <h3 className={`font-semibold ${cardStyle.text} text-base sm:text-lg line-clamp-2 flex-1 mr-2`}>
             {note.title}
           </h3>
           
@@ -88,7 +90,7 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
         </div>
 
         {/* Content Preview */}
-        <p className={`leading-relaxed mb-3 sm:mb-4 line-clamp-3 ${getRandomGradient().text === 'text-white' ? 'text-white/90' : 'text-slate-700' } text-xs sm:text-sm`}>
+        <p className={`leading-relaxed mb-3 sm:mb-4 line-clamp-3 text-slate-600 text-xs sm:text-sm`}>
           {getPreview(note.content, window.innerWidth < 640 ? 80 : 120)}
         </p>
 
@@ -99,14 +101,14 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
               <span
                 key={index}
                 className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-medium 
-                         bg-white/60 text-slate-700 border border-white/40 backdrop-blur-sm"
+                         bg-white/80 text-slate-700 border border-slate-300 shadow-sm"
               >
                 #{tag}
               </span>
             ))}
             {note.tags.length > (window.innerWidth < 640 ? 2 : 3) && (
               <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-medium 
-                             bg-slate-100 text-slate-500 border border-slate-200">
+                             bg-slate-200 text-slate-600 border border-slate-300">
                 +{note.tags.length - (window.innerWidth < 640 ? 2 : 3)} more
               </span>
             )}
@@ -115,7 +117,7 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
       </div>
 
       {/* Card Footer */}
-      <div className="px-4 sm:px-6 py-3 sm:py-4 bg-white/50 border-t border-slate-100">
+      <div className={`px-4 sm:px-6 py-3 sm:py-4 ${cardStyle.headerBg} border-t border-slate-200`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 sm:space-x-4 text-xs text-slate-500">
             <div className="flex items-center space-x-1">
