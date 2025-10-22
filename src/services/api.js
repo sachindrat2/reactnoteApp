@@ -135,7 +135,7 @@ const getAuthHeaders = () => {
   const userDataStr = localStorage.getItem('notesapp_user');
   
   if (!userDataStr) {
-    console.log('🔑 No authentication data found');
+    console.log('🔑 No authentication data founds');
     return {
       'Content-Type': 'application/json'
     };
