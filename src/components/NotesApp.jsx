@@ -4,6 +4,7 @@ import NotesList from './NotesList';
 import NoteEditor from './NoteEditor';
 import AddNoteModal from './AddNoteModal';
 import DebugPanel from './DebugPanel';
+import AuthHealthChecker from './AuthHealthChecker';
 import { notesService } from '../services/notesService';
 import { useAuth } from '../context/AuthContext';
 
@@ -57,7 +58,12 @@ const NotesApp = () => {
         // Provide specific error messages based on error type
         let errorMessage = result?.error || 'Failed to load notes';
         
-        if (errorMessage.includes('TIMEOUT_ERROR')) {
+        if (result?.requiresLogin) {
+          console.log('🚪 API requires re-authentication, logging out user');
+          // Auto-logout when session expired
+          logout();
+          return;
+        } else if (errorMessage.includes('TIMEOUT_ERROR')) {
           errorMessage = 'Server is taking too long to respond. Your cached notes are displayed below.';
         } else if (errorMessage.includes('CORS_ERROR')) {
           errorMessage = 'Connection blocked by browser security. Using cached data.';
@@ -192,6 +198,9 @@ const NotesApp = () => {
       
       {/* Content with backdrop blur */}
       <div className="relative z-10 backdrop-blur-sm">
+      {/* Authentication Health Checker */}
+      <AuthHealthChecker />
+      
       <NotesHeader
         onAddNote={() => setIsAddModalOpen(true)}
         searchTerm={searchTerm}

@@ -111,7 +111,29 @@ export const AuthProvider = ({ children }) => {
     };
     
     initializeAuth();
-  }, []);
+    
+    // Listen for token expiration events from API layer
+    const handleTokenExpired = (event) => {
+      console.log('🚨 Token expiration event received:', event.detail);
+      
+      // Only auto-logout if we're currently authenticated
+      if (isAuthenticated) {
+        console.log('🚪 Auto-logout due to token expiration');
+        setUser(null);
+        setIsAuthenticated(false);
+        
+        // Show a notification to the user
+        console.log('💬 Session expired notification should be shown');
+      }
+    };
+    
+    window.addEventListener('auth:token-expired', handleTokenExpired);
+    
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('auth:token-expired', handleTokenExpired);
+    };
+  }, [isAuthenticated]);
 
   // Monitor auth state changes for debugging
   useEffect(() => {

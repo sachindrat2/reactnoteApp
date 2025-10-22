@@ -318,6 +318,25 @@ const makeRequest = async (url, options = {}, endpoint) => {
         data: data
       });
       
+      // Handle 401 errors specifically
+      if (response.status === 401) {
+        console.log('🚫 401 Unauthorized - clearing auth and triggering event');
+        
+        // Clear any stored auth immediately
+        localStorage.removeItem('notesapp_user');
+        
+        // Dispatch event for components to handle
+        window.dispatchEvent(new CustomEvent('auth:token-expired', {
+          detail: { 
+            reason: 'API returned 401 Unauthorized',
+            endpoint: endpoint,
+            url: url
+          }
+        }));
+        
+        throw new Error('401: Unauthorized - Session expired');
+      }
+      
       // Check if this is a token response with valid data despite error status
       if (endpoint === '/token' && data && (data.access_token || (typeof data === 'object' && data !== null && Object.keys(data).length > 0))) {
         console.log('Token endpoint returned error status but has valid data, treating as success');
@@ -437,13 +456,36 @@ export const notesAPI = {
   }
 };
 
-// Error handling utility - DO NOT clear localStorage here
+// Enhanced error handling utility with automatic token cleanup
 export const handleAPIError = (error) => {
+  console.log('🔍 Handling API error:', error.message);
+  
   if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-    // Token expired or invalid - just return error message
-    // Let the components handle the logout if needed
-    console.log('🚫 401 error detected - token may be expired');
-    return 'Session expired. Please login again.';
+    console.log('🚫 401 error detected - token expired or invalid');
+    
+    // Check if we have stored auth data
+    const storedUser = localStorage.getItem('notesapp_user');
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        const token = userData.access_token || userData.token;
+        
+        if (token) {
+          console.log('🧹 Clearing expired/invalid token from localStorage');
+          localStorage.removeItem('notesapp_user');
+          
+          // Trigger a custom event that components can listen to
+          window.dispatchEvent(new CustomEvent('auth:token-expired', {
+            detail: { reason: 'Token expired or invalid (401 error)' }
+          }));
+        }
+      } catch (e) {
+        console.error('Error parsing stored user data during 401 handling:', e);
+        localStorage.removeItem('notesapp_user');
+      }
+    }
+    
+    return 'Your session has expired. Please login again.';
   }
   
   if (error.message.includes('Network error') || error.message.includes('Failed to fetch')) {

@@ -141,8 +141,19 @@ export const notesService = {
                          error.message.includes('Invalid authentication') ||
                          error.message.includes('Authentication failed');
       
-      if (isNetworkError || isCorsError || isAuthError) {
-        console.log(`🌐 ${isAuthError ? 'Authentication' : 'Network/CORS'} error detected, showing demo notes`);
+      if (isAuthError) {
+        console.log('🚫 Authentication error detected - user needs to re-login');
+        
+        // For auth errors, don't show demo notes - let the user re-authenticate
+        return { 
+          success: false, 
+          error: 'Your session has expired. Please login again to access your notes.',
+          requiresLogin: true
+        };
+      }
+      
+      if (isNetworkError || isCorsError) {
+        console.log(`🌐 ${isCorsError ? 'CORS' : 'Network'} error detected, showing demo notes`);
         
         // Show demo notes when API is unavailable
         const demoNotes = [
