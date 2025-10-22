@@ -1,7 +1,7 @@
-// Service Worker for NotesApp PWA
-const CACHE_NAME = 'notesapp-v2.0.0';
-const STATIC_CACHE = 'notesapp-static-v2.0.0';
-const API_CACHE = 'notesapp-api-v2.0.0';
+// Service Worker for NotesApp PWA - API requests bypass SW
+const CACHE_NAME = 'notesapp-v2.1.0';
+const STATIC_CACHE = 'notesapp-static-v2.1.0';
+const API_CACHE = 'notesapp-api-v2.1.0';
 
 // Files to cache immediately
 const STATIC_FILES = [
@@ -60,37 +60,13 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   
-  // Handle API requests
-  if (url.pathname.includes('/api/') || url.hostname.includes('azurewebsites.net')) {
-    event.respondWith(
-      caches.open(API_CACHE)
-        .then((cache) => {
-          return fetch(request)
-            .then((response) => {
-              // Only cache GET requests and successful responses
-              if (request.method === 'GET' && response.ok && response.status < 400) {
-                try {
-                  // Clone response before caching to avoid body consumption
-                  const responseClone = response.clone();
-                  cache.put(request, responseClone).catch(err => {
-                    console.warn('Failed to cache response:', err);
-                  });
-                } catch (cacheError) {
-                  console.warn('Error cloning response for cache:', cacheError);
-                }
-              }
-              return response;
-            })
-            .catch(() => {
-              // Return cached response if network fails (only for GET requests)
-              if (request.method === 'GET') {
-                return cache.match(request);
-              }
-              // For non-GET requests, just reject
-              throw new Error('Network request failed');
-            });
-        })
-    );
+  // Skip service worker for auth and API requests - let them go directly to network
+  if (url.hostname.includes('azurewebsites.net') || 
+      url.pathname.includes('/api/') || 
+      url.pathname.includes('/register') || 
+      url.pathname.includes('/token') || 
+      url.pathname.includes('/notes')) {
+    // Let these requests bypass service worker completely
     return;
   }
   
