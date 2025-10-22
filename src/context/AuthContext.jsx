@@ -172,6 +172,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       console.log('✅ Login successful - access token received:', userData.access_token.substring(0, 20) + '...');
+      setIsLoading(false); // Explicitly clear loading state on success
       return { success: true };
     } catch (error) {
       console.error('❌ Login failed:', error);
@@ -241,6 +242,7 @@ export const AuthProvider = ({ children }) => {
       }
       
       console.log('✅ Registration successful - access token received');
+      setIsLoading(false); // Explicitly clear loading state on success
       return { success: true };
     } catch (error) {
       console.error('❌ Registration failed:', error);

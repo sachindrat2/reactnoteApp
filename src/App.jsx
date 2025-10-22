@@ -39,10 +39,11 @@ const checkForUpdates = () => {
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
-  console.log('🛡️ ProtectedRoute check:', { isAuthenticated, isLoading });
+  console.log('🛡️ ProtectedRoute check:', { isAuthenticated, isLoading, timestamp: new Date().toISOString() });
 
   // Only show loading during active operations
   if (isLoading) {
+    console.log('🛡️ ProtectedRoute showing LoadingScreen due to auth isLoading');
     return <LoadingScreen />;
   }
 
