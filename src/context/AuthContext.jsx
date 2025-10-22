@@ -173,11 +173,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password) => {
+  const register = async (email, password) => {
     try {
       setIsLoading(true);
       console.log('📝 Attempting registration...');
-      const userData = await authAPI.register(name, email, password);
+      // Use email as username for registration
+      const userData = await authAPI.register(email, password);
       
       // Validate that we got a proper access token
       if (!userData || !userData.access_token) {

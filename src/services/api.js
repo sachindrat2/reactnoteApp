@@ -464,12 +464,12 @@ export const authAPI = {
     });
   },
 
-  register: async (name, email, password) => {
-    console.log('Register attempt with:', { name, email, password: password ? '[HIDDEN]' : 'EMPTY' });
+  register: async (username, password) => {
+    console.log('Register attempt with:', { username, password: password ? '[HIDDEN]' : 'EMPTY' });
     
-    // Server expects username and password format (email as username)
+    // Server expects username and password format
     const payload = { 
-      username: email,  // Use email as username
+      username: username,
       password: password 
     };
     console.log('Registration payload:', { username: payload.username, password: '[HIDDEN]' });
