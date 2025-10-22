@@ -56,6 +56,19 @@ export const notesService = {
     
     try {
       console.log('Fetching notes from API...');
+      
+      // Debug: Check what token is being used
+      const authData = localStorage.getItem('notesapp_user');
+      if (authData) {
+        const parsed = JSON.parse(authData);
+        console.log('🔑 Debug: Token being used:', {
+          hasToken: !!parsed.access_token,
+          tokenStart: parsed.access_token?.substring(0, 30) + '...',
+          tokenType: parsed.token_type,
+          userEmail: parsed.user?.email
+        });
+      }
+      
       const notes = await notesAPI.getAllNotes();
       console.log('API getAllNotes response:', notes);
       
