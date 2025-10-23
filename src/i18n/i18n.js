@@ -67,8 +67,19 @@ const resources = {
       
       // Add Note Modal
       addNewNote: "Add New Note",
+      createNewNote: "Create New Note",
+      addNewNoteDesc: "Add a new note to your collection",
       createNote: "Create Note",
       cancel: "Cancel",
+      title: "Title",
+      content: "Content",
+      tags: "Tags (optional)",
+      tagsDescription: "Separate tags with commas",
+      quickTips: "Quick Tips",
+      tipEscape: "• Press Escape to cancel",
+      tipTags: "• Use tags to organize your notes",
+      tipEdit: "• You can edit the note after creating it",
+      charactersCount: "{{count}} characters, {{words}} words",
       
       // Date/Time
       created: "Created",
@@ -149,8 +160,19 @@ const resources = {
       
       // Add Note Modal
       addNewNote: "新しいノート追加",
+      createNewNote: "新しいノートを作成",
+      addNewNoteDesc: "コレクションに新しいノートを追加",
       createNote: "ノート作成",
       cancel: "キャンセル",
+      title: "タイトル",
+      content: "内容",
+      tags: "タグ（オプション）",
+      tagsDescription: "タグはカンマで区切ってください",
+      quickTips: "クイックヒント",
+      tipEscape: "• Escapeキーでキャンセル",
+      tipTags: "• タグでノートを整理できます",
+      tipEdit: "• 作成後にノートを編集できます",
+      charactersCount: "{{count}}文字、{{words}}語",
       
       // Date/Time
       created: "作成日",

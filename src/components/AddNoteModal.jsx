@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const AddNoteModal = ({ onAdd, onClose }) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('');
@@ -31,7 +33,7 @@ const AddNoteModal = ({ onAdd, onClose }) => {
     }
 
     const noteData = {
-      title: title.trim() || 'Untitled Note',
+      title: title.trim() || t('untitledNote'),
       content: content.trim(),
       tags: tags
         .split(',')
@@ -57,8 +59,8 @@ const AddNoteModal = ({ onAdd, onClose }) => {
         {/* Modal Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Create New Note</h2>
-            <p className="text-slate-500 text-sm mt-1 hidden sm:block">Add a new note to your collection</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">{t('createNewNote')}</h2>
+            <p className="text-slate-500 text-sm mt-1 hidden sm:block">{t('addNewNoteDesc')}</p>
           </div>
           <button
             onClick={onClose}
@@ -75,7 +77,7 @@ const AddNoteModal = ({ onAdd, onClose }) => {
           {/* Title Input */}
           <div>
             <label htmlFor="note-title" className="block text-sm font-medium text-slate-700 mb-2">
-              Title
+              {t('title')}
             </label>
             <input
               ref={titleInputRef}
@@ -83,7 +85,7 @@ const AddNoteModal = ({ onAdd, onClose }) => {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter note title..."
+              placeholder={t('titlePlaceholder')}
               className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-500
                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                        transition-all duration-200 text-sm sm:text-base"
@@ -93,31 +95,31 @@ const AddNoteModal = ({ onAdd, onClose }) => {
           {/* Tags Input */}
           <div>
             <label htmlFor="note-tags" className="block text-sm font-medium text-slate-700 mb-2">
-              Tags (optional)
+              {t('tags')}
             </label>
             <input
               id="note-tags"
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              placeholder="work, personal, ideas..."
+              placeholder={t('tagsPlaceholder')}
               className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-500
                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                        transition-all duration-200 text-sm sm:text-base"
             />
-            <p className="text-xs text-slate-500 mt-1">Separate tags with commas</p>
+            <p className="text-xs text-slate-500 mt-1">{t('tagsDescription')}</p>
           </div>
 
           {/* Content Textarea */}
           <div>
             <label htmlFor="note-content" className="block text-sm font-medium text-slate-700 mb-2">
-              Content
+              {t('content')}
             </label>
             <textarea
               id="note-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Start writing your note..."
+              placeholder={t('contentPlaceholder')}
               rows={window.innerWidth < 640 ? 5 : 6}
               className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-500
                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
@@ -128,7 +130,7 @@ const AddNoteModal = ({ onAdd, onClose }) => {
           {/* Modal Footer */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-slate-200 space-y-3 sm:space-y-0">
             <div className="text-xs sm:text-sm text-slate-500 order-2 sm:order-1">
-              {content.length} characters, {content.split(/\s+/).filter(word => word.length > 0).length} words
+              {t('charactersCount', { count: content.length, words: content.split(/\s+/).filter(word => word.length > 0).length })}
             </div>
             
             <div className="flex items-center space-x-3 order-1 sm:order-2">
@@ -138,7 +140,7 @@ const AddNoteModal = ({ onAdd, onClose }) => {
                 className="flex-1 sm:flex-none px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 
                          rounded-lg transition-colors duration-200 text-sm sm:text-base"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 type="submit"
@@ -149,7 +151,7 @@ const AddNoteModal = ({ onAdd, onClose }) => {
                     : 'bg-slate-200 text-slate-500 cursor-not-allowed'
                 }`}
               >
-                Create Note
+                {t('createNote')}
               </button>
             </div>
           </div>
@@ -165,11 +167,11 @@ const AddNoteModal = ({ onAdd, onClose }) => {
                 </svg>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-blue-900">Quick Tips</h4>
+                <h4 className="text-sm font-medium text-blue-900">{t('quickTips')}</h4>
                 <ul className="text-sm text-blue-700 mt-1 space-y-1">
-                  <li>• Press Escape to cancel</li>
-                  <li>• Use tags to organize your notes</li>
-                  <li>• You can edit the note after creating it</li>
+                  <li>{t('tipEscape')}</li>
+                  <li>{t('tipTags')}</li>
+                  <li>{t('tipEdit')}</li>
                 </ul>
               </div>
             </div>
