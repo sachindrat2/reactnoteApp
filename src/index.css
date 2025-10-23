@@ -80,16 +80,14 @@ html, body {
   margin: 0;
   padding: 0;
   min-width: 320px;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
   background-color: var(--color-slate-50);
   color: var(--color-slate-900);
 }
 
 #root {
-  height: 100vh;
+  min-height: 100vh;
   width: 100vw;
-  overflow: hidden;
 }
 
 /* Utility classes for line clamping */
@@ -326,3 +324,28 @@ html, body {
 .blur-xs { filter: blur(2px); }
 .blur-3xl { filter: blur(64px); }
 .blur-4xl { filter: blur(128px); }
+
+/* Mobile scrolling enhancements */
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  #root {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Ensure main content areas can scroll */
+  main {
+    overflow-y: visible;
+  }
+  
+  /* Fix grid layout on mobile to prevent horizontal overflow */
+  .grid {
+    overflow-x: hidden;
+  }
+}
