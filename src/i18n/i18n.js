@@ -62,8 +62,14 @@ const resources = {
       tagsPlaceholder: "Tags (comma separated)",
       save: "Save",
       saving: "Saving...",
+      saveChanges: "Save Changes",
+      saved: "Saved",
       deleteNote: "Delete Note",
       deleteConfirm: "Are you sure you want to delete this note? This action cannot be undone.",
+      backToNotes: "Back to Notes",
+      tagsLabel: "Tags (separate with commas)",
+      charactersAndWords: "{{characters}} characters, {{words}} words",
+      keyboardShortcuts: "Press Ctrl+S to save, Escape to close",
       
       // Add Note Modal
       addNewNote: "Add New Note",
@@ -155,8 +161,14 @@ const resources = {
       tagsPlaceholder: "タグ（カンマ区切り）",
       save: "保存",
       saving: "保存中...",
+      saveChanges: "変更を保存",
+      saved: "保存済み",
       deleteNote: "ノート削除",
       deleteConfirm: "このノートを削除しますか？この操作は元に戻せません。",
+      backToNotes: "ノートに戻る",
+      tagsLabel: "タグ（カンマで区切ってください）",
+      charactersAndWords: "{{characters}}文字、{{words}}語",
+      keyboardShortcuts: "Ctrl+Sで保存、Escapeで閉じる",
       
       // Add Note Modal
       addNewNote: "新しいノート追加",

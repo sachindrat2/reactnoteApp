@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
   const [tags, setTags] = useState(note.tags?.join(', ') || '');
@@ -28,7 +30,7 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
     
     const updatedNote = {
       ...note,
-      title: title.trim() || 'Untitled Note',
+      title: title.trim() || t('untitledNote'),
       content: content.trim(),
       tags: tags
         .split(',')
@@ -44,7 +46,7 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
   };
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
+    if (window.confirm(t('deleteConfirm'))) {
       onDelete(note.id);
     }
   };
@@ -62,7 +64,7 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'No date';
+    if (!dateString) return t('noDate');
     
     // Handle different date formats from API
     let date;
@@ -74,7 +76,7 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
       date = new Date(dateString + 'Z'); // Add Z to treat as UTC
     }
     
-    return date.toLocaleString('en-US', {
+    return date.toLocaleString(undefined, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -99,22 +101,22 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              Back to Notes
+              {t('backToNotes')}
             </button>
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-3">
               {/* Note Info */}
               <div className="text-sm text-slate-500 mr-4">
-                <div>Created: {formatDate(note.createdAt || note.created_at)}</div>
-                <div>Updated: {formatDate(note.updatedAt || note.updated_at)}</div>
+                <div>{t('created')}: {formatDate(note.createdAt || note.created_at)}</div>
+                <div>{t('updated')}: {formatDate(note.updatedAt || note.updated_at)}</div>
               </div>
 
               {/* Delete Button */}
               <button
                 onClick={handleDelete}
                 className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                title="Delete note"
+                title={t('deleteNote')}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -137,14 +139,14 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Saving...
+                    {t('saving')}
                   </>
                 ) : (
                   <>
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                     </svg>
-                    {hasChanges ? 'Save Changes' : 'Saved'}
+                    {hasChanges ? t('saveChanges') : t('saved')}
                   </>
                 )}
               </button>
@@ -160,7 +162,7 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Note title..."
+          placeholder={t('titlePlaceholder')}
           className="w-full text-3xl font-bold text-slate-800 placeholder-slate-400 border-none outline-none 
                    bg-transparent mb-4 focus:ring-0 resize-none"
         />
@@ -168,13 +170,13 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
         {/* Tags Input */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            Tags (separate with commas)
+            {t('tagsLabel')}
           </label>
           <input
             type="text"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            placeholder="work, personal, ideas..."
+            placeholder={t('tagsPlaceholder')}
             className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-500
                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                      transition-all duration-200"
@@ -187,7 +189,7 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
             ref={contentRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Start writing your note..."
+            placeholder={t('contentPlaceholder')}
             className="w-full h-96 p-4 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-500
                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                      transition-all duration-200 resize-y leading-relaxed"
@@ -198,11 +200,10 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
         {/* Editor Footer */}
         <div className="flex items-center justify-between text-sm text-slate-500 pt-4 border-t border-slate-200">
           <div className="flex items-center space-x-4">
-            <span>{content.length} characters</span>
-            <span>{content.split(/\s+/).filter(word => word.length > 0).length} words</span>
+            <span>{t('charactersAndWords', { characters: content.length, words: content.split(/\s+/).filter(word => word.length > 0).length })}</span>
           </div>
           <div className="text-slate-400">
-            Press Ctrl+S to save, Escape to close
+            {t('keyboardShortcuts')}
           </div>
         </div>
       </div>

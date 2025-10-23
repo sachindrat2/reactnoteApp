@@ -26,7 +26,18 @@ const LanguageSwitcher = ({ className = "" }) => {
           }`}
           title={t('english')}
         >
-          <span className="emoji-flag text-base leading-none select-none" role="img" aria-label="US Flag">🇺🇸</span>
+          {/* US Flag SVG */}
+          <svg className="w-4 h-3" viewBox="0 0 16 12" fill="none">
+            <rect width="16" height="12" fill="#B22234"/>
+            <rect width="16" height="0.923" y="1.077" fill="white"/>
+            <rect width="16" height="0.923" y="2.769" fill="white"/>
+            <rect width="16" height="0.923" y="4.462" fill="white"/>
+            <rect width="16" height="0.923" y="6.154" fill="white"/>
+            <rect width="16" height="0.923" y="7.846" fill="white"/>
+            <rect width="16" height="0.923" y="9.538" fill="white"/>
+            <rect width="16" height="0.923" y="11.231" fill="white"/>
+            <rect width="5.714" height="6.462" fill="#3C3B6E"/>
+          </svg>
           <span>EN</span>
         </button>
         
@@ -39,7 +50,11 @@ const LanguageSwitcher = ({ className = "" }) => {
           }`}
           title={t('japanese')}
         >
-          <span className="emoji-flag text-base leading-none select-none" role="img" aria-label="Japan Flag">🇯🇵</span>
+          {/* Japan Flag SVG */}
+          <svg className="w-4 h-3" viewBox="0 0 16 12" fill="none">
+            <rect width="16" height="12" fill="white"/>
+            <circle cx="8" cy="6" r="3.6" fill="#BC002D"/>
+          </svg>
           <span>日本</span>
         </button>
       </div>
