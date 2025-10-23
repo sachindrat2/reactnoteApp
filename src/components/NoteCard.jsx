@@ -1,8 +1,10 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const NoteCard = ({ note, onEdit, onDelete }) => {
+  const { t } = useTranslation();
   const formatDate = (dateString) => {
-    if (!dateString) return 'No date';
+    if (!dateString) return t('noDate');
     
     // Handle different date formats from API
     let date;
@@ -20,15 +22,15 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
     const diffInDays = Math.floor(diffInHours / 24);
     
     if (diffInMinutes < 1) {
-      return 'Just now';
+      return t('justNow');
     } else if (diffInMinutes < 60) {
-      return `${diffInMinutes}m ago`;
+      return t('minutesAgo', { count: diffInMinutes });
     } else if (diffInHours < 24) {
-      return `${diffInHours}h ago`;
+      return t('hoursAgo', { count: diffInHours });
     } else if (diffInDays === 1) {
-      return 'Yesterday';
+      return t('yesterday');
     } else if (diffInDays < 7) {
-      return `${diffInDays} days ago`;
+      return t('daysAgo', { count: diffInDays });
     } else {
       // For older dates, show full date with time in user's timezone
       return date.toLocaleDateString('en-US', { 
@@ -171,7 +173,7 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
                 <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-slate-400">No date</span>
+                <span className="text-slate-400">{t('noDate')}</span>
               </div>
             )}
           </div>
@@ -180,8 +182,8 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
             onClick={() => onEdit(note)}
             className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200"
           >
-            <span className="hidden sm:inline">Open →</span>
-            <span className="sm:hidden">Open</span>
+            <span className="hidden sm:inline">{t('openArrow')}</span>
+            <span className="sm:hidden">{t('open')}</span>
           </button>
         </div>
       </div>

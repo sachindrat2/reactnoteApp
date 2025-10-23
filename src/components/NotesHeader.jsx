@@ -1,9 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import ConnectionStatus from './ConnectionStatus';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -33,9 +36,9 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-white">NotesApp</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-white">{t('appTitle')}</h1>
                 <p className="text-xs sm:text-sm text-gray-300">
-                  {notesCount} notes for {user?.user?.name || user?.name || user?.user?.email || user?.email || 'User'}
+                  {t('notesCount', { count: notesCount })} for {user?.user?.name || user?.name || user?.user?.email || user?.email || 'User'}
                 </p>
                 <ConnectionStatus />
               </div>
@@ -43,6 +46,9 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
 
             {/* Mobile Actions */}
             <div className="lg:hidden flex items-center space-x-2">
+              {/* Language Switcher - Mobile */}
+              <LanguageSwitcher className="scale-75" />
+              
               {/* User Profile - Mobile */}
               {user && (
                 <div className="flex items-center space-x-2">
@@ -74,7 +80,7 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
                 <svg className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                <span className="hidden sm:inline">New Note</span>
+                <span className="hidden sm:inline">{t('addNote')}</span>
               </button>
             </div>
           </div>
@@ -89,7 +95,7 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
               </div>
               <input
                 type="text"
-                placeholder="Search notes..."
+                placeholder={t('searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="block w-full pl-8 sm:pl-10 pr-8 sm:pr-10 py-2 sm:py-2.5 border border-gray-600 rounded-xl 
@@ -123,14 +129,17 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              New Note
+{t('addNote')}
             </button>
+
+            {/* Language Switcher - Desktop */}
+            <LanguageSwitcher />
 
             {/* User Profile - Desktop */}
             {user && (
               <div className="flex items-center space-x-3 pl-4 border-l border-gray-600">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-200">Welcome back!</p>
+                  <p className="text-sm font-medium text-gray-200">{t('welcomeBack')}</p>
                   <p className="text-xs text-gray-400">{user?.user?.name || user?.name || user?.user?.email || user?.email}</p>
                 </div>
                 <div className="w-10 h-10 rounded-full border-2 border-purple-500 shadow-sm bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center hover:scale-110 transition-transform duration-200">
