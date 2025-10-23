@@ -19,28 +19,28 @@ const LanguageSwitcher = ({ className = "" }) => {
         
         <button
           onClick={() => changeLanguage('en')}
-          className={`flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded transition-colors duration-200 ${
+          className={`flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-medium rounded transition-colors duration-200 ${
             currentLanguage === 'en' 
               ? 'bg-white/20 text-white' 
               : 'text-white/70 hover:text-white hover:bg-white/10'
           }`}
           title={t('english')}
         >
-          <span className="text-sm">🇺🇸</span>
+          <span className="emoji-flag text-base leading-none select-none" role="img" aria-label="US Flag">🇺🇸</span>
           <span>EN</span>
         </button>
         
         <button
           onClick={() => changeLanguage('ja')}
-          className={`flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded transition-colors duration-200 ${
+          className={`flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-medium rounded transition-colors duration-200 ${
             currentLanguage === 'ja' 
               ? 'bg-white/20 text-white' 
               : 'text-white/70 hover:text-white hover:bg-white/10'
           }`}
           title={t('japanese')}
         >
-          <span className="text-sm">🇯🇵</span>
-          <span>JP</span>
+          <span className="emoji-flag text-base leading-none select-none" role="img" aria-label="Japan Flag">🇯🇵</span>
+          <span>日本</span>
         </button>
       </div>
     </div>
