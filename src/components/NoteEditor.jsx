@@ -62,12 +62,26 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString('en-US', {
+    if (!dateString) return 'No date';
+    
+    // Handle different date formats from API
+    let date;
+    if (dateString.includes('T') || dateString.includes('Z')) {
+      // ISO format: "2025-10-23T04:23:00Z"
+      date = new Date(dateString);
+    } else {
+      // MySQL format: "2025-10-22 08:03:01" - treat as UTC
+      date = new Date(dateString + 'Z'); // Add Z to treat as UTC
+    }
+    
+    return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true,
+      timeZoneName: 'short'
     });
   };
 

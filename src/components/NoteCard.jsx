@@ -4,21 +4,40 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
   const formatDate = (dateString) => {
     if (!dateString) return 'No date';
     
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    // Handle different date formats from API
+    let date;
+    if (dateString.includes('T') || dateString.includes('Z')) {
+      // ISO format: "2025-10-23T04:23:00Z"
+      date = new Date(dateString);
+    } else {
+      // MySQL format: "2025-10-22 08:03:01" - treat as UTC
+      date = new Date(dateString + 'Z'); // Add Z to treat as UTC
+    }
     
-    if (diffInHours < 1) {
+    const now = new Date();
+    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    
+    if (diffInMinutes < 1) {
       return 'Just now';
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
     } else if (diffInHours < 24) {
       return `${diffInHours}h ago`;
-    } else if (diffInHours < 48) {
+    } else if (diffInDays === 1) {
       return 'Yesterday';
+    } else if (diffInDays < 7) {
+      return `${diffInDays} days ago`;
     } else {
+      // For older dates, show full date with time in user's timezone
       return date.toLocaleDateString('en-US', { 
         month: 'short', 
         day: 'numeric',
-        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
       });
     }
   };
