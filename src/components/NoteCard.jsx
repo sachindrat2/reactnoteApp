@@ -2,6 +2,8 @@ import React from 'react';
 
 const NoteCard = ({ note, onEdit, onDelete }) => {
   const formatDate = (dateString) => {
+    if (!dateString) return 'No date';
+    
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
@@ -20,6 +22,10 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
       });
     }
   };
+
+  // Handle both camelCase and snake_case from API
+  const getCreatedDate = () => note.createdAt || note.created_at;
+  const getUpdatedDate = () => note.updatedAt || note.updated_at;
 
   const getPreview = (content, maxLength = 120) => {
     if (content.length <= maxLength) return content;
@@ -120,13 +126,35 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
       <div className={`px-4 sm:px-6 py-3 sm:py-4 ${cardStyle.headerBg} border-t border-slate-200`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 sm:space-x-4 text-xs text-slate-500">
-            <div className="flex items-center space-x-1">
-              <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="hidden sm:inline">Updated {formatDate(note.updatedAt)}</span>
-              <span className="sm:hidden">{formatDate(note.updatedAt)}</span>
-            </div>
+            {/* Show created date if available */}
+            {getCreatedDate() && (
+              <div className="flex items-center space-x-1">
+                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                </svg>
+                <span className="hidden sm:inline">Created {formatDate(getCreatedDate())}</span>
+                <span className="sm:hidden">{formatDate(getCreatedDate())}</span>
+              </div>
+            )}
+            {/* Show updated date if different from created date */}
+            {getUpdatedDate() && (!getCreatedDate() || getUpdatedDate() !== getCreatedDate()) && (
+              <div className="flex items-center space-x-1">
+                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="hidden sm:inline">Updated {formatDate(getUpdatedDate())}</span>
+                <span className="sm:hidden">Updated {formatDate(getUpdatedDate())}</span>
+              </div>
+            )}
+            {/* Fallback if no timestamps are available */}
+            {!getCreatedDate() && !getUpdatedDate() && (
+              <div className="flex items-center space-x-1">
+                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-slate-400">No date</span>
+              </div>
+            )}
           </div>
           
           <button

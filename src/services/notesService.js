@@ -1,5 +1,26 @@
 ﻿import { notesAPI, handleAPIError } from './api.js';
 
+// Helper function to normalize note data from API (snake_case to camelCase)
+const normalizeNoteData = (note) => {
+  if (!note) return note;
+  
+  return {
+    ...note,
+    // Ensure camelCase format for dates
+    createdAt: note.createdAt || note.created_at,
+    updatedAt: note.updatedAt || note.updated_at,
+    // Clean up snake_case versions if they exist
+    created_at: undefined,
+    updated_at: undefined
+  };
+};
+
+// Helper function to normalize an array of notes
+const normalizeNotesArray = (notes) => {
+  if (!Array.isArray(notes)) return notes;
+  return notes.map(normalizeNoteData);
+};
+
 // Helper function to get current user info
 const getCurrentUser = () => {
   try {
@@ -81,7 +102,9 @@ export const notesService = {
       
       if (notes && Array.isArray(notes)) {
         console.log('✅ Raw notes from API:', notes.length, 'notes');
-        return { success: true, data: notes };
+        const normalizedNotes = normalizeNotesArray(notes);
+        console.log('🔄 Normalized notes:', normalizedNotes.length, 'notes with proper date formats');
+        return { success: true, data: normalizedNotes };
       } else {
         console.log('❌ API returned invalid notes format:', notes);
         return { success: false, error: 'Invalid notes data received from server' };
@@ -121,7 +144,9 @@ export const notesService = {
       const newNote = await notesAPI.createNote(noteData);
       console.log('Note created successfully:', newNote);
       
-      return { success: true, data: newNote };
+      const normalizedNote = normalizeNoteData(newNote);
+      console.log('🔄 Normalized created note:', normalizedNote);
+      return { success: true, data: normalizedNote };
     } catch (error) {
       console.error('Failed to create note:', error);
       
@@ -152,7 +177,9 @@ export const notesService = {
       const updatedNote = await notesAPI.updateNote(noteId, noteData);
       console.log('Note updated successfully:', updatedNote);
       
-      return { success: true, data: updatedNote };
+      const normalizedNote = normalizeNoteData(updatedNote);
+      console.log('🔄 Normalized updated note:', normalizedNote);
+      return { success: true, data: normalizedNote };
     } catch (error) {
       console.error('Failed to update note:', error);
       

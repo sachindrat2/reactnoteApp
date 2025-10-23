@@ -92,8 +92,8 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
             <div className="flex items-center space-x-3">
               {/* Note Info */}
               <div className="text-sm text-slate-500 mr-4">
-                <div>Created: {formatDate(note.createdAt)}</div>
-                <div>Updated: {formatDate(note.updatedAt)}</div>
+                <div>Created: {formatDate(note.createdAt || note.created_at)}</div>
+                <div>Updated: {formatDate(note.updatedAt || note.updated_at)}</div>
               </div>
 
               {/* Delete Button */}
