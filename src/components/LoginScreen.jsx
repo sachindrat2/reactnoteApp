@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const LoginScreen = () => {
+  const { t } = useTranslation();
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,7 +39,7 @@ const LoginScreen = () => {
     setIsLoading(true);
 
     if (isRegisterMode && password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('passwordsNoMatch'));
       setIsLoading(false);
       return;
     }
@@ -47,10 +50,10 @@ const LoginScreen = () => {
         : await login(email, password);
 
       if (!result.success) {
-        setError(result.error || `${isRegisterMode ? 'Registration' : 'Login'} failed`);
+        setError(result.error || t(isRegisterMode ? 'registrationFailed' : 'loginFailed'));
       }
     } catch (err) {
-      setError(`${isRegisterMode ? 'Registration' : 'Login'} failed`);
+      setError(t(isRegisterMode ? 'registrationFailed' : 'loginFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -73,6 +76,11 @@ const LoginScreen = () => {
         <div className="absolute bottom-1/3 right-1/3 w-1.5 h-1.5 bg-purple-300 rounded-full animate-float opacity-30"></div>
       </div>
 
+      {/* Language Switcher */}
+      <div className="absolute top-6 right-6 z-20">
+        <LanguageSwitcher />
+      </div>
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-purple-500/25 animate-glow-pulse">
@@ -81,10 +89,10 @@ const LoginScreen = () => {
             </svg>
           </div>
           <h2 className="text-4xl font-bold text-white mb-3 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-            NotesApp
+            {t('appTitle')}
           </h2>
           <p className="text-gray-400 text-lg">
-            {isRegisterMode ? 'Join NotesApp and start organizing your thoughts' : 'Sign in to continue to your notes'}
+            {isRegisterMode ? t('joinApp') : t('signIn')}
           </p>
         </div>
       </div>
@@ -105,10 +113,10 @@ const LoginScreen = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Logging in...
+                {t('loggingIn')}
               </>
             ) : (
-              <>🚀 Try Demo Login</>
+              <>{t('demoLogin')}</>
             )}
           </button>
 
@@ -117,14 +125,14 @@ const LoginScreen = () => {
               <div className="w-full border-t border-gray-700"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-900 text-gray-400">Or continue with email</span>
+              <span className="px-2 bg-gray-900 text-gray-400">{t('orContinueWith')}</span>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                Email address
+                {t('email')}
               </label>
               <div className="relative">
                 <input
@@ -137,7 +145,7 @@ const LoginScreen = () => {
                            placeholder-gray-500 text-white bg-gray-800/50 backdrop-blur-sm
                            focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent 
                            focus:z-10 transition-all duration-200"
-                  placeholder="Enter your email"
+                  placeholder={t('email')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -151,7 +159,7 @@ const LoginScreen = () => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                Password
+                {t('password')}
               </label>
               <div className="relative">
                 <input
@@ -164,7 +172,7 @@ const LoginScreen = () => {
                            placeholder-gray-500 text-white bg-gray-800/50 backdrop-blur-sm
                            focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent 
                            focus:z-10 transition-all duration-200"
-                  placeholder="Enter your password"
+                  placeholder={t('password')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -187,7 +195,7 @@ const LoginScreen = () => {
             {isRegisterMode && (
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
-                  Confirm Password
+                  {t('confirmPassword')}
                 </label>
                 <div className="relative">
                   <input
@@ -200,7 +208,7 @@ const LoginScreen = () => {
                              placeholder-gray-500 text-white bg-gray-800/50 backdrop-blur-sm
                              focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent 
                              focus:z-10 transition-all duration-200"
-                    placeholder="Confirm your password"
+                    placeholder={t('confirmPassword')}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
@@ -254,10 +262,10 @@ const LoginScreen = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    {isRegisterMode ? 'Creating Account...' : 'Signing In...'}
+                    {isRegisterMode ? t('creatingAccount') : t('loggingIn')}
                   </div>
                 ) : (
-                  isRegisterMode ? 'Create Account' : 'Sign In'
+                  isRegisterMode ? t('registerButton') : t('loginButton')
                 )}
               </button>
             </div>
@@ -276,8 +284,8 @@ const LoginScreen = () => {
               className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors duration-200"
             >
               {isRegisterMode 
-                ? "Already have an account? Sign in" 
-                : "Don't have an account? Sign up"}
+                ? t('switchToLogin') 
+                : t('switchToRegister')}
             </button>
           </div>
         </div>

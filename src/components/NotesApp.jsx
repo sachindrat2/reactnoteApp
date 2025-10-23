@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import NotesHeader from './NotesHeader';
 import NotesList from './NotesList';
 import NoteEditor from './NoteEditor';
 import AddNoteModal from './AddNoteModal';
 import AuthHealthChecker from './AuthHealthChecker';
+import LanguageSwitcher from './LanguageSwitcher';
 import { notesService } from '../services/notesService';
 import { useAuth } from '../context/AuthContext';
 
 const NotesApp = () => {
+  const { t } = useTranslation();
   const { logout, user } = useAuth();
   const [notes, setNotes] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
