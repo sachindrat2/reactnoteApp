@@ -11,11 +11,9 @@ const AuthDebug = () => {
 
   useEffect(() => {
     addLog('=== AUTH DEBUG COMPONENT MOUNTED ===');
-    
     // Check localStorage immediately
     const storedUser = localStorage.getItem('notesapp_user');
     addLog(`localStorage 'notesapp_user': ${storedUser ? 'EXISTS' : 'NOT FOUND'}`);
-    
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
@@ -28,7 +26,6 @@ const AuthDebug = () => {
         addLog(`Error parsing user data: ${error.message}`);
       }
     }
-    
     // Test if token is valid
     const testToken = async () => {
       const userData = JSON.parse(localStorage.getItem('notesapp_user') || '{}');
@@ -36,7 +33,6 @@ const AuthDebug = () => {
         addLog('No token to test');
         return;
       }
-      
       try {
         addLog('Testing token validity...');
         const baseUrl = window.location.hostname === 'localhost' 
@@ -50,9 +46,7 @@ const AuthDebug = () => {
             'Content-Type': 'application/json'
           }
         });
-        
         addLog(`Token test response: ${response.status}`);
-        
         if (response.status === 401) {
           addLog('❌ TOKEN IS INVALID - This is why auth fails on refresh!');
         } else if (response.ok) {
@@ -76,7 +70,6 @@ const AuthDebug = () => {
         addLog(`localStorage changed: ${e.newValue ? 'SET' : 'REMOVED'}`);
       }
     };
-    
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);

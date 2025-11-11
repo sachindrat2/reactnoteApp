@@ -133,7 +133,7 @@ const resources = {
       backToNotes: "ノート一覧に戻る",
       
       // Notes List
-      welcomeBack: "おかえりなさい",
+      welcomeBack: "ようこそ",
       notesCount_one: "{{count}}件のノート",
       notesCount_other: "{{count}}件のノート",
       searchPlaceholder: "ノートを検索...",

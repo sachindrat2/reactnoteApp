@@ -1,7 +1,7 @@
 // Enhanced authentication debugger and token validator
 class AuthDebugger {
     constructor() {
-        this.baseUrl = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
+        this.baseUrl = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
     }
 
     async checkAuthState() {

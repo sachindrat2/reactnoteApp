@@ -32,23 +32,19 @@ const LoginScreen = () => {
       setIsLoading(false);
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-
     if (isRegisterMode && password !== confirmPassword) {
       setError(t('passwordsNoMatch'));
       setIsLoading(false);
       return;
     }
-
     try {
       const result = isRegisterMode 
         ? await register(email, password)
         : await login(email, password);
-
       if (!result.success) {
         setError(result.error || t(isRegisterMode ? 'registrationFailed' : 'loginFailed'));
       }
@@ -58,16 +54,14 @@ const LoginScreen = () => {
       setIsLoading(false);
     }
   };
-
   return (
-    <div className="fixed inset-0 w-full h-full bg-gray-950 flex flex-col justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+    <div className="fixed inset-0 w-full h-full bg-gray-950 flex flex-col justify-center p-4 sm:p-6 lg:p-8 overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-950 to-black">
         <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
         <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
         <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
       </div>
-
       {/* Floating Particles */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-float opacity-60"></div>
@@ -75,12 +69,10 @@ const LoginScreen = () => {
         <div className="absolute bottom-1/4 left-1/3 w-3 h-3 bg-pink-400 rounded-full animate-float-slow opacity-50"></div>
         <div className="absolute bottom-1/3 right-1/3 w-1.5 h-1.5 bg-purple-300 rounded-full animate-float opacity-30"></div>
       </div>
-
       {/* Language Switcher */}
       <div className="absolute top-6 right-6 z-20">
         <LanguageSwitcher />
       </div>
-
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-purple-500/25 animate-glow-pulse">
@@ -96,7 +88,6 @@ const LoginScreen = () => {
           </p>
         </div>
       </div>
-
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-gray-900/60 backdrop-blur-xl py-8 px-6 shadow-2xl sm:rounded-3xl sm:px-10 border border-gray-700/50">
           <button
@@ -119,7 +110,6 @@ const LoginScreen = () => {
               <>{t('demoLogin')}</>
             )}
           </button>
-
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-700"></div>
@@ -128,7 +118,6 @@ const LoginScreen = () => {
               <span className="px-2 bg-gray-900 text-gray-400">{t('orContinueWith')}</span>
             </div>
           </div>
-
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
@@ -156,7 +145,6 @@ const LoginScreen = () => {
                 </div>
               </div>
             </div>
-
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                 {t('password')}
@@ -191,7 +179,6 @@ const LoginScreen = () => {
                 </button>
               </div>
             </div>
-
             {isRegisterMode && (
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
@@ -228,7 +215,6 @@ const LoginScreen = () => {
                 </div>
               </div>
             )}
-
             {error && (
               <div className="rounded-xl bg-red-900/50 border border-red-700 p-4 backdrop-blur-sm">
                 <div className="flex">
@@ -245,7 +231,6 @@ const LoginScreen = () => {
                 </div>
               </div>
             )}
-
             <div>
               <button
                 type="submit"
@@ -270,7 +255,6 @@ const LoginScreen = () => {
               </button>
             </div>
           </form>
-
           <div className="text-center mt-6">
             <button
               type="button"

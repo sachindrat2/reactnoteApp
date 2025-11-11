@@ -5,7 +5,6 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
   const { t } = useTranslation();
   const formatDate = (dateString) => {
     if (!dateString) return t('noDate');
-    
     // Handle different date formats from API
     let date;
     if (dateString.includes('T') || dateString.includes('Z')) {
@@ -15,12 +14,10 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
       // MySQL format: "2025-10-22 08:03:01" - treat as UTC
       date = new Date(dateString + 'Z'); // Add Z to treat as UTC
     }
-    
     const now = new Date();
     const diffInMinutes = Math.floor((now - date) / (1000 * 60));
     const diffInHours = Math.floor(diffInMinutes / 60);
     const diffInDays = Math.floor(diffInHours / 24);
-    
     if (diffInMinutes < 1) {
       return t('justNow');
     } else if (diffInMinutes < 60) {
@@ -47,12 +44,10 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
   // Handle both camelCase and snake_case from API
   const getCreatedDate = () => note.createdAt || note.created_at;
   const getUpdatedDate = () => note.updatedAt || note.updated_at;
-
   const getPreview = (content, maxLength = 120) => {
     if (content.length <= maxLength) return content;
     return content.substring(0, maxLength).trim() + '...';
   };
-
   const getCardStyle = () => {
     // Palette of solid background colors with excellent readability
     const palette = [
@@ -65,7 +60,6 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
       { bg: 'bg-teal-50 border-teal-200', text: 'text-slate-800', headerBg: 'bg-teal-100/50' },
       { bg: 'bg-orange-50 border-orange-200', text: 'text-slate-800', headerBg: 'bg-orange-100/50' }
     ];
-
     // Deterministic selection using numeric id or string hash
     const index = (() => {
       if (typeof note.id === 'number') return Math.abs(note.id);
@@ -75,24 +69,20 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
       for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i) | 0;
       return Math.abs(h);
     })();
-
     return palette[index % palette.length];
   };
-
   const cardStyle = getCardStyle();
-
   return (
     <div className={`group rounded-2xl shadow-sm hover:shadow-xl border 
-                    overflow-hidden transition-all duration-300 sm:hover:scale-[1.02] sm:hover:-translate-y-1
-                    ${cardStyle.bg} animate-fade-in`}>
-      
+      overflow-hidden transition-all duration-300 sm:hover:scale-[1.02] sm:hover:-translate-y-1
+      ${cardStyle.bg} animate-fade-in`
+      }>
       {/* Card Header */}
       <div className="p-4 sm:p-6 pb-3 sm:pb-4">
         <div className="flex items-start justify-between mb-3">
           <h3 className={`font-semibold ${cardStyle.text} text-base sm:text-lg line-clamp-2 flex-1 mr-2`}>
             {note.title}
           </h3>
-          
           {/* Action Buttons - Always visible on mobile, hover on desktop */}
           <div className="flex items-center space-x-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
             <button
@@ -115,12 +105,10 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
             </button>
           </div>
         </div>
-
         {/* Content Preview */}
         <p className={`leading-relaxed mb-3 sm:mb-4 line-clamp-3 text-slate-600 text-xs sm:text-sm`}>
           {getPreview(note.content, window.innerWidth < 640 ? 80 : 120)}
         </p>
-
         {/* Tags */}
         {note.tags && note.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
@@ -142,7 +130,6 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
           </div>
         )}
       </div>
-
       {/* Card Footer */}
       <div className={`px-4 sm:px-6 py-3 sm:py-4 ${cardStyle.headerBg} border-t border-slate-200`}>
         <div className="flex items-center justify-between">
@@ -177,7 +164,6 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
               </div>
             )}
           </div>
-          
           <button
             onClick={() => onEdit(note)}
             className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200"

@@ -1,5 +1,5 @@
 // API Base Configuration - ALWAYS use absolute URL
-const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
 
 // Force absolute URL to prevent relative resolution issues
 const getAbsoluteBackendUrl = () => {
