@@ -97,7 +97,7 @@ const AppContent = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router basename="/reactnoteApp">
+      <Router>
         <AppContent />
       </Router>
     </AuthProvider>

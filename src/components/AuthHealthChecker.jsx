@@ -51,7 +51,7 @@ const AuthHealthChecker = () => {
 
     // Test token with API
     try {
-      const baseUrl = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
+  const baseUrl = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
       const response = await fetch(`${baseUrl}/notes`, {
         method: 'GET',
         headers: {

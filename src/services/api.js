@@ -1,5 +1,5 @@
 // API Base Configuration - ALWAYS use absolute URL
-const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
+const BACKEND_URL = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
 
 // Force absolute URL to prevent relative resolution issues
 const getAbsoluteBackendUrl = () => {
@@ -23,21 +23,12 @@ let corsFailureDetected = false;
 let activeRequests = new Map();
 let requestCounter = 0;
 
-// Use multiple CORS proxies with fallback for production
+// Always use direct connection to Azure backend
 const CORS_PROXIES = [
-  // Try direct connection first (may work if CORS is fixed server-side)
   (url) => {
     const absoluteUrl = url.startsWith('http') ? url : `https://${url}`;
-    console.log('🎯 Direct connection to:', absoluteUrl);
     return absoluteUrl;
-  },
-  // Reliable CORS proxies for production
-  (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  // Backup proxies
-  (url) => `https://cors-anywhere.herokuapp.com/${url}`,
-  (url) => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`,
+  }
 ];
 
 // Final fallback: try direct connection with no-cors mode
@@ -65,15 +56,9 @@ const tryNoCorsRequest = async (url, options = {}) => {
   }
 };
 
-const getApiUrl = () => {
-  if (window.location.hostname === 'localhost') {
-    // Use local CORS proxy when on localhost
-    return 'http://localhost:3001/api';
-  }
-  
-  // Try the first proxy by default
-  return CORS_PROXIES[0](BACKEND_URL);
-};
+
+// Always use Azure backend URL
+const getApiUrl = () => getAbsoluteBackendUrl();
 
 // Enhanced CORS detection and error handling
 const detectCorsError = (error) => {
@@ -92,34 +77,10 @@ const detectCorsError = (error) => {
   );
 };
 
-// Store failed proxy attempts to avoid retrying
-let failedProxies = new Set();
 
-// Store working proxy index to try successful ones first
-let workingProxyIndex = 0;
 
-const getApiUrlWithFallback = (proxyIndex = 0) => {
-  if (window.location.hostname === 'localhost') {
-    // Use local CORS proxy when on localhost
-    return 'http://localhost:3001/api';
-  }
-  
-  if (proxyIndex >= CORS_PROXIES.length) {
-    throw new Error('All CORS proxies failed');
-  }
-  
-  const absoluteBackendUrl = getAbsoluteBackendUrl();
-  const result = CORS_PROXIES[proxyIndex](absoluteBackendUrl);
-  
-  console.log(`🌐 getApiUrlWithFallback(${proxyIndex}):`, {
-    originalBackendUrl: BACKEND_URL,
-    absoluteBackendUrl,
-    proxyIndex,
-    result,
-    currentLocation: window.location.href
-  });
-  
-  return result;
+const getApiUrlWithFallback = () => {
+  return getAbsoluteBackendUrl();
 };
 
 // API endpoint paths
@@ -174,142 +135,31 @@ const getAuthHeaders = () => {
 const apiRequest = async (endpoint, options = {}) => {
   const requestId = ++requestCounter;
   const requestKey = `${options.method || 'GET'}_${endpoint}`;
-  
+
   // Check if the same request is already in progress
   if (activeRequests.has(requestKey)) {
     console.log(`⏸️ Request ${requestId}: Duplicate ${requestKey} detected, waiting for existing request...`);
     return await activeRequests.get(requestKey);
   }
-  
+
   console.log(`🚀 Request ${requestId}: Starting ${requestKey} at ${new Date().toISOString()}`);
-  
-  let lastError;
-  
-  // Try multiple proxies in production
-  if (window.location.hostname !== 'localhost') {
-    const requestPromise = (async () => {
-      try {
-        // Start with the last working proxy if we have one
-        const tryOrder = [...Array(CORS_PROXIES.length).keys()];
-        if (workingProxyIndex > 0) {
-          tryOrder.splice(workingProxyIndex, 1);
-          tryOrder.unshift(workingProxyIndex);
-        }
-        
-        for (let i = 0; i < tryOrder.length; i++) {
-          const proxyIndex = tryOrder[i];
-          try {
-            const baseUrl = getApiUrlWithFallback(proxyIndex);
-            const url = `${baseUrl}${endpoint}`;
-            
-            console.log(`🔄 Trying proxy ${proxyIndex + 1}/${CORS_PROXIES.length} (${proxyIndex === 0 ? 'direct' : 'proxy'}):`, {
-              baseUrl,
-              endpoint,
-              finalUrl: url,
-              currentLocation: window.location.href
-            });
-            
-            const result = await makeRequest(url, options, endpoint);
-            console.log(`Proxy ${proxyIndex + 1} succeeded - caching for future use`);
-            console.log(`✅ Request ${requestId}: ${requestKey} completed successfully`);
-            workingProxyIndex = proxyIndex; // Cache successful proxy
-            return result;
-          } catch (error) {
-            console.log(`Proxy ${proxyIndex + 1} failed:`, error.message);
-            lastError = error;
-            
-            // For production, be aggressive about trying next proxy for any network-related error
-            if (error.message.includes('CORS') || 
-                error.message.includes('Failed to fetch') ||
-                error.message.includes('timeout') ||
-                error.message.includes('ERR_FAILED') ||
-                error.message.includes('net::') ||
-                error.name === 'TypeError') {
-              continue;
-            }
-            
-            // For authentication or API errors, don't try more proxies
-            break;
-          }
-        }
-        
-        // If all proxies failed, try no-cors mode as final fallback for specific endpoints
-        if (endpoint === '/token' || endpoint === '/register') {
-          console.log('🔄 All proxies failed, trying no-cors mode for authentication...');
-          try {
-            const directUrl = `${BACKEND_URL}${endpoint}`;
-            const noCorsResult = await tryNoCorsRequest(directUrl, options);
-            if (noCorsResult.success && noCorsResult.opaque) {
-              // For opaque responses, we can't read the data, but we know the request went through
-              // Return a success response that the calling code can handle
-              return { 
-                success: true, 
-                opaque: true,
-                message: 'Request sent successfully (response not readable due to CORS)'
-              };
-            }
-          } catch (noCorsError) {
-            console.log('❌ no-cors fallback also failed:', noCorsError.message);
-          }
-        }
-        
-        // If all proxies failed, show a helpful error message
-        console.error('🚨 All proxy attempts failed. This is likely due to CORS restrictions.');
-        console.log('💡 To fix this permanently, the backend server needs to add CORS headers for:', window.location.origin);
-        
-        console.log(`❌ Request ${requestId}: ${requestKey} failed completely`);
-        throw new Error(`Connection failed: Unable to reach the server through any available proxy. The backend server may need to enable CORS for this domain.`);
-      } finally {
-        // Clean up the active request
-        activeRequests.delete(requestKey);
-      }
-    })();
-    
-    // Store the promise so duplicate requests can await it
-    activeRequests.set(requestKey, requestPromise);
-    return await requestPromise;
-  } else {
-    // Local development - try CORS proxy first, then fallback to production proxies
-    const requestPromise = (async () => {
-      try {
-        const baseUrl = getApiUrl();
-        const url = `${baseUrl}${endpoint}`;
-        console.log('🏠 Localhost request:', { baseUrl, endpoint, url });
-        const result = await makeRequest(url, options, endpoint);
-        console.log(`✅ Request ${requestId}: ${requestKey} completed successfully`);
-        return result;
-      } catch (localError) {
-        console.log('❌ Local CORS proxy failed, trying production proxies:', localError.message);
-        
-        // Fallback to production proxy logic if local proxy fails
-        for (let i = 0; i < CORS_PROXIES.length; i++) {
-          try {
-            const baseUrl = getApiUrlWithFallback(i);
-            const url = `${baseUrl}${endpoint}`;
-            console.log(`🔄 Trying fallback proxy ${i + 1}:`, url);
-            
-            const result = await makeRequest(url, options, endpoint);
-            console.log(`✅ Fallback proxy ${i + 1} succeeded`);
-            console.log(`✅ Request ${requestId}: ${requestKey} completed successfully`);
-            return result;
-          } catch (proxyError) {
-            console.log(`❌ Fallback proxy ${i + 1} failed:`, proxyError.message);
-            lastError = proxyError;
-          }
-        }
-        
-        console.log(`❌ Request ${requestId}: ${requestKey} failed completely`);
-        throw lastError || localError;
-      } finally {
-        // Clean up the active request
-        activeRequests.delete(requestKey);
-      }
-    })();
-    
-    // Store the promise so duplicate requests can await it
-    activeRequests.set(requestKey, requestPromise);
-    return await requestPromise;
-  }
+
+  const requestPromise = (async () => {
+    try {
+      const baseUrl = getApiUrl();
+      const url = `${baseUrl}${endpoint}`;
+      const result = await makeRequest(url, options, endpoint);
+      console.log(`✅ Request ${requestId}: ${requestKey} completed successfully`);
+      return result;
+    } finally {
+      // Clean up the active request
+      activeRequests.delete(requestKey);
+    }
+  })();
+
+  // Store the promise so duplicate requests can await it
+  activeRequests.set(requestKey, requestPromise);
+  return await requestPromise;
 };
 
 // Extracted request logic with timeout

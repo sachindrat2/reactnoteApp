@@ -35,9 +35,7 @@ const AuthDebug = () => {
       }
       try {
         addLog('Testing token validity...');
-        const baseUrl = window.location.hostname === 'localhost' 
-          ? 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net'
-          : `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net')}`;
+        const baseUrl = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
         
         const response = await fetch(`${baseUrl}/notes`, {
           method: 'GET',

@@ -19,7 +19,7 @@ const timestampPlugin = () => {
 
 export default defineConfig({
   plugins: [react(), timestampPlugin()],
-  base: '/reactnoteApp/', // Your repository name
+  base: './', // Use root for Docker/nginx/Azure deployment
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

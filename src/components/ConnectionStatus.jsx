@@ -9,12 +9,8 @@ const ConnectionStatus = () => {
   }, []);
 
   const checkConnection = async () => {
-    // Quick check - just test if we're on localhost
-    if (window.location.hostname === 'localhost') {
-      setStatus({ type: 'success', message: 'Local dev ✅' });
-    } else {
-      setStatus({ type: 'warning', message: 'Production 🌐' });
-    }
+    // Always show production status (Azure)
+    setStatus({ type: 'success', message: 'Production (Azure) 🌐' });
   };
 
   const getStatusColor = () => {

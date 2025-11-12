@@ -3,29 +3,29 @@
   "short_name": "NotesApp",
   "description": "A modern, responsive note-taking application with offline support",
   "version": "2.0.0",
-  "start_url": "/reactnoteApp/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#1f2937",
   "theme_color": "#8b5cf6",
   "orientation": "portrait-primary",
-  "scope": "/reactnoteApp/",
+  "scope": "/",
   "lang": "en-US",
   "dir": "ltr",
   "categories": ["productivity", "utilities", "lifestyle"],
   "icons": [
     {
-      "src": "/reactnoteApp/app-icon.svg",
+  "src": "app-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     },
     {
-      "src": "/reactnoteApp/icon-192.png",
+  "src": "icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "maskable"
     },
     {
-      "src": "/reactnoteApp/icon-512.png",
+  "src": "icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
@@ -33,13 +33,13 @@
   ],
   "screenshots": [
     {
-      "src": "/reactnoteApp/screenshot-wide.png",
+  "src": "screenshot-wide.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide"
     },
     {
-      "src": "/reactnoteApp/screenshot-narrow.png",
+  "src": "screenshot-narrow.png",
       "sizes": "750x1334",
       "type": "image/png",
       "form_factor": "narrow"
@@ -50,10 +50,10 @@
       "name": "New Note",
       "short_name": "New",
       "description": "Create a new note",
-      "url": "/reactnoteApp/?action=new",
+  "url": "/?action=new",
       "icons": [
         {
-          "src": "/reactnoteApp/icon-96.png",
+          "src": "icon-96.png",
           "sizes": "96x96"
         }
       ]
@@ -62,10 +62,10 @@
       "name": "Search Notes",
       "short_name": "Search",
       "description": "Search through your notes",
-      "url": "/reactnoteApp/?action=search",
+  "url": "/?action=search",
       "icons": [
         {
-          "src": "/reactnoteApp/icon-96.png",
+          "src": "icon-96.png",
           "sizes": "96x96"
         }
       ]
