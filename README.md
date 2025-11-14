@@ -1,5 +1,10 @@
 # Notes App (React + Vite)
 
+## 🚀 Live Demo
+
+[Open the app on Azure (Login/Register)](https://mynoteapp-ehahhgf7dhe8hufc.japanwest-01.azurewebsites.net/login)
+# Notes App (React + Vite)
+
 
 ## Screenshots
 
