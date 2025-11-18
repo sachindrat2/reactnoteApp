@@ -36,12 +36,10 @@ const NotesApp = () => {
       console.log('🔄 Loading notes for user:', user?.user?.email || user?.email);
       const result = await notesService.fetchNotes();
       console.log('📦 fetchNotes result:', result);
-      
       if (result && result.success) {
         const notesData = Array.isArray(result.data) ? result.data : [];
         console.log('📋 Setting notes data:', notesData.length, 'notes');
         setNotes(notesData);
-        
         if (result.isDemo) {
           // Show a subtle banner for demo mode
           setError(result.message || 'Showing demo notes - API connection unavailable');
@@ -49,7 +47,6 @@ const NotesApp = () => {
           // Commented out cache warning to reduce UI clutter
           // setError('Using cached data. Some changes may not be synced.');
         }
-        
         console.log('✅ Notes loaded successfully');
       } else {
         console.log('❌ Notes loading failed:', result?.error);

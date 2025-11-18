@@ -65,9 +65,7 @@ const AppContent = () => {
     console.log('🎯 AppContent: Showing loading screen');
     return <LoadingScreen />;
   }
-
   console.log('🎯 AppContent: Rendering routes with authenticated =', isAuthenticated);
-
   return (
     <Routes>
       <Route 

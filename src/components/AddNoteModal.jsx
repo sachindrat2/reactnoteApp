@@ -15,7 +15,7 @@ const AddNoteModal = ({ onAdd, onClose }) => {
     }
 
     // Handle escape key to close modal
-    const handleEscape = (e) => {
+    const handleEscape = (e) => { 
       if (e.key === 'Escape') {
         onClose();
       }
@@ -49,7 +49,6 @@ const AddNoteModal = ({ onAdd, onClose }) => {
       onClose();
     }
   };
-
   return (
     <div 
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6 animate-fade-in"
@@ -91,7 +90,6 @@ const AddNoteModal = ({ onAdd, onClose }) => {
                        transition-all duration-200 text-sm sm:text-base"
             />
           </div>
-
           {/* Tags Input */}
           <div>
             <label htmlFor="note-tags" className="block text-sm font-medium text-slate-700 mb-2">
@@ -109,7 +107,6 @@ const AddNoteModal = ({ onAdd, onClose }) => {
             />
             <p className="text-xs text-slate-500 mt-1">{t('tagsDescription')}</p>
           </div>
-
           {/* Content Textarea */}
           <div>
             <label htmlFor="note-content" className="block text-sm font-medium text-slate-700 mb-2">
@@ -126,13 +123,11 @@ const AddNoteModal = ({ onAdd, onClose }) => {
                        transition-all duration-200 resize-y text-sm sm:text-base"
             />
           </div>
-
           {/* Modal Footer */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-slate-200 space-y-3 sm:space-y-0">
             <div className="text-xs sm:text-sm text-slate-500 order-2 sm:order-1">
               {t('charactersCount', { count: content.length, words: content.split(/\s+/).filter(word => word.length > 0).length })}
             </div>
-            
             <div className="flex items-center space-x-3 order-1 sm:order-2">
               <button
                 type="button"
@@ -156,7 +151,6 @@ const AddNoteModal = ({ onAdd, onClose }) => {
             </div>
           </div>
         </form>
-
         {/* Quick Tips - Hidden on small screens to save space */}
         <div className="px-4 sm:px-6 pb-4 sm:pb-6 hidden sm:block">
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
