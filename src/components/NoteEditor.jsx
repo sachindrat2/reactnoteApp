@@ -7,7 +7,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
+const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
+  if (!note) return null;
   const { t } = useTranslation();
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
@@ -92,7 +93,6 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
       timeZoneName: 'short'
     });
   };
-
   return (
     <div className="min-h-screen bg-white" onKeyDown={handleKeyDown}>
       {/* Editor Header */}
@@ -116,7 +116,6 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
                 <div>{t('created')}: {formatDate(note.createdAt || note.created_at)}</div>
                 <div>{t('updated')}: {formatDate(note.updatedAt || note.updated_at)}</div>
               </div>
-
               {/* Delete Button */}
               <button
                 onClick={handleDelete}
@@ -127,7 +126,6 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
-
               {/* Save Button */}
               <button
                 onClick={handleSave}
@@ -185,7 +183,6 @@ const NoteEditor = ({ note, onSave, onClose, onDelete }) => {
                      transition-all duration-200"
           />
         </div>
-
         {/* Content Textarea */}
         <div className="mb-8">
           <textarea
