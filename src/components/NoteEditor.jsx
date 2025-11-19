@@ -3,8 +3,10 @@ import { useTranslation } from 'react-i18next';
 
 
 const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
-  if (!note) {
-    console.warn('NoteEditor: `note` prop is missing or undefined. Component will not render.');
+  // Defensive: note must be a valid object with required fields
+  const isValidNote = note && typeof note === 'object' && 'id' in note && 'title' in note && 'content' in note;
+  if (!isValidNote) {
+    console.warn('NoteEditor: Invalid or missing `note` prop. Component will not render.', note);
     return null;
   }
 
