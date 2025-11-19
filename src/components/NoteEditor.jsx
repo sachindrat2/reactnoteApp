@@ -1,23 +1,32 @@
-  // Sync state with note prop when it changes
-  useEffect(() => {
-    setTitle(note.title);
-    setContent(note.content);
-    setTags(note.tags?.join(', ') || '');
-  }, [note]);
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+
 const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
-  if (!note) return null;
+  if (!note) {
+    console.warn('NoteEditor: `note` prop is missing or undefined. Component will not render.');
+    return null;
+  }
+
   const { t } = useTranslation();
-  const [title, setTitle] = useState(note.title);
-  const [content, setContent] = useState(note.content);
-  const [tags, setTags] = useState(note.tags?.join(', ') || '');
+  // If note is not defined, do not initialize state/hooks
+  const [title, setTitle] = useState(note ? note.title : '');
+  const [content, setContent] = useState(note ? note.content : '');
+  const [tags, setTags] = useState(note && note.tags ? note.tags.join(', ') : '');
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const contentRef = useRef(null);
 
+  // Sync state with note prop when it changes
   useEffect(() => {
+    if (!note) return;
+    setTitle(note.title);
+    setContent(note.content);
+    setTags(note.tags?.join(', ') || '');
+  }, [note]);
+
+  useEffect(() => {
+    if (!note) return;
     const hasAnyChanges = 
       title !== note.title || 
       content !== note.content || 
@@ -26,7 +35,6 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
   }, [title, content, tags, note]);
 
   useEffect(() => {
-    // Auto-focus on content area when editor opens
     if (contentRef.current) {
       contentRef.current.focus();
     }
@@ -34,7 +42,6 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    
     const updatedNote = {
       ...note,
       title: title.trim() || t('untitledNote'),
@@ -44,10 +51,8 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0)
     };
-
     // Simulate save delay for better UX
     await new Promise(resolve => setTimeout(resolve, 300));
-    
     onSave(updatedNote);
     setIsSaving(false);
   };
@@ -72,7 +77,6 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
 
   const formatDate = (dateString) => {
     if (!dateString) return t('noDate');
-    
     // Handle different date formats from API
     let date;
     if (dateString.includes('T') || dateString.includes('Z')) {
@@ -82,7 +86,6 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
       // MySQL format: "2025-10-22 08:03:01" - treat as UTC
       date = new Date(dateString + 'Z'); // Add Z to treat as UTC
     }
-    
     return date.toLocaleString(undefined, {
       year: 'numeric',
       month: 'long',
@@ -93,6 +96,7 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
       timeZoneName: 'short'
     });
   };
+
   return (
     <div className="min-h-screen bg-white" onKeyDown={handleKeyDown}>
       {/* Editor Header */}
@@ -209,6 +213,7 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
       </div>
     </div>
   );
-};
+}
 
 export default NoteEditor;
+
