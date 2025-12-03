@@ -88,6 +88,7 @@ const LoginScreen = () => {
           </p>
         </div>
       </div>
+      
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-gray-900/60 backdrop-blur-xl py-8 px-6 shadow-2xl sm:rounded-3xl sm:px-10 border border-gray-700/50">
           <div className="relative mb-6">
@@ -170,7 +171,7 @@ const LoginScreen = () => {
                     name="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     autoComplete="new-password"
-                    required
+                    require
                     className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-600 
                              placeholder-gray-500 text-white bg-gray-800/50 backdrop-blur-sm
                              focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent 

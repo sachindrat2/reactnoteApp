@@ -157,7 +157,8 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
                     </svg>
                     {hasChanges ? t('saveChanges') : t('saved')}
                   </>
-                )}
+                )
+                }
               </button>
             </div>
           </div>

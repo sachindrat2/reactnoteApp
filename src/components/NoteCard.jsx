@@ -155,14 +155,15 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
               </div>
             )}
             {/* Fallback if no timestamps are available */}
-            {!getCreatedDate() && !getUpdatedDate() && (
-              <div className="flex items-center space-x-1">
-                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-slate-400">{t('noDate')}</span>
-              </div>
-            )}
+              {!getCreatedDate() && !getUpdatedDate() && (
+                <div className="flex items-center space-x-1">
+                  <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-slate-400">{t('noDate')}</span>
+                </div>
+              )
+            }
           </div>
           <button
             onClick={() => onEdit(note)}
