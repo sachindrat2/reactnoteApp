@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI, handleAPIError } from '../services/api.js';
+import { authAPI, handleAPIError, refreshTokenAPI } from '../services/api.js';
 
 const AuthContext = createContext(undefined);
 
@@ -66,23 +66,63 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth state from localStorage on mount
+  // Initialize auth state from localStorage on mount and auto-logout if token expired
   useEffect(() => {
     console.log('🔄 Initializing auth state from storage...');
-    
-    // Add a small delay to ensure DOM is ready and localStorage is accessible
+
+    const checkTokenExpiry = async (userObj) => {
+      if (!userObj || !userObj.access_token) return false;
+      try {
+        const payload = JSON.parse(atob(userObj.access_token.split('.')[1]));
+        if (payload.exp) {
+          const expDate = new Date(payload.exp * 1000);
+          const now = new Date();
+          if (now > expDate) {
+            console.log('⏰ Token expired at', expDate.toISOString(), '- attempting refresh');
+            // Try to refresh token
+            try {
+              const refreshed = await refreshTokenAPI();
+              if (refreshed && refreshed.access_token) {
+                // Merge new tokens into user object
+                const newUser = { ...userObj, ...refreshed };
+                setUser(newUser);
+                setIsAuthenticated(true);
+                setIsLoading(false);
+                localStorage.setItem('notesapp_user', JSON.stringify(newUser));
+                console.log('🔄 Token refreshed and stored');
+                return false; // Not expired anymore
+              } else {
+                throw new Error('No access_token in refresh response');
+              }
+            } catch (refreshErr) {
+              console.error('❌ Token refresh failed:', refreshErr);
+              setUser(null);
+              setIsAuthenticated(false);
+              setIsLoading(false);
+              localStorage.removeItem('notesapp_user');
+              window.dispatchEvent(new CustomEvent('auth:token-expired', { detail: { reason: 'Token expired and refresh failed' } }));
+              return true;
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Error decoding JWT for expiry check:', e);
+      }
+      return false;
+    };
+
     const initializeAuth = async () => {
       try {
-        // Wait a tick to ensure localStorage is fully accessible
         await new Promise(resolve => setTimeout(resolve, 50));
-        
         const storedAuth = getStoredAuth();
         console.log('🔑 Retrieved auth state:', storedAuth);
-        
+        // Auto-logout or refresh if token expired
+        if (storedAuth.user && (await checkTokenExpiry(storedAuth.user))) {
+          return;
+        }
         setUser(storedAuth.user);
         setIsAuthenticated(storedAuth.isAuthenticated);
         setIsLoading(false);
-        
         console.log('✅ Auth state initialized:', storedAuth);
       } catch (error) {
         console.error('🚨 Error initializing auth:', error);
@@ -91,26 +131,21 @@ export const AuthProvider = ({ children }) => {
         setIsLoading(false);
       }
     };
-    
+
     initializeAuth();
-    
+
     // Listen for token expiration events from API layer
     const handleTokenExpired = (event) => {
       console.log('🚨 Token expiration event received:', event.detail);
-      
-      // Only auto-logout if we're currently authenticated
       if (isAuthenticated) {
         console.log('🚪 Auto-logout due to token expiration');
         setUser(null);
         setIsAuthenticated(false);
-        
-        // Show a notification to the user
-        console.log('💬 Session expired notification should be shown');
+        setIsLoading(false);
+        localStorage.removeItem('notesapp_user');
       }
     };
-    
     window.addEventListener('auth:token-expired', handleTokenExpired);
-    
     // Cleanup event listener
     return () => {
       window.removeEventListener('auth:token-expired', handleTokenExpired);
@@ -139,6 +174,9 @@ export const AuthProvider = ({ children }) => {
         console.error('❌ Missing access_token in response:', userData);
         throw new Error('Login response missing access_token');
       }
+
+      // Debug: Show access token preview
+      console.log('🔑 Received access_token:', userData.access_token.substring(0, 30) + '...');
 
       // Extract user info from JWT token
       try {
@@ -169,6 +207,19 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         setIsAuthenticated(true);
         localStorage.setItem('notesapp_user', JSON.stringify(userData));
+      }
+
+      // Debug: Confirm token is in localStorage
+      const stored = localStorage.getItem('notesapp_user');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          console.log('🔎 Token in localStorage after login:', parsed.access_token ? parsed.access_token.substring(0, 30) + '...' : 'MISSING');
+        } catch (e) {
+          console.error('❌ Error parsing stored token after login:', e);
+        }
+      } else {
+        console.error('❌ Token NOT found in localStorage after login!');
       }
 
       console.log('✅ Login successful - access token received:', userData.access_token.substring(0, 20) + '...');

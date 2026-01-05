@@ -15,7 +15,6 @@ const LoginScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const { login, register } = useAuth();
-
   const demoLogin = async () => {
     setIsLoading(true);
     setError('');
@@ -88,7 +87,6 @@ const LoginScreen = () => {
           </p>
         </div>
       </div>
-      
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-gray-900/60 backdrop-blur-xl py-8 px-6 shadow-2xl sm:rounded-3xl sm:px-10 border border-gray-700/50">
           <div className="relative mb-6">

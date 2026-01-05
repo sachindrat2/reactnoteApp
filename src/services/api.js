@@ -88,13 +88,37 @@ const API_ENDPOINTS = {
   LOGIN: '/token',
   REGISTER: '/register',
   LOGOUT: '/logout',
-  NOTES: '/notes'
+  NOTES: '/notes',
+  REFRESH: '/refresh'
+};
+
+// Token refresh API function
+export const refreshTokenAPI = async () => {
+  const userDataStr = localStorage.getItem('notesapp_user');
+  if (!userDataStr) throw new Error('No user data for refresh');
+  let user;
+  try {
+    user = JSON.parse(userDataStr);
+  } catch (e) {
+    throw new Error('Corrupt user data for refresh');
+  }
+  if (!user.refresh_token) throw new Error('No refresh_token available');
+  const payload = { refresh_token: user.refresh_token };
+  const baseUrl = getApiUrl();
+  const url = `${baseUrl}${API_ENDPOINTS.REFRESH}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) throw new Error('Failed to refresh token');
+  const data = await response.json();
+  return data;
 };
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
   const userDataStr = localStorage.getItem('notesapp_user');
-  
   if (!userDataStr) {
     console.log('🔑 No authentication data founds');
     return {
@@ -116,7 +140,6 @@ const getAuthHeaders = () => {
 
   // Get the access token
   const token = user.access_token;
-  
   if (!token) {
     console.warn('� No access token found in user data');
     return {
@@ -124,9 +147,11 @@ const getAuthHeaders = () => {
     };
   }
 
+  // Debug: Show Authorization header preview
+  const authHeader = `Bearer ${token.substring(0, 30)}...`;
   console.log('🔑 Using access token for authentication');
-  console.log('   - Token preview:', token.substring(0, 30) + '...');
-  
+  console.log('   - Authorization header:', authHeader);
+
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
