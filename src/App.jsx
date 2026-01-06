@@ -6,6 +6,7 @@ import NotesApp from './components/NotesApp'
 import LoginScreen from './components/LoginScreen'
 import LoadingScreen from './components/LoadingScreen'
 import VerifyEmailScreen from './components/VerifyEmailScreen'
+import VerifyCodeScreen from './components/VerifyCodeScreen'
 import ForgotPasswordScreen from './components/ForgotPasswordScreen'
 import ResetPasswordScreen from './components/ResetPasswordScreen'
 
@@ -84,6 +85,7 @@ const AppContent = () => {
         } 
       />
       <Route path="/verify-email" element={<VerifyEmailScreen />} />
+      <Route path="/verify-code" element={<VerifyCodeScreen />} />
       <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
       <Route path="/reset-password" element={<ResetPasswordScreen />} />
       <Route 
