@@ -169,6 +169,19 @@ export const AuthProvider = ({ children }) => {
 
       console.log('📊 Login API response:', userData);
 
+      // Detect unregistered user error from backend (common patterns)
+      if (userData && (userData.detail || userData.message)) {
+        const msg = (userData.detail || userData.message).toLowerCase();
+        if (
+          msg.includes('not found') ||
+          msg.includes('not registered') ||
+          msg.includes('does not exist') ||
+          msg.includes('no user')
+        ) {
+          throw new Error('USER_NOT_FOUND');
+        }
+      }
+
       // Validate that we got a proper access token
       if (!userData || !userData.access_token) {
         console.error('❌ Missing access_token in response:', userData);
@@ -182,7 +195,6 @@ export const AuthProvider = ({ children }) => {
       try {
         const tokenPayload = JSON.parse(atob(userData.access_token.split('.')[1]));
         console.log('🔍 JWT payload:', tokenPayload);
-        
         // Create enhanced user data with decoded info
         const enhancedUserData = {
           ...userData,
@@ -192,14 +204,11 @@ export const AuthProvider = ({ children }) => {
             exp: tokenPayload.exp
           }
         };
-        
         console.log('📝 Enhanced user data:', enhancedUserData);
-        
         // Store the enhanced user data
         setUser(enhancedUserData);
         setIsAuthenticated(true);
         localStorage.setItem('notesapp_user', JSON.stringify(enhancedUserData));
-        
         console.log('💾 Stored in localStorage with user info');
       } catch (jwtError) {
         console.error('❌ Failed to decode JWT:', jwtError);
@@ -227,15 +236,14 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error('❌ Login failed:', error);
-      
       // Clear any auth state on failure
       setUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem('notesapp_user');
-      
       let errorMessage = 'Login failed. Please check your credentials and try again.';
-      
-      if (error.message.includes('CORS')) {
+      if (error.message === 'USER_NOT_FOUND') {
+        errorMessage = 'userNotFound'; // i18n key
+      } else if (error.message.includes('CORS')) {
         errorMessage = 'Connection blocked by browser security. Please try again or contact support.';
       } else if (error.message.includes('NETWORK') || error.message.includes('Failed to fetch')) {
         errorMessage = 'Network connection failed. Please check your internet connection and try again.';
@@ -244,9 +252,8 @@ export const AuthProvider = ({ children }) => {
       } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
         errorMessage = 'Invalid email or password. Please check your credentials.';
       }
-      
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: errorMessage
       };
     } finally {

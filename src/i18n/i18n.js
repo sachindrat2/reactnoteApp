@@ -28,6 +28,7 @@ const resources = {
       // Error Messages
       passwordsNoMatch: "Passwords do not match",
       loginFailed: "Login failed. Please check your credentials and try again.",
+      userNotFound: "User not found or not registered. Please register first.",
       registrationFailed: "Registration failed. Please try again.",
       
       // Navigation
@@ -97,6 +98,14 @@ const resources = {
       success: "Success",
       close: "Close",
       
+      // Forgot Password Screen
+      "forgotPassword.title": "Forgot Password",
+      "forgotPassword.emailPlaceholder": "Enter your email",
+      "forgotPassword.sending": "Sending...",
+      "forgotPassword.sendButton": "Send",
+      "forgotPassword.link": "Forgot password?",
+      "sent": "Password reset email sent! Please check your inbox.",
+      "error": "Error sending email. Please try again.",
       // Language Switcher
       language: "Language",
       english: "English",
@@ -127,6 +136,7 @@ const resources = {
       // Error Messages
       passwordsNoMatch: "パスワードが一致しません",
       loginFailed: "ログインに失敗しました。認証情報を確認してもう一度お試しください。",
+      userNotFound: "ユーザーが見つかりません。まだ登録されていません。まずはアカウントを作成してください。",
       registrationFailed: "アカウント作成に失敗しました。もう一度お試しください。",
       
       // Navigation
@@ -196,6 +206,14 @@ const resources = {
       success: "成功",
       close: "閉じる",
       
+      // Forgot Password Screen
+      "forgotPassword.title": "パスワードをお忘れですか",
+      "forgotPassword.emailPlaceholder": "メールアドレスを入力してください",
+      "forgotPassword.sending": "送信中...",
+      "forgotPassword.sendButton": "送信",
+      "forgotPassword.link": "パスワードをお忘れですか？",
+      "sent": "パスワードリセット用のメールを送信しました。受信箱をご確認ください。",
+      "error": "メール送信中にエラーが発生しました。もう一度お試しください。",
       // Language Switcher
       language: "言語",
       english: "English",

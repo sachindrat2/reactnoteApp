@@ -1,4 +1,57 @@
-﻿import { notesAPI, handleAPIError } from './api.js';
+﻿// Reset password API
+export const resetPasswordAPI = async (token, newPassword) => {
+  try {
+    const baseUrl = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
+    const url = `${baseUrl}/reset-password`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, new_password: newPassword })
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      return { success: false, error: data.detail || data.message || 'Failed to reset password.' };
+    }
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message || 'Failed to reset password.' };
+  }
+};
+// Forgot password API
+export const forgotPasswordAPI = async (email) => {
+  try {
+    const baseUrl = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
+    const url = `${baseUrl}/forgot-password`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      return { success: false, error: data.detail || data.message || 'Failed to send reset email.' };
+    }
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message || 'Failed to send reset email.' };
+  }
+};
+// Verify email API
+export const verifyEmailAPI = async (token) => {
+  try {
+    const baseUrl = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
+    const url = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}`;
+    const response = await fetch(url, { method: 'GET' });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      return { success: false, error: data.detail || data.message || 'Verification failed.' };
+    }
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message || 'Verification failed.' };
+  }
+};
+import { notesAPI, handleAPIError } from './api.js';
 
 // Helper function to normalize note data from API (snake_case to camelCase)
 const normalizeNoteData = (note) => {

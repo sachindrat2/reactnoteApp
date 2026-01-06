@@ -5,6 +5,9 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import NotesApp from './components/NotesApp'
 import LoginScreen from './components/LoginScreen'
 import LoadingScreen from './components/LoadingScreen'
+import VerifyEmailScreen from './components/VerifyEmailScreen'
+import ForgotPasswordScreen from './components/ForgotPasswordScreen'
+import ResetPasswordScreen from './components/ResetPasswordScreen'
 
 // Version for cache busting - Updated for deployment test
 const APP_VERSION = '2.0.1-production';
@@ -80,6 +83,9 @@ const AppContent = () => {
           </ProtectedRoute>
         } 
       />
+      <Route path="/verify-email" element={<VerifyEmailScreen />} />
+      <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+      <Route path="/reset-password" element={<ResetPasswordScreen />} />
       <Route 
         path="/" 
         element={<Navigate to={isAuthenticated ? "/notes" : "/login"} replace />} 

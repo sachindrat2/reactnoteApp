@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -45,7 +46,12 @@ const LoginScreen = () => {
         ? await register(email, password)
         : await login(email, password);
       if (!result.success) {
-        setError(result.error || t(isRegisterMode ? 'registrationFailed' : 'loginFailed'));
+        // If error is an i18n key, translate it, else show as is
+        if (result.error === 'userNotFound') {
+          setError(t('userNotFound'));
+        } else {
+          setError(result.error || t(isRegisterMode ? 'registrationFailed' : 'loginFailed'));
+        }
       }
     } catch (err) {
       setError(t(isRegisterMode ? 'registrationFailed' : 'loginFailed'));
@@ -158,6 +164,17 @@ const LoginScreen = () => {
                 </button>
               </div>
             </div>
+            {!isRegisterMode && (
+              <div className="flex justify-end mb-2">
+                <Link
+                  to="/forgot-password"
+                  className="inline-block text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors duration-200 px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900 hover:bg-purple-900/20"
+                  tabIndex={0}
+                >
+                  {t('forgotPassword.link')}
+                </Link>
+              </div>
+            )}
             {isRegisterMode && (
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
