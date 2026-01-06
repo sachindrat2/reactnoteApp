@@ -328,15 +328,20 @@ export const authAPI = {
   },
 
   register: async (username, password) => {
-    console.log('Register attempt with:', { username, password: password ? '[HIDDEN]' : 'EMPTY' });
-    
-    // Server expects username and password format
-    const payload = { 
-      username: username,
-      password: password 
-    };
-    console.log('Registration payload:', { username: payload.username, password: '[HIDDEN]' });
-    
+    // Accepts either (email, password) or (username, password, email)
+    let payload;
+    if (typeof username === 'object' && username !== null) {
+      // If called with an object
+      payload = username;
+    } else {
+      // If called with (email, password)
+      payload = {
+        username: username,
+        password: password,
+        email: username // Use username as email if only two args
+      };
+    }
+    console.log('Registration payload:', { ...payload, password: '[HIDDEN]' });
     return apiRequest(API_ENDPOINTS.REGISTER, {
       method: 'POST',
       headers: {
