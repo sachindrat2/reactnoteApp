@@ -267,41 +267,14 @@ export const AuthProvider = ({ children }) => {
       console.log('📝 Attempting registration...');
       // Use email as username for registration
       const userData = await authAPI.register(email, password);
-      
-      // Validate that we got a proper access token
-      if (!userData || !userData.access_token) {
-        throw new Error('Registration response missing access_token');
+      // Expecting only a message, not tokens
+      if (userData && userData.success) {
+        setIsLoading(false);
+        return { success: true, message: userData.message || 'Registration successful! Please check your email to verify your account.' };
+      } else {
+        setIsLoading(false);
+        return { success: false, error: userData?.error || 'Registration failed. Please try again.' };
       }
-      
-      // Extract user info from JWT token for registration too
-      try {
-        const tokenPayload = JSON.parse(atob(userData.access_token.split('.')[1]));
-        console.log('🔍 Registration JWT payload:', tokenPayload);
-        
-        // Create enhanced user data with decoded info
-        const enhancedUserData = {
-          ...userData,
-          user: {
-            email: tokenPayload.sub,
-            id: tokenPayload.sub,
-            exp: tokenPayload.exp
-          }
-        };
-        
-        setUser(enhancedUserData);
-        setIsAuthenticated(true);
-        localStorage.setItem('notesapp_user', JSON.stringify(enhancedUserData));
-      } catch (jwtError) {
-        console.error('❌ Failed to decode JWT during registration:', jwtError);
-        // Fallback: store as-is
-        setUser(userData);
-        setIsAuthenticated(true);
-        localStorage.setItem('notesapp_user', JSON.stringify(userData));
-      }
-      
-      console.log('✅ Registration successful - access token received');
-      setIsLoading(false); // Explicitly clear loading state on success
-      return { success: true };
     } catch (error) {
       console.error('❌ Registration failed:', error);
       
