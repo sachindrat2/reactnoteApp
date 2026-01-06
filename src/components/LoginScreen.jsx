@@ -7,6 +7,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 const LoginScreen = () => {
   const { t } = useTranslation();
   const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -42,9 +43,12 @@ const LoginScreen = () => {
       return;
     }
     try {
-      const result = isRegisterMode 
-        ? await register(email, password)
-        : await login(email, password);
+      let result;
+      if (isRegisterMode) {
+        result = await register({ username, email, password });
+      } else {
+        result = await login(email, password);
+      }
       if (!result.success) {
         // If error is an i18n key, translate it, else show as is
         if (result.error === 'userNotFound') {
@@ -104,6 +108,29 @@ const LoginScreen = () => {
             </div>
           </div>
           <form onSubmit={handleSubmit} className="space-y-5">
+            {isRegisterMode && (
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+                  {t('username')}
+                </label>
+                <div className="relative">
+                  <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    autoComplete="username"
+                    required
+                    className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-600 
+                             placeholder-gray-500 text-white bg-gray-800/50 backdrop-blur-sm
+                             focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent 
+                             focus:z-10 transition-all duration-200"
+                    placeholder={t('username')}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                 {t('email')}
