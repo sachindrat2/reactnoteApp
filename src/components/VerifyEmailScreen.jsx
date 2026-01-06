@@ -22,7 +22,7 @@ const VerifyEmailScreen = () => {
       if (result.success) {
         setStatus('success');
         setMessage(t('verifyEmail.success'));
-        setTimeout(() => navigate('/'), 3000);
+        setTimeout(() => navigate('/login'), 3000);
       } else {
         setStatus('error');
         setMessage(result.error || t('verifyEmail.error'));

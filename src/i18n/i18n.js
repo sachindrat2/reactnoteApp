@@ -6,6 +6,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const resources = {
   en: {
     translation: {
+      registrationSuccessCheckEmail: "Registration successful! Please check your email to verify your account before logging in.",
       // App Title
       appTitle: "NotesApp",
       appSubtitle: "Personal Note Taking",
@@ -114,6 +115,7 @@ const resources = {
   },
   ja: {
     translation: {
+      registrationSuccessCheckEmail: "登録が完了しました。ログインする前に、メールの認証リンクをクリックしてください。",
       // App Title
       appTitle: "ノートアプリ",
       appSubtitle: "個人ノートアプリ",

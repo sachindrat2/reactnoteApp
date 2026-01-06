@@ -14,12 +14,14 @@ const LoginScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const { login, register } = useAuth();
   const demoLogin = async () => {
     setIsLoading(true);
     setError('');
+    setSuccess('');
     try {
       // Use the demo credentials: hello@gmail.com / hello7863
       const result = await login('hello@gmail.com', 'hello7863');
@@ -46,15 +48,19 @@ const LoginScreen = () => {
       let result;
       if (isRegisterMode) {
         result = await register({ username, email, password });
+        if (result.success) {
+          setSuccess(t('registrationSuccessCheckEmail'));
+        } else {
+          setError(result.error || t('registrationFailed'));
+        }
       } else {
         result = await login(email, password);
-      }
-      if (!result.success) {
-        // If error is an i18n key, translate it, else show as is
-        if (result.error === 'userNotFound') {
-          setError(t('userNotFound'));
-        } else {
-          setError(result.error || t(isRegisterMode ? 'registrationFailed' : 'loginFailed'));
+        if (!result.success) {
+          if (result.error === 'userNotFound') {
+            setError(t('userNotFound'));
+          } else {
+            setError(result.error || t('loginFailed'));
+          }
         }
       }
     } catch (err) {
@@ -249,6 +255,22 @@ const LoginScreen = () => {
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-red-300">
                       {error}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+            )}
+            {success && (
+              <div className="rounded-xl bg-green-900/50 border border-green-700 p-4 backdrop-blur-sm mt-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-green-300">
+                      {success}
                     </h3>
                   </div>
                 </div>
