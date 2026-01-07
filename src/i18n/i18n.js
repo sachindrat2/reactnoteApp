@@ -6,6 +6,8 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const resources = {
   en: {
     translation: {
+      switchToRegisterNew: "New? Create Account",
+      switchToLoginNew: "Already have an account? Sign In",
       registrationSuccessCheckEmail: "Registration successful! Please check your email to verify your account before logging in.",
       // App Title
       appTitle: "NotesApp",
@@ -117,6 +119,8 @@ const resources = {
   },
   ja: {
     translation: {
+      switchToRegisterNew: "新規ですか？アカウント作成",
+      switchToLoginNew: "すでにアカウントをお持ちですか？サインイン",
       registrationSuccessCheckEmail: "登録が完了しました。ログインする前に、メールの認証リンクをクリックしてください。",
       // App Title
       appTitle: "ノートアプリ",

@@ -144,7 +144,7 @@ const LoginScreen = () => {
                 className="inline-block text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors duration-200 px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 hover:bg-blue-900/20 ml-2"
                 tabIndex={0}
               >
-                {t('registerButton')}
+                {t('switchToRegisterNew')}
               </Link>
             </div>
             {error && (

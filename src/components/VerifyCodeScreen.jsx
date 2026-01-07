@@ -44,11 +44,21 @@ const VerifyCodeScreen = () => {
         setMessage(t('verifyCode.success'));
         // Auto-login after successful verification
         setTimeout(async () => {
-          const loginResult = await login(username, password);
-          console.log('🔍 Auto-login result:', loginResult);
-          if (loginResult.success) {
-            navigate('/notes');
+          if (username && password) {
+            const loginResult = await login(username, password);
+            console.log('🔍 Auto-login result:', loginResult);
+            if (loginResult.success) {
+              navigate('/notes');
+            } else {
+              navigate('/login', {
+                state: {
+                  username: username,
+                  password: '',
+                }
+              });
+            }
           } else {
+            // If password is not available, redirect to login with username autofilled
             navigate('/login', {
               state: {
                 username: username,
