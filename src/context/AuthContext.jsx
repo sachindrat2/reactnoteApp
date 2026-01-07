@@ -261,12 +261,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (email, password) => {
+  const register = async (username, email, password) => {
     try {
       setIsLoading(true);
       console.log('📝 Attempting registration...');
-      // Use email as username for registration
-      const userData = await authAPI.register(email, password);
+      // Send username, email, and password for registration
+      const userData = await authAPI.register({ username, email, password });
       // Expecting only a message, not tokens
       if (userData && userData.success) {
         setIsLoading(false);

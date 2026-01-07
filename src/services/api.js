@@ -327,18 +327,16 @@ export const authAPI = {
     });
   },
 
-  register: async (username, password) => {
-    // Accepts either (email, password) or (username, password, email)
+  register: async (username, email, password) => {
+    // Always require (username, email, password)
     let payload;
     if (typeof username === 'object' && username !== null) {
-      // If called with an object
       payload = username;
     } else {
-      // If called with (email, password)
       payload = {
         username: username,
-        password: password,
-        email: username // Use username as email if only two args
+        email: email,
+        password: password
       };
     }
     console.log('Registration payload:', { ...payload, password: '[HIDDEN]' });

@@ -53,7 +53,7 @@ const LoginScreen = () => {
     try {
       let result;
       if (isRegisterMode) {
-        result = await register(email, password);
+        result = await register(username, email, password);
         console.log('🔍 Registration result:', result);
         console.log('🔍 Registration result.message:', result.message);
         if (
