@@ -14,7 +14,7 @@ const LoginScreen = () => {
   const autofillPassword = location.state?.password || '';
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [username, setUsername] = useState(autofillUsername);
-  const [email, setEmail] = useState(autofillUsername); // assuming email is used for login
+  const [email, setEmail] = useState(''); // always start with empty email
   const [password, setPassword] = useState(autofillPassword);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -61,7 +61,7 @@ const LoginScreen = () => {
           (result.message && result.message.trim() === 'Registration successful. Please check your email for the verification code.')
         ) {
           setSuccess(t('registrationSuccessCheckEmail'));
-          // Redirect to code verification screen
+          // Redirect to code verification screen, always pass the username (not email)
           setTimeout(() => {
             navigate('/verify-code', { state: { username } });
           }, 100);
@@ -69,7 +69,7 @@ const LoginScreen = () => {
           setError(result.error || t('registrationFailed'));
         }
       } else {
-        result = await login(email, password);
+        result = await login(username, password);
         if (!result.success) {
           if (result.error === 'userNotFound') {
             setError(t('userNotFound'));
