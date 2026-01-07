@@ -17,6 +17,8 @@ const resources = {
       email: "Email",
       password: "Password",
       confirmPassword: "Confirm Password",
+      "username.label": "Username",
+      "username.placeholder": "Enter your username",
       loginButton: "Sign In",
       registerButton: "Create Account",
       switchToRegister: "Don't have an account? Sign up",
@@ -219,7 +221,9 @@ const resources = {
       // Language Switcher
       language: "言語",
       english: "English",
-      japanese: "日本語"
+      japanese: "日本語",
+      "username.label": "ユーザー名",
+      "username.placeholder": "ユーザー名を入力してください",
     }
   }
 };

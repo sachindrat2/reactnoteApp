@@ -12,74 +12,29 @@ const LoginScreen = () => {
   const location = useLocation();
   const autofillUsername = location.state?.username || '';
   const autofillPassword = location.state?.password || '';
-  const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [username, setUsername] = useState(autofillUsername);
-  const [email, setEmail] = useState(''); // always start with empty email
   const [password, setPassword] = useState(autofillPassword);
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login, register } = useAuth();
-  const demoLogin = async () => {
-    setIsLoading(true);
-    setError('');
-    setSuccess('');
-    try {
-      // Use the demo credentials: hello@gmail.com / hello7863
-      const result = await login('hello@gmail.com', 'hello7863');
-      if (!result.success) {
-        setError(result.error || 'Demo login failed');
-      }
-    } catch (err) {
-      console.error('Demo login error:', err);
-      setError('Demo login failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { login } = useAuth();
+  // Demo login removed (not used)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    if (isRegisterMode && password !== confirmPassword) {
-      setError(t('passwordsNoMatch'));
-      setIsLoading(false);
-      return;
-    }
     try {
-      let result;
-      if (isRegisterMode) {
-        result = await register(username, email, password);
-        console.log('🔍 Registration result:', result);
-        console.log('🔍 Registration result.message:', result.message);
-        if (
-          result.success ||
-          (result.message && result.message.trim() === 'Registration successful. Please check your email for the verification code.')
-        ) {
-          setSuccess(t('registrationSuccessCheckEmail'));
-          // Redirect to code verification screen, always pass the username (not email)
-          setTimeout(() => {
-            navigate('/verify-code', { state: { username } });
-          }, 100);
+      const result = await login(username, password);
+      if (!result.success) {
+        if (result.error === 'userNotFound') {
+          setError(t('userNotFound'));
         } else {
-          setError(result.error || t('registrationFailed'));
-        }
-      } else {
-        result = await login(username, password);
-        if (!result.success) {
-          if (result.error === 'userNotFound') {
-            setError(t('userNotFound'));
-          } else {
-            setError(result.error || t('loginFailed'));
-          }
+          setError(result.error || t('loginFailed'));
         }
       }
     } catch (err) {
-      setError(t(isRegisterMode ? 'registrationFailed' : 'loginFailed'));
+      setError(t('loginFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -114,7 +69,7 @@ const LoginScreen = () => {
             {t('appTitle')}
           </h2>
           <p className="text-gray-400 text-lg">
-            {isRegisterMode ? t('joinApp') : t('signIn')}
+            {t('signIn')}
           </p>
         </div>
       </div>
@@ -122,60 +77,27 @@ const LoginScreen = () => {
         <div className="bg-gray-900/60 backdrop-blur-xl py-8 px-6 shadow-2xl sm:rounded-3xl sm:px-10 border border-gray-700/50">
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700"></div>
+             
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-900 text-gray-400">{t('orContinueWith')}</span>
-            </div>
+            
           </div>
           <form onSubmit={handleSubmit} className="space-y-5">
-            {isRegisterMode && (
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
-                  {t('username')}
-                </label>
-                <div className="relative">
-                  <input
-                    id="username"
-                    name="username"
-                    type="text"
-                    autoComplete="username"
-                    required
-                    className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-600 
-                             placeholder-gray-500 text-white bg-gray-800/50 backdrop-blur-sm
-                             focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent 
-                             focus:z-10 transition-all duration-200"
-                    placeholder={t('username')}
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                {t('email')}
+              <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+                {t('username.label')}
               </label>
               <div className="relative">
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
+                  id="username"
+                  name="username"
+                  type="text"
+                  autoComplete="username"
                   required
-                  className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-600 
-                           placeholder-gray-500 text-white bg-gray-800/50 backdrop-blur-sm
-                           focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent 
-                           focus:z-10 transition-all duration-200"
-                  placeholder={t('email')}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-500 text-white bg-gray-800/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:z-10 transition-all duration-200"
+                  placeholder={t('username.placeholder')}
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
                 />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                  </svg>
-                </div>
               </div>
             </div>
             <div>
@@ -189,13 +111,10 @@ const LoginScreen = () => {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
-                  className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-600 
-                           placeholder-gray-500 text-white bg-gray-800/50 backdrop-blur-sm
-                           focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent 
-                           focus:z-10 transition-all duration-200"
+                  className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-500 text-white bg-gray-800/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:z-10 transition-all duration-200"
                   placeholder={t('password')}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                 />
                 <button
                   type="button"
@@ -212,53 +131,22 @@ const LoginScreen = () => {
                 </button>
               </div>
             </div>
-            {!isRegisterMode && (
-              <div className="flex justify-end mb-2">
-                <Link
-                  to="/forgot-password"
-                  className="inline-block text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors duration-200 px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900 hover:bg-purple-900/20"
-                  tabIndex={0}
-                >
-                  {t('forgotPassword.link')}
-                </Link>
-              </div>
-            )}
-            {isRegisterMode && (
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
-                  {t('confirmPassword')}
-                </label>
-                <div className="relative">
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    require
-                    className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-600 
-                             placeholder-gray-500 text-white bg-gray-800/50 backdrop-blur-sm
-                             focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent 
-                             focus:z-10 transition-all duration-200"
-                    placeholder={t('confirmPassword')}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      {showConfirmPassword ? (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                      ) : (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      )}
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            )}
+            <div className="flex justify-between mb-2">
+              <Link
+                to="/forgot-password"
+                className="inline-block text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors duration-200 px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900 hover:bg-purple-900/20"
+                tabIndex={0}
+              >
+                {t('forgotPassword.link')}
+              </Link>
+              <Link
+                to="/register"
+                className="inline-block text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors duration-200 px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 hover:bg-blue-900/20 ml-2"
+                tabIndex={0}
+              >
+                {t('registerButton')}
+              </Link>
+            </div>
             {error && (
               <div className="rounded-xl bg-red-900/50 border border-red-700 p-4 backdrop-blur-sm">
                 <div className="flex">
@@ -275,63 +163,14 @@ const LoginScreen = () => {
                 </div>
               </div>
             )}
-            {success && (
-              <div className="rounded-xl bg-green-900/50 border border-green-700 p-4 backdrop-blur-sm mt-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-green-300">
-                      {success}
-                    </h3>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white 
-                         bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 
-                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-gray-900
-                         disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] transition-all duration-200 
-                         shadow-lg hover:shadow-xl"
-              >
-                {isLoading ? (
-                  <div className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    {isRegisterMode ? t('creatingAccount') : t('loggingIn')}
-                  </div>
-                ) : (
-                  isRegisterMode ? t('registerButton') : t('loginButton')
-                )}
-              </button>
-            </div>
-          </form>
-          <div className="text-center mt-6">
             <button
-              type="button"
-              onClick={() => {
-                setIsRegisterMode(!isRegisterMode);
-                setError('');
-                setEmail('');
-                setPassword('');
-                setConfirmPassword('');
-              }}
-              className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors duration-200"
+              type="submit"
+              disabled={isLoading}
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isRegisterMode 
-                ? t('switchToLogin') 
-                : t('switchToRegister')}
+              {isLoading ? t('loggingIn') : t('loginButton')}
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>

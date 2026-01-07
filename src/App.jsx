@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext'
 import NotesApp from './components/NotesApp'
 import LoginScreen from './components/LoginScreen'
+import RegisterScreen from './components/RegisterScreen'
 import LoadingScreen from './components/LoadingScreen'
 import VerifyEmailScreen from './components/VerifyEmailScreen'
 import VerifyCodeScreen from './components/VerifyCodeScreen'
@@ -75,6 +76,10 @@ const AppContent = () => {
       <Route 
         path="/login" 
         element={isAuthenticated ? <Navigate to="/notes" replace /> : <LoginScreen />} 
+      />
+      <Route 
+        path="/register" 
+        element={isAuthenticated ? <Navigate to="/notes" replace /> : <RegisterScreen />} 
       />
       <Route 
         path="/notes" 
