@@ -78,7 +78,7 @@ const VerifyCodeScreen = () => {
       </div>
       <div className="bg-gray-900/90 p-10 rounded-3xl shadow-2xl w-full max-w-md text-center border border-gray-700/60 backdrop-blur-xl relative z-10">
         <h2 className="text-4xl font-extrabold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-fade-in drop-shadow-lg">
-          {t('verifyCode.title')}
+          {t('Verification')}
         </h2>
         <p className="text-gray-300 mb-8 animate-fade-in-slow text-lg">
           {t('verifyCode.instructions', 'Enter the 6-digit code sent to your email to verify your account.')}
