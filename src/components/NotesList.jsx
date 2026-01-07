@@ -1,7 +1,7 @@
 import React from 'react';
 import NoteCard from './NoteCard';
 
-const NotesList = ({ notes, onEditNote, onDeleteNote, searchTerm }) => {
+const NotesList = ({ notes, onEditNote, onDeleteNote, searchTerm, page = 1, totalPages = 1, onPageChange, totalNotes }) => {
   // Ensure notes is always an array
   const safeNotes = Array.isArray(notes) ? notes : [];
   if (safeNotes.length === 0) {
@@ -70,11 +70,33 @@ const NotesList = ({ notes, onEditNote, onDeleteNote, searchTerm }) => {
           </div>
         ))}
       </div>
-      {/* Load More Button (for future pagination) */}
-      {notes.length > 0 && ( 
-        <div className="flex justify-center mt-12">
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-10 gap-2">
+          <button
+            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 disabled:opacity-50"
+            onClick={() => onPageChange(page - 1)}
+            disabled={page === 1}
+          >
+            Previous
+          </button>
+          <span className="px-4 py-2 text-gray-600 font-semibold">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 disabled:opacity-50"
+            onClick={() => onPageChange(page + 1)}
+            disabled={page === totalPages}
+          >
+            Next
+          </button>
+        </div>
+      )}
+      {/* Show count */}
+      {typeof totalNotes === 'number' && (
+        <div className="flex justify-center mt-4">
           <div className="text-sm text-slate-500 bg-white px-4 py-2 rounded-full border border-slate-200">
-            Showing {notes.length} notes
+            Showing {notes.length} of {totalNotes} notes
           </div>
         </div>
       )}

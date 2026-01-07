@@ -10,10 +10,13 @@ const LoginScreen = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const autofillUsername = location.state?.username || '';
+  const autofillUsername = location.state?.username || localStorage.getItem('notesapp_remembered_username') || '';
   const autofillPassword = location.state?.password || '';
   const [username, setUsername] = useState(autofillUsername);
   const [password, setPassword] = useState(autofillPassword);
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem('notesapp_remember_me') === 'true';
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +28,13 @@ const LoginScreen = () => {
     setError('');
     setIsLoading(true);
     try {
+      if (rememberMe) {
+        localStorage.setItem('notesapp_remember_me', 'true');
+        localStorage.setItem('notesapp_remembered_username', username);
+      } else {
+        localStorage.removeItem('notesapp_remember_me');
+        localStorage.removeItem('notesapp_remembered_username');
+      }
       const result = await login(username, password);
       if (!result.success) {
         if (result.error === 'userNotFound') {
@@ -82,6 +92,19 @@ const LoginScreen = () => {
             
           </div>
           <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="flex items-center mb-2">
+                          <input
+                            id="rememberMe"
+                            name="rememberMe"
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={e => setRememberMe(e.target.checked)}
+                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-300 cursor-pointer select-none">
+                            {t('rememberMe')}
+                          </label>
+                        </div>
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
                 {t('username.label')}

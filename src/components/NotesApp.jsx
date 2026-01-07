@@ -118,13 +118,23 @@ const NotesApp = () => {
     }
   }, [isLoading]);
 
+
+  // Pagination state
+  const NOTES_PER_PAGE = 12;
+  const [page, setPage] = useState(1);
   // Memoize filtered notes to avoid unnecessary recalculations
   const filteredNotes = useMemo(() => {
     if (!searchTerm.trim()) return notes;
-    
     console.log('🔍 Search filter running:', { searchTerm, notesCount: notes.length });
     return notesService.searchNotes(searchTerm, notes);
   }, [searchTerm, notes]);
+
+  // Paginated notes
+  const totalPages = Math.max(1, Math.ceil(filteredNotes.length / NOTES_PER_PAGE));
+  const paginatedNotes = useMemo(() => {
+    const start = (page - 1) * NOTES_PER_PAGE;
+    return filteredNotes.slice(start, start + NOTES_PER_PAGE);
+  }, [filteredNotes, page]);
 
   const handleAddNote = useCallback(async (noteData) => {
     if (!user) {
@@ -199,6 +209,9 @@ const NotesApp = () => {
     setIsEditing(false);
     setSelectedNote(null);
   };
+
+  // Reset to page 1 if search/filter changes
+  useEffect(() => { setPage(1); }, [searchTerm, filteredNotes.length]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-800 relative">
@@ -309,10 +322,14 @@ const NotesApp = () => {
           </div>
         ) : (
           <NotesList
-            notes={filteredNotes}
+            notes={paginatedNotes}
             onEditNote={handleEditNote}
             onDeleteNote={handleDeleteNote}
             searchTerm={searchTerm}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalNotes={filteredNotes.length}
           />
         )}
       </main>

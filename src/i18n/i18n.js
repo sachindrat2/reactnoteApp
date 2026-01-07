@@ -6,6 +6,8 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const resources = {
   en: {
     translation: {
+              rememberMe: "Remember Me",
+              rememberMe: "ログイン状態を保持する",
             Verification: "Verification",
             verifyCode: {
               instructions: "Enter the 6-digit code sent to your email to verify your account.",

@@ -105,13 +105,59 @@ const VerifyCodeScreen = () => {
                 value={code[i] || ''}
                 onChange={e => {
                   const val = e.target.value.replace(/[^0-9]/g, '');
-                  if (!val) return;
-                  const newCode = code.split('');
-                  newCode[i] = val;
-                  setCode(newCode.join('').slice(0, 6));
-                  // Move to next input
-                  const next = document.getElementById(`code-input-${i+1}`);
-                  if (next) next.focus();
+                  if (val.length === 1) {
+                    // Single char entry
+                    const newCode = code.split('');
+                    newCode[i] = val;
+                    setCode(newCode.join('').slice(0, 6));
+                    // Move to next input
+                    const next = document.getElementById(`code-input-${i+1}`);
+                    if (next) next.focus();
+                  } else if (val.length > 1) {
+                    // Paste case: distribute chars
+                    const chars = val.split('');
+                    const newCode = code.split('');
+                    for (let j = 0; j < chars.length && i + j < 6; j++) {
+                      newCode[i + j] = chars[j];
+                    }
+                    setCode(newCode.join('').slice(0, 6));
+                    // Focus last filled
+                    const next = document.getElementById(`code-input-${Math.min(i + chars.length, 5)}`);
+                    if (next) next.focus();
+                  }
+                }}
+                onPaste={e => {
+                  const paste = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+                  if (paste.length) {
+                    e.preventDefault();
+                    const newCode = code.split('');
+                    for (let j = 0; j < paste.length && i + j < 6; j++) {
+                      newCode[i + j] = paste[j];
+                    }
+                    setCode(newCode.join('').slice(0, 6));
+                    // Focus last filled
+                    const next = document.getElementById(`code-input-${Math.min(i + paste.length, 5)}`);
+                    if (next) next.focus();
+                  }
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Backspace') {
+                    if (!code[i] && i > 0) {
+                      // Move focus to previous
+                      const prev = document.getElementById(`code-input-${i-1}`);
+                      if (prev) prev.focus();
+                      // Remove previous digit
+                      const newCode = code.split('');
+                      newCode[i-1] = '';
+                      setCode(newCode.join('').slice(0, 6));
+                      e.preventDefault();
+                    } else {
+                      // Clear current
+                      const newCode = code.split('');
+                      newCode[i] = '';
+                      setCode(newCode.join('').slice(0, 6));
+                    }
+                  }
                 }}
                 id={`code-input-${i}`}
                 autoFocus={i === 0}
