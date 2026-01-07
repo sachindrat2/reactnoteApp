@@ -63,7 +63,7 @@ const LoginScreen = () => {
           setSuccess(t('registrationSuccessCheckEmail'));
           // Redirect to code verification screen
           setTimeout(() => {
-            navigate('/verify-code', { state: { username: email } });
+            navigate('/verify-code', { state: { username } });
           }, 100);
         } else {
           setError(result.error || t('registrationFailed'));
