@@ -31,7 +31,7 @@ const RegisterScreen = () => {
       if (result.success) {
         setSuccess(t('registrationSuccessCheckEmail'));
         setTimeout(() => {
-          navigate('/verify-code', { state: { username } });
+          navigate('/verify-code', { state: { username, password } });
         }, 100);
       } else {
         setError(result.error || t('registrationFailed'));

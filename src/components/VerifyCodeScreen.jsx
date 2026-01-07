@@ -91,7 +91,7 @@ const VerifyCodeScreen = () => {
           {t('Verification')}
         </h2>
         <p className="text-gray-300 mb-8 animate-fade-in-slow text-lg">
-          {t('verifyCode.instructions', 'Enter the 6-digit code sent to your email to verify your account.')}
+          {t('verifyCode.instructions')}
         </p>
         <form onSubmit={handleSubmit} className="space-y-8 animate-fade-in-slow">
           <div className="flex justify-center gap-3">

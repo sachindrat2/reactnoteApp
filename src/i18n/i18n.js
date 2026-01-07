@@ -6,6 +6,24 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const resources = {
   en: {
     translation: {
+            Verification: "Verification",
+            verifyCode: {
+              instructions: "Enter the 6-digit code sent to your email to verify your account.",
+              success: "Your account has been verified! Redirecting...",
+              error: "Verification failed. Please check your code and try again.",
+              redirect: "You will be redirected shortly..."
+            },
+            verifying: "Verifying...",
+            verify: "Verify",
+            Verification: "認証",
+            verifyCode: {
+              instructions: "メールに送信された6桁のコードを入力してアカウントを認証してください。",
+              success: "アカウントが認証されました！リダイレクト中...",
+              error: "認証に失敗しました。コードを確認して再度お試しください。",
+              redirect: "まもなくリダイレクトされます..."
+            },
+            verifying: "認証中...",
+            verify: "認証する",
       switchToRegisterNew: "New? Create Account",
       switchToLoginNew: "Already have an account? Sign In",
       registrationSuccessCheckEmail: "Registration successful! Please check your email to verify your account before logging in.",
