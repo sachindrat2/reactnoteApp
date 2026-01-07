@@ -21,14 +21,24 @@ const VerifyCodeScreen = () => {
     e.preventDefault();
     setStatus('loading');
     setMessage('');
+    console.log('🔍 Username:', username);
+    console.log('🔍 Code:', code);
+    const payload = { username, code };
+    console.log('🔍 Sending to /verify-code:', payload);
     try {
       const response = await fetch('https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net/verify-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, code })
+        body: JSON.stringify(payload)
       });
-      const result = await response.json();
-      console.log('🔍 Backend verify-code response:', result);
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonErr) {
+        console.error('🔍 Could not parse JSON from backend:', jsonErr);
+        result = { error: 'Invalid JSON response', raw: await response.text() };
+      }
+      console.log('🔍 Backend verify-code response:', result, '| Status:', response.status);
       if (response.ok && result.success) {
         setStatus('success');
         setMessage(t('verifyCode.success'));
