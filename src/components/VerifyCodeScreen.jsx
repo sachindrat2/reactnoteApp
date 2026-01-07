@@ -28,12 +28,14 @@ const VerifyCodeScreen = () => {
         body: JSON.stringify({ username, code })
       });
       const result = await response.json();
+      console.log('🔍 Backend verify-code response:', result);
       if (response.ok && result.success) {
         setStatus('success');
         setMessage(t('verifyCode.success'));
         // Auto-login after successful verification
         setTimeout(async () => {
           const loginResult = await login(username, password);
+          console.log('🔍 Auto-login result:', loginResult);
           if (loginResult.success) {
             navigate('/notes');
           } else {
@@ -50,6 +52,7 @@ const VerifyCodeScreen = () => {
         setMessage(result.error || t('verifyCode.error'));
       }
     } catch (err) {
+      console.error('🔍 Verify code error:', err);
       setStatus('error');
       setMessage(t('verifyCode.error'));
     }
