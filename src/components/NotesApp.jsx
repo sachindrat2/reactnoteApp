@@ -300,7 +300,10 @@ const NotesApp = () => {
         </div>
       )}
       
-      <main className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 animate-slide-in-right relative z-10">
+      <main
+        className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 animate-slide-in-right relative z-10 overflow-y-auto rounded-3xl shadow-2xl bg-gray-900/70 backdrop-blur-xl scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-gray-800"
+        style={{ maxHeight: 'calc(100vh - 120px)' }}
+      >
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
