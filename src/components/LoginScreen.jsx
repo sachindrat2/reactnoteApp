@@ -55,7 +55,7 @@ const LoginScreen = () => {
       if (isRegisterMode) {
         result = await register(email, password);
         console.log('🔍 Registration result:', result);
-        if (result.success) {
+        if (result.success || (result.message && result.message.toLowerCase().includes('registration successful'))) {
           setSuccess(t('registrationSuccessCheckEmail'));
           // Redirect to code verification screen
           navigate('/verify-code', { state: { username: email } });
