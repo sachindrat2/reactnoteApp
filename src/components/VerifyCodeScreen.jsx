@@ -2,14 +2,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const VerifyCodeScreen = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  // Get username from location.state or query param
+  const { login } = useAuth();
+  // Get username and password from location.state or query param
   const params = new URLSearchParams(location.search);
   const username = location.state?.username || params.get('username') || '';
+  const password = location.state?.password || '';
   const [code, setCode] = useState('');
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
   const [message, setMessage] = useState('');
@@ -19,7 +22,7 @@ const VerifyCodeScreen = () => {
     setStatus('loading');
     setMessage('');
     try {
-      const response = await fetch('https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net/verify-email', {
+      const response = await fetch('https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net/verify-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, code })
@@ -28,14 +31,20 @@ const VerifyCodeScreen = () => {
       if (response.ok && result.success) {
         setStatus('success');
         setMessage(t('verifyCode.success'));
-        setTimeout(() => {
-          navigate('/login', {
-            state: {
-              username: username,
-              password: '',
-            }
-          });
-        }, 3000);
+        // Auto-login after successful verification
+        setTimeout(async () => {
+          const loginResult = await login(username, password);
+          if (loginResult.success) {
+            navigate('/notes');
+          } else {
+            navigate('/login', {
+              state: {
+                username: username,
+                password: '',
+              }
+            });
+          }
+        }, 1000);
       } else {
         setStatus('error');
         setMessage(result.error || t('verifyCode.error'));

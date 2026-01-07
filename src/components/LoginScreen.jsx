@@ -55,13 +55,16 @@ const LoginScreen = () => {
       if (isRegisterMode) {
         result = await register(email, password);
         console.log('🔍 Registration result:', result);
+        console.log('🔍 Registration result.message:', result.message);
         if (
           result.success ||
           (result.message && result.message.trim() === 'Registration successful. Please check your email for the verification code.')
         ) {
           setSuccess(t('registrationSuccessCheckEmail'));
           // Redirect to code verification screen
-          navigate('/verify-code', { state: { username: email } });
+          setTimeout(() => {
+            navigate('/verify-code', { state: { username: email } });
+          }, 100);
         } else {
           setError(result.error || t('registrationFailed'));
         }
