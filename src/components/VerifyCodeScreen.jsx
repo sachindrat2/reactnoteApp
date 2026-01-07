@@ -21,7 +21,7 @@ const VerifyCodeScreen = () => {
     e.preventDefault();
     setStatus('loading');
     setMessage('');
-    console.log('🔍 Username:', username);
+    console.log('🔍 Username (should be the registered username, not email):', username);
     console.log('🔍 Code:', code);
     const payload = { username, code };
     console.log('🔍 Sending to /verify-code:', payload);
