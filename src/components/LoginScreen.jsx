@@ -1,15 +1,21 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from './LanguageSwitcher';
 
+import { useLocation } from 'react-router-dom';
+
 const LoginScreen = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const autofillUsername = location.state?.username || '';
+  const autofillPassword = location.state?.password || '';
   const [isRegisterMode, setIsRegisterMode] = useState(false);
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState(autofillUsername);
+  const [email, setEmail] = useState(autofillUsername); // assuming email is used for login
+  const [password, setPassword] = useState(autofillPassword);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -47,9 +53,12 @@ const LoginScreen = () => {
     try {
       let result;
       if (isRegisterMode) {
-        result = await register({ username, email, password });
+        result = await register(email, password);
+        console.log('🔍 Registration result:', result);
         if (result.success) {
           setSuccess(t('registrationSuccessCheckEmail'));
+          // Redirect to code verification screen
+          navigate('/verify-code', { state: { username: email } });
         } else {
           setError(result.error || t('registrationFailed'));
         }
