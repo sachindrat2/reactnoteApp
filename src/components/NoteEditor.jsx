@@ -16,6 +16,7 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
   const [content, setContent] = useState(note ? note.content : '');
   const [tags, setTags] = useState(note && note.tags ? note.tags.join(', ') : '');
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const contentRef = useRef(null);
 
@@ -53,15 +54,21 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0)
     };
-    // Simulate save delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 300));
-    onSave(updatedNote);
-    setIsSaving(false);
+    try {
+      await onSave(updatedNote);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm(t('deleteConfirm'))) {
-      onDelete(note.id);
+      setIsDeleteLoading(true);
+      try {
+        await onDelete(note.id);
+      } finally {
+        setIsDeleteLoading(false);
+      }
     }
   };
 
@@ -125,12 +132,20 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
               {/* Delete Button */}
               <button
                 onClick={handleDelete}
-                className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                disabled={isDeleteLoading}
+                className={`p-2 rounded-lg transition-colors duration-200 ${isDeleteLoading ? 'bg-red-200 text-red-400 cursor-wait' : 'text-slate-500 hover:text-red-600 hover:bg-red-50'}`}
                 title={t('deleteNote')}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                {isDeleteLoading ? (
+                  <svg className="animate-spin w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                )}
               </button>
               {/* Save Button */}
               <button

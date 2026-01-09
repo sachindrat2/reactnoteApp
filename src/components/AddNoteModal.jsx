@@ -6,6 +6,7 @@ const AddNoteModal = ({ onAdd, onClose }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const titleInputRef = useRef(null);
 
   useEffect(() => {
@@ -25,13 +26,13 @@ const AddNoteModal = ({ onAdd, onClose }) => {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!title.trim() && !content.trim()) {
       return; // Don't create empty notes
     }
-
+    setIsLoading(true);
     const noteData = {
       title: title.trim() || t('untitledNote'),
       content: content.trim(),
@@ -40,8 +41,11 @@ const AddNoteModal = ({ onAdd, onClose }) => {
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0)
     };
-
-    onAdd(noteData);
+    try {
+      await onAdd(noteData);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBackdropClick = (e) => {
@@ -139,14 +143,24 @@ const AddNoteModal = ({ onAdd, onClose }) => {
               </button>
               <button
                 type="submit"
-                disabled={!title.trim() && !content.trim()}
+                disabled={isLoading || (!title.trim() && !content.trim())}
                 className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
-                  title.trim() || content.trim()
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl'
-                    : 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                  isLoading
+                    ? 'bg-blue-300 text-white cursor-wait opacity-70'
+                    : (title.trim() || content.trim()
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl'
+                        : 'bg-slate-200 text-slate-500 cursor-not-allowed')
                 }`}
               >
-                {t('createNote')}
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin h-4 w-4 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    {t('creating')}...
+                  </span>
+                ) : t('createNote')}
               </button>
             </div>
           </div>

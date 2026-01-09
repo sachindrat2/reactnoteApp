@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Notes App. All rights reserved.
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -87,9 +88,7 @@ const LoginScreen = () => {
         <div className="bg-gray-900/60 backdrop-blur-xl py-8 px-6 shadow-2xl sm:rounded-3xl sm:px-10 border border-gray-700/50">
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-             
             </div>
-            
           </div>
           <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="flex items-center mb-2">
@@ -196,6 +195,13 @@ const LoginScreen = () => {
           </form>
         </div>
       </div>
+
+      {/* Copyright Footer */}
+      <footer className="absolute bottom-4 left-0 w-full flex justify-center z-20">
+        <span className="text-xs text-gray-500 bg-gray-900/70 px-4 py-2 rounded-xl shadow-md">
+          © 2026 Notes App. All rights reserved.
+        </span>
+      </footer>
     </div>
   );
 };
