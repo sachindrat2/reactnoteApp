@@ -3,6 +3,7 @@ import './App.css'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import NotesApp from './components/NotesApp'
+import NoteDetail from './components/NoteDetail.jsx'
 import LoginScreen from './components/LoginScreen'
 import RegisterScreen from './components/RegisterScreen'
 import LoadingScreen from './components/LoadingScreen'
@@ -88,6 +89,14 @@ const AppContent = () => {
             <NotesApp />
           </ProtectedRoute>
         } 
+      />
+      <Route
+        path="/notes/:id"
+        element={
+          <ProtectedRoute>
+            <NoteDetail />
+          </ProtectedRoute>
+        }
       />
       <Route path="/verify-email" element={<VerifyEmailScreen />} />
       <Route path="/verify-code" element={<VerifyCodeScreen />} />

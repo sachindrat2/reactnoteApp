@@ -9,8 +9,8 @@ const ConnectionStatus = () => {
   }, []);
 
   const checkConnection = async () => {
-    // Always show production status (Azure)
-    setStatus({ type: 'success', message: 'Production (Azure) 🌐' });
+    // Show only generic connection status
+    setStatus({ type: 'success', message: 'Connected ✅' });
   };
 
   const getStatusColor = () => {

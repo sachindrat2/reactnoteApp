@@ -122,6 +122,13 @@ const resources = {
       error: "Error",
       success: "Success",
       close: "Close",
+
+      // Logout Modal
+      logout: "Logout",
+      logoutConfirmTitle: "Are you sure you want to logout?",
+      logoutConfirmDesc: "You will be signed out of your account.",
+      yes: "Yes",
+      no: "No",
       
       // Forgot Password Screen
       "forgotPassword.title": "Forgot Password",
@@ -233,6 +240,13 @@ const resources = {
       error: "エラー",
       success: "成功",
       close: "閉じる",
+
+      // Logout Modal
+      logout: "ログアウト",
+      logoutConfirmTitle: "ログアウトしますか？",
+      logoutConfirmDesc: "アカウントからサインアウトします。",
+      yes: "はい",
+      no: "いいえ",
       
       // Forgot Password Screen
       "forgotPassword.title": "パスワードをお忘れですか",

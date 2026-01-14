@@ -7,6 +7,8 @@ const AddNoteModal = ({ onAdd, onClose }) => {
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [images, setImages] = useState([]); // Array of image URLs
+  const [imageFiles, setImageFiles] = useState([]); // For local preview
   const titleInputRef = useRef(null);
 
   useEffect(() => {
@@ -33,13 +35,20 @@ const AddNoteModal = ({ onAdd, onClose }) => {
       return; // Don't create empty notes
     }
     setIsLoading(true);
+    // Prepare image URLs (simulate upload or use local preview URLs)
+    let imageUrls = images;
+    // If user selected files, upload logic would go here (for now, use local preview URLs)
+    if (imageFiles.length > 0) {
+      imageUrls = imageFiles.map(f => f.previewUrl);
+    }
     const noteData = {
       title: title.trim() || t('untitledNote'),
       content: content.trim(),
       tags: tags
         .split(',')
         .map(tag => tag.trim())
-        .filter(tag => tag.length > 0)
+        .filter(tag => tag.length > 0),
+      images: imageUrls
     };
     try {
       await onAdd(noteData);
@@ -55,10 +64,10 @@ const AddNoteModal = ({ onAdd, onClose }) => {
   };
   return (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6 animate-fade-in"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex flex-col justify-center items-center z-50 p-4 sm:p-6 animate-fade-in"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto animate-scale-in my-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-y-auto animate-scale-in">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200">
           <div>
@@ -110,6 +119,59 @@ const AddNoteModal = ({ onAdd, onClose }) => {
                        transition-all duration-200 text-sm sm:text-base"
             />
             <p className="text-xs text-slate-500 mt-1">{t('tagsDescription')}</p>
+          </div>
+
+          {/* Image Upload Section */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Images</label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={e => {
+                const files = Array.from(e.target.files || []);
+                const previews = files.map(file => {
+                  const previewUrl = URL.createObjectURL(file);
+                  return { file, previewUrl };
+                });
+                setImageFiles(prev => [...prev, ...previews]);
+                setImages([]); // Clear manual URLs if uploading
+                // Reset input value to allow re-selecting the same file(s)
+                e.target.value = '';
+              }}
+              className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {/* Manual URL input for images (optional) */}
+            <input
+              type="text"
+              placeholder="Paste image URL and press Enter"
+              className="mt-2 w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              onKeyDown={e => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                  setImages(prev => [...prev, e.target.value.trim()]);
+                  e.target.value = '';
+                  setImageFiles([]); // Clear file previews if using URLs
+                }
+              }}
+            />
+            {/* Preview selected images */}
+            {(imageFiles.length > 0 || images.length > 0) && (
+              <div className="flex flex-wrap gap-3 mt-3">
+                {imageFiles.map((img, idx) => (
+                  <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
+                    <img src={img.previewUrl} alt="Preview" className="object-cover w-full h-full" />
+                    <button type="button" className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-xs" onClick={() => setImageFiles(imageFiles.filter((_, i) => i !== idx))}>&times;</button>
+                  </div>
+                ))}
+                {images.map((url, idx) => (
+                  <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
+                    <img src={url} alt="Preview" className="object-cover w-full h-full" />
+                    <button type="button" className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-xs" onClick={() => setImages(images.filter((_, i) => i !== idx))}>&times;</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-slate-500 mt-1">You can upload images or paste image URLs. First image will be used as cover.</p>
           </div>
           {/* Content Textarea */}
           <div>

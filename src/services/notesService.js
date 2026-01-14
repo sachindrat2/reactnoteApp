@@ -16,6 +16,20 @@ export const resetPasswordAPI = async (token, newPassword) => {
   } catch (error) {
     return { success: false, error: error.message || 'Failed to reset password.' };
   }
+
+  // Fetch a single note by ID
+  fetchNoteById: async (noteId) => {
+    try {
+      const note = await notesAPI.getNoteById(noteId);
+      if (note) {
+        return { success: true, data: normalizeNoteData(note) };
+      } else {
+        return { success: false, error: 'Note not found' };
+      }
+    } catch (error) {
+      return { success: false, error: error.message || 'Failed to fetch note' };
+    }
+  }
 };
 // Forgot password API
 export const forgotPasswordAPI = async (email) => {

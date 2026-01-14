@@ -7,6 +7,7 @@ import AddNoteModal from './AddNoteModal';
 import AuthHealthChecker from './AuthHealthChecker';
 import LanguageSwitcher from './LanguageSwitcher';
 import LoadingScreen from './LoadingScreen';
+import NotesSkeleton from './NotesSkeleton';
 import { notesService } from '../services/notesService';
 import { useAuth } from '../context/AuthContext';
 
@@ -142,24 +143,24 @@ const NotesApp = () => {
       setError('Please login to create notes');
       return;
     }
-    
+    // Optimistically add note with temporary ID
+    const tempId = 'temp-' + Date.now();
+    const optimisticNote = { ...noteData, id: tempId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    setNotes(prev => [optimisticNote, ...prev]);
+    setIsAddModalOpen(false);
     try {
-      console.log('📝 Creating note:', noteData);
       const result = await notesService.createNote(noteData);
       if (result && result.success) {
-        setNotes(prev => [result.data, ...prev]);
-        
+        setNotes(prev => prev.map(note => note.id === tempId ? result.data : note));
         setError(null);
-        console.log('✅ Note created successfully');
       } else {
-        console.error('❌ Note creation failed:', result?.error);
+        setNotes(prev => prev.filter(note => note.id !== tempId));
         setError(result?.error || 'Failed to create note');
       }
     } catch (error) {
-      console.error('Failed to create note:', error);
+      setNotes(prev => prev.filter(note => note.id !== tempId));
       setError('Failed to create note. Please try again.');
     }
-    setIsAddModalOpen(false);
   }, [user]);
 
   const handleEditNote = (note) => {
@@ -168,40 +169,53 @@ const NotesApp = () => {
   };
 
   const handleSaveNote = async (updatedNote) => {
+    // Optimistically update note
+    const prevNotes = notes;
+    setNotes(prev => prev.map(note => note.id === updatedNote.id ? updatedNote : note));
+    setIsEditing(false);
+    setSelectedNote(null);
     try {
       const result = await notesService.updateNote(updatedNote.id, updatedNote);
       if (result && result.success) {
-        setNotes(prev => prev.map(note =>
-          note.id === updatedNote.id ? result.data : note
-        ));
-        
+        setNotes(prev => prev.map(note => note.id === updatedNote.id ? result.data : note));
         setError(null);
       } else {
+        setNotes(prevNotes);
         setError(result?.error || 'Failed to update note');
       }
     } catch (error) {
-      console.error('Failed to update note:', error);
+      setNotes(prevNotes);
       setError('Failed to update note. Please try again.');
     }
-    setIsEditing(false);
-    setSelectedNote(null);
   };
 
   const handleDeleteNote = async (noteId) => {
+    // Only allow delete for real notes (not temp)
+    if (String(noteId).startsWith('temp-')) {
+      setNotes(prev => prev.filter(note => note.id !== noteId));
+      if (selectedNote && selectedNote.id === noteId) {
+        setSelectedNote(null);
+        setIsEditing(false);
+      }
+      return;
+    }
+    // Optimistically remove note
+    const prevNotes = notes;
+    setNotes(prev => prev.filter(note => note.id !== noteId));
+    if (selectedNote && selectedNote.id === noteId) {
+      setSelectedNote(null);
+      setIsEditing(false);
+    }
     try {
       const result = await notesService.deleteNote(noteId);
       if (result && result.success) {
-        setNotes(prev => prev.filter(note => note.id !== noteId));
-        if (selectedNote && selectedNote.id === noteId) {
-          setSelectedNote(null);
-          setIsEditing(false);
-        }
         setError(null);
       } else {
+        setNotes(prevNotes);
         setError(result?.error || 'Failed to delete note');
       }
     } catch (error) {
-      console.error('Failed to delete note:', error);
+      setNotes(prevNotes);
       setError('Failed to delete note. Please try again.');
     }
   };
@@ -302,11 +316,12 @@ const NotesApp = () => {
       )}
       
       <main
-        className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 animate-slide-in-right relative z-10 overflow-y-auto rounded-3xl shadow-2xl bg-gray-900/70 backdrop-blur-xl scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-gray-800"
-        style={{ maxHeight: 'calc(100vh - 120px)' }}
+        className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 animate-slide-in-right relative z-10"
       >
         {isLoading ? (
-          <LoadingScreen />
+          <div className="py-10 px-2">
+            <NotesSkeleton count={6} />
+          </div>
         ) : isEditing && selectedNote ? (
           <div className="animate-scale-in">
             <NoteEditor
@@ -337,6 +352,18 @@ const NotesApp = () => {
         />
       )}
 
+      {/* Floating Add Note Button - only visible on mobile */}
+      <button
+        onClick={() => setIsAddModalOpen(true)}
+        className="fixed bottom-6 right-6 z-[9999] p-5 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-full shadow-xl hover:scale-110 transition-transform duration-200 flex items-center justify-center md:hidden"
+        title={t('addNote')}
+        aria-label={t('addNote')}
+        style={{ pointerEvents: 'auto' }}
+      >
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
       </div>
     </div>
   );

@@ -1,36 +1,54 @@
 import React from 'react';
 import NoteCard from './NoteCard';
 
+// Skeleton NoteCard loader
+const NoteCardSkeleton = () => (
+  <div
+    className="group rounded-2xl shadow-lg border border-gray-200/40 backdrop-blur-lg bg-gradient-to-br from-blue-100 via-white to-purple-100 overflow-hidden animate-pulse relative w-full h-56 p-0 flex flex-col justify-between border-transparent cursor-pointer"
+    style={{ boxShadow: '0 4px 32px 0 rgba(80,120,255,0.07)' }}
+  >
+    {/* Created Date - absolute top left with extra spacing */}
+    <div className="absolute top-1 left-4 z-40 flex items-center gap-1 bg-white/80 rounded-full px-2 py-0.5 shadow border border-blue-100 text-blue-700 text-[10px] font-semibold min-w-[60px]">
+      <div className="w-3 h-3 bg-blue-200 rounded-full animate-pulse" />
+      <span className="bg-blue-100 rounded w-12 h-2 inline-block animate-pulse" />
+    </div>
+    {/* Card Image Carousel */}
+    <div className="w-full h-24 bg-gray-200 border-b border-gray-300 rounded-t-2xl flex items-center justify-center relative overflow-hidden">
+      <div className="w-full h-full bg-gray-300 animate-pulse" />
+    </div>
+    {/* Glow effect */}
+    <div className="absolute inset-0 pointer-events-none z-0">
+      <div className="absolute top-0 left-0 w-24 h-24 bg-blue-400 opacity-10 rounded-full blur-2xl" />
+      <div className="absolute bottom-0 right-0 w-32 h-32 bg-purple-400 opacity-10 rounded-full blur-2xl" />
+    </div>
+    {/* Card Header and Content */}
+    <div className="p-4 pb-2 relative z-10 flex items-start gap-4 flex-shrink-0">
+      {/* Avatar skeleton */}
+      <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-400 animate-pulse shadow-md ring-2 ring-white/60" />
+      <div className="flex-1 min-w-0">
+        <div className="h-6 bg-slate-200 rounded w-2/3 mb-1 animate-pulse" />
+        <div className="h-4 bg-slate-100 rounded w-5/6 mb-2 animate-pulse" />
+        <div className="h-4 bg-slate-100 rounded w-1/2 mb-2 animate-pulse" />
+        <div className="flex flex-wrap gap-2 mb-1 min-h-[2.2rem] items-center">
+          <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-slate-700 border border-slate-200 shadow-sm animate-pulse w-12 h-4" />
+          <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-slate-700 border border-slate-200 shadow-sm animate-pulse w-12 h-4" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
 const NotesList = ({ notes, onEditNote, onDeleteNote, searchTerm, page = 1, totalPages = 1, onPageChange, totalNotes }) => {
   // Ensure notes is always an array
   const safeNotes = Array.isArray(notes) ? notes : [];
-  if (safeNotes.length === 0) {
+  // Skeleton loading state (simulate with notes === null)
+  if (notes === null) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <div className="w-24 h-24 bg-gradient-to-r from-slate-200 to-slate-300 rounded-full flex items-center justify-center mb-6">
-          <svg className="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 gap-y-6 gap-x-8">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <NoteCardSkeleton key={i} />
+          ))}
         </div>
-        <h3 className="text-xl font-semibold text-slate-700 mb-2">
-          {searchTerm ? 'No notes found' : 'No notes yet'}
-        </h3>
-        <p className="text-slate-500 text-center max-w-md">
-          {searchTerm 
-            ? `No notes match "${searchTerm}". Try adjusting your search terms.`
-            : 'Start by creating your first note. Click the "New Note" button to get started.'
-          }
-        </p>
-        {
-          searchTerm && (
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
-            >
-              Clear Search
-            </button>
-          )
-        }
       </div>
     );
   }
@@ -55,9 +73,9 @@ const NotesList = ({ notes, onEditNote, onDeleteNote, searchTerm, page = 1, tota
         </div>
       )}
       {/* Notes Grid - Improved responsive breakpoints */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 gap-y-6 gap-x-8">
         {safeNotes.map((note, index) => (
-          <div 
+          <div
             key={note.id}
             className="animate-fade-in"
             style={{ animationDelay: `${index * 0.1}s` }}
