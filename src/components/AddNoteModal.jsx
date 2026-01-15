@@ -29,17 +29,26 @@ const AddNoteModal = ({ onAdd, onClose }) => {
   }, [onClose]);
 
 
+  // Helper to convert File to base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new window.FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim() && !content.trim()) {
       return; // Don't create empty notes
     }
     setIsLoading(true);
-    // Prepare image URLs (simulate upload or use local preview URLs)
     let imageUrls = images;
-    // If user selected files, upload logic would go here (for now, use local preview URLs)
     if (imageFiles.length > 0) {
-      imageUrls = imageFiles.map(f => f.previewUrl);
+      // Convert all files to base64
+      imageUrls = await Promise.all(imageFiles.map(f => fileToBase64(f.file)));
     }
     const noteData = {
       title: title.trim() || t('untitledNote'),

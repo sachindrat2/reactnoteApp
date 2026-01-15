@@ -3,7 +3,7 @@ import React from 'react';
 const LoadingScreen = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-      <div className="text-center">/
+      <div className="text-center">
         {/* Animated Logo */}
         <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl mb-8 animate-bounce">
           <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

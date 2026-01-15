@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import NotesHeader from './NotesHeader';
 import NotesList from './NotesList';
@@ -22,18 +22,24 @@ const NotesApp = () => {
   const [isLoading, setIsLoading] = useState(false); // Start with false, set to true when actually loading
   const [error, setError] = useState(null);
   // Removed offline mode - only using real API authentication
+  // Dirty flag: only reload notes if a change was made
+  const isDirtyRef = useRef(false);
 
   // Memoize loadNotes function to prevent unnecessary re-renders
-  const loadNotes = useCallback(async () => {
+  const loadNotes = useCallback(async (force = false) => {
     if (!user) {
       console.log('⏸️ No user available, skipping notes load');
       return;
     }
-    
+    // Only reload if dirty or forced
+    if (!isDirtyRef.current && !force) {
+      console.log('🟢 Notes not dirty, skipping reload');
+      return;
+    }
+    isDirtyRef.current = false;
     console.log('🚀 Starting loadNotes - isLoading:', isLoading);
     setIsLoading(true);
     setError(null);
-    
     try {
       console.log('🔄 Loading notes for user:', user?.user?.email || user?.email);
       const result = await notesService.fetchNotes();
@@ -43,18 +49,14 @@ const NotesApp = () => {
         console.log('📋 Setting notes data:', notesData.length, 'notes');
         setNotes(notesData);
         if (result.isDemo) {
-          // Show a subtle banner for demo mode
           setError(result.message || 'Showing demo notes - API connection unavailable');
         } else if (result.fromCache) {
-          // Commented out cache warning to reduce UI clutter
           // setError('Using cached data. Some changes may not be synced.');
         }
         console.log('✅ Notes loaded successfully');
       } else {
         console.log('❌ Notes loading failed:', result?.error);
-        // Provide specific error messages based on error type
         let errorMessage = result?.error || 'Failed to load notes';
-        
         if (errorMessage.includes('TIMEOUT_ERROR')) {
           errorMessage = 'Server is taking too long to respond. Your cached notes are displayed below.';
         } else if (errorMessage.includes('CORS_ERROR')) {
@@ -62,8 +64,6 @@ const NotesApp = () => {
         } else if (errorMessage.includes('NETWORK_ERROR')) {
           errorMessage = 'No internet connection. Using cached data.';
         }
-        
-        // Only show error if this is the initial load (no cached data)
         setError(errorMessage);
       }
     } catch (error) {
@@ -73,7 +73,7 @@ const NotesApp = () => {
       console.log('🏁 Setting isLoading to false');
       setIsLoading(false);
     }
-  }, [user]); // Remove isLoading from deps to prevent recreation issues
+  }, [user]);
 
   // Load notes from API on component mount - simplified approach
   const hasLoadedRef = React.useRef(false);
@@ -82,11 +82,11 @@ const NotesApp = () => {
     if (user && !hasLoadedRef.current) {
       console.log('🚀 Initial notes load for authenticated user');
       hasLoadedRef.current = true;
-      loadNotes();
+      loadNotes(true); // Force initial load
     } else if (!user) {
       hasLoadedRef.current = false;
       console.log('🔄 User logged out, resetting loading state');
-      setIsLoading(true); // Reset loading state when user logs out
+      setIsLoading(true);
     }
   }, [user, loadNotes]);
 
@@ -143,11 +143,11 @@ const NotesApp = () => {
       setError('Please login to create notes');
       return;
     }
-    // Optimistically add note with temporary ID
     const tempId = 'temp-' + Date.now();
     const optimisticNote = { ...noteData, id: tempId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     setNotes(prev => [optimisticNote, ...prev]);
     setIsAddModalOpen(false);
+    isDirtyRef.current = true;
     try {
       const result = await notesService.createNote(noteData);
       if (result && result.success) {
@@ -169,11 +169,11 @@ const NotesApp = () => {
   };
 
   const handleSaveNote = async (updatedNote) => {
-    // Optimistically update note
     const prevNotes = notes;
     setNotes(prev => prev.map(note => note.id === updatedNote.id ? updatedNote : note));
     setIsEditing(false);
     setSelectedNote(null);
+    isDirtyRef.current = true;
     try {
       const result = await notesService.updateNote(updatedNote.id, updatedNote);
       if (result && result.success) {
@@ -190,7 +190,6 @@ const NotesApp = () => {
   };
 
   const handleDeleteNote = async (noteId) => {
-    // Only allow delete for real notes (not temp)
     if (String(noteId).startsWith('temp-')) {
       setNotes(prev => prev.filter(note => note.id !== noteId));
       if (selectedNote && selectedNote.id === noteId) {
@@ -199,13 +198,13 @@ const NotesApp = () => {
       }
       return;
     }
-    // Optimistically remove note
     const prevNotes = notes;
     setNotes(prev => prev.filter(note => note.id !== noteId));
     if (selectedNote && selectedNote.id === noteId) {
       setSelectedNote(null);
       setIsEditing(false);
     }
+    isDirtyRef.current = true;
     try {
       const result = await notesService.deleteNote(noteId);
       if (result && result.success) {
