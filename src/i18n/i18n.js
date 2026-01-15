@@ -132,6 +132,26 @@ const resources = {
       yes: "Yes",
       no: "No",
       
+      // Reset Password Screen
+      resetPassword: {
+        title: "Reset Password",
+        nameLabel: "Name",
+        namePlaceholder: "Enter your name",
+        nameRequired: "Name is required.",
+        newPasswordLabel: "New Password",
+        newPasswordPlaceholder: "Enter your new password",
+        show: "Show",
+        hide: "Hide",
+        confirmPasswordLabel: "Confirm Password",
+        confirmPasswordPlaceholder: "Re-enter your new password",
+        resetButton: "Reset Password",
+        saving: "Resetting...",
+        success: "Password reset successful! Redirecting...",
+        error: "Failed to reset password. Please try again.",
+        noMatch: "Passwords do not match.",
+        invalidLink: "Invalid or expired reset link.",
+        redirect: "You will be redirected shortly..."
+      },
       // Forgot Password Screen
       "forgotPassword.title": "Forgot Password",
       "forgotPassword.emailPlaceholder": "Enter your email",
@@ -252,6 +272,26 @@ const resources = {
       yes: "はい",
       no: "いいえ",
       
+      // Reset Password Screen
+      resetPassword: {
+        title: "パスワードリセット",
+        nameLabel: "名前",
+        namePlaceholder: "名前を入力してください",
+        nameRequired: "名前は必須です。",
+        newPasswordLabel: "新しいパスワード",
+        newPasswordPlaceholder: "新しいパスワードを入力してください",
+        show: "表示",
+        hide: "非表示",
+        confirmPasswordLabel: "パスワード確認",
+        confirmPasswordPlaceholder: "新しいパスワードを再入力してください",
+        resetButton: "パスワードをリセット",
+        saving: "リセット中...",
+        success: "パスワードがリセットされました！リダイレクト中...",
+        error: "パスワードのリセットに失敗しました。もう一度お試しください。",
+        noMatch: "パスワードが一致しません。",
+        invalidLink: "無効または期限切れのリセットリンクです。",
+        redirect: "まもなくリダイレクトされます..."
+      },
       // Forgot Password Screen
       "forgotPassword.title": "パスワードをお忘れですか",
       "forgotPassword.emailPlaceholder": "メールアドレスを入力してください",

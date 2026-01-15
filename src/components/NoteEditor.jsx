@@ -14,7 +14,11 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
   // If note is not defined, do not initialize state/hooks
   const [title, setTitle] = useState(note ? note.title : '');
   const [content, setContent] = useState(note ? note.content : '');
-  const [tags, setTags] = useState(note && note.tags ? note.tags.join(', ') : '');
+  const [tags, setTags] = useState(note && note.tags ? note.tags : []);
+  const [tagInput, setTagInput] = useState('');
+  const [images, setImages] = useState(note && Array.isArray(note.images) ? note.images : []);
+  const [imageFiles, setImageFiles] = useState([]); // For new uploads
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -25,17 +29,19 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
     if (!note) return;
     setTitle(note.title);
     setContent(note.content);
-    setTags(note.tags?.join(', ') || '');
+    setTags(note.tags || []);
+    setImages(Array.isArray(note.images) ? note.images : []);
   }, [note]);
 
   useEffect(() => {
     if (!note) return;
-    const hasAnyChanges = 
-      title !== note.title || 
-      content !== note.content || 
-      tags !== (note.tags?.join(', ') || '');
+    const hasAnyChanges =
+      title !== note.title ||
+      content !== note.content ||
+      JSON.stringify(tags) !== JSON.stringify(note.tags || []) ||
+      JSON.stringify(images) !== JSON.stringify(note.images || []);
     setHasChanges(hasAnyChanges);
-  }, [title, content, tags, note]);
+  }, [title, content, tags, images, note]);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -43,19 +49,33 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
     }
   }, []);
 
+  // Helper to convert File to base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new window.FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
+    let updatedImages = images;
+    if (imageFiles.length > 0) {
+      const newBase64s = await Promise.all(imageFiles.map(f => fileToBase64(f.file)));
+      updatedImages = [...images, ...newBase64s];
+    }
     const updatedNote = {
       ...note,
       title: title.trim() || t('untitledNote'),
       content: content.trim(),
-      tags: tags
-        .split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tag.length > 0)
+      tags,
+      images: updatedImages
     };
     try {
       await onSave(updatedNote);
+      setImageFiles([]); // Clear after save
     } finally {
       setIsSaving(false);
     }
@@ -190,21 +210,91 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
           className="w-full text-3xl font-bold text-slate-800 placeholder-slate-400 border-none outline-none 
                    bg-transparent mb-4 focus:ring-0 resize-none"
         />
-        {/* Tags Input */}
+        {/* Tags Input - add/remove individual tags */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            {t('tagsLabel')}
-          </label>
-          <input
-            type="text"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder={t('tagsPlaceholder')}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-500
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                     transition-all duration-200"
-          />
+          <label className="block text-sm font-medium text-slate-700 mb-2">{t('tagsLabel')}</label>
+          <div className="flex gap-2 mb-2 flex-wrap">
+            {tags.map((tag, idx) => (
+              <span key={idx} className="inline-flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium mr-1 mb-1">
+                {tag}
+                <button type="button" className="ml-1 text-blue-500 hover:text-red-500" onClick={() => setTags(tags.filter((_, i) => i !== idx))}>&times;</button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={tagInput}
+              onChange={e => setTagInput(e.target.value)}
+              placeholder={t('tagsPlaceholder')}
+              className="px-3 py-2 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              onKeyDown={e => {
+                if (e.key === 'Enter' && tagInput.trim()) {
+                  if (!tags.includes(tagInput.trim())) setTags([...tags, tagInput.trim()]);
+                  setTagInput('');
+                }
+              }}
+            />
+            <button type="button" className="px-3 py-2 bg-blue-500 text-white rounded-lg" onClick={() => {
+              if (tagInput.trim() && !tags.includes(tagInput.trim())) setTags([...tags, tagInput.trim()]);
+              setTagInput('');
+            }}>Add</button>
+          </div>
         </div>
+                {/* Images Section - add/remove images */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Images</label>
+                  <div className="flex flex-wrap gap-3 mb-2">
+                    {images.map((img, idx) => (
+                      <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
+                        <img src={img} alt={`Note image ${idx + 1}`} className="object-cover w-full h-full" />
+                        <button type="button" className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-xs" onClick={() => setImages(images.filter((_, i) => i !== idx))}>&times;</button>
+                      </div>
+                    ))}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={e => {
+                      const files = Array.from(e.target.files || []);
+                      const previews = files.map(file => ({ file }));
+                      setImageFiles(prev => [...prev, ...previews]);
+                      e.target.value = '';
+                    }}
+                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Paste image URL and press Enter"
+                    className="mt-2 w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    value={imageUrlInput}
+                    onChange={e => setImageUrlInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && imageUrlInput.trim()) {
+                        setImages(prev => [...prev, imageUrlInput.trim()]);
+                        setImageUrlInput('');
+                      }
+                    }}
+                  />
+                  <button type="button" className="mt-2 px-3 py-2 bg-blue-500 text-white rounded-lg" onClick={() => {
+                    if (imageUrlInput.trim()) {
+                      setImages(prev => [...prev, imageUrlInput.trim()]);
+                      setImageUrlInput('');
+                    }
+                  }}>Add Image URL</button>
+                  {/* Preview new uploads before save */}
+                  {imageFiles.length > 0 && (
+                    <div className="flex flex-wrap gap-3 mt-3">
+                      {imageFiles.map((img, idx) => (
+                        <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
+                          <img src={URL.createObjectURL(img.file)} alt="Preview" className="object-cover w-full h-full" />
+                          <button type="button" className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-xs" onClick={() => setImageFiles(imageFiles.filter((_, i) => i !== idx))}>&times;</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
         {/* Content Textarea */}
         <div className="mb-8">
           <textarea

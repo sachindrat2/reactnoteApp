@@ -19,7 +19,7 @@ const timestampPlugin = () => {
 
 export default defineConfig({
   plugins: [react(), timestampPlugin()],
-  base: './', // Use root for Docker/nginx/Azure deployment
+  base: '/notes/', // Use /notes/ for correct subpath deployment
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
