@@ -58,9 +58,11 @@ const resources = {
       
       // Navigation
       backToNotes: "Back to Notes",
+      back: "Back",
       
       // Notes List
       welcomeBack: "Welcome back",
+      welcome: "Welcome",
       notesCount_one: "{{count}} note",
       notesCount_other: "{{count}} notes",
       searchPlaceholder: "Search notes...",
@@ -176,9 +178,11 @@ const resources = {
       
       // Navigation
       backToNotes: "ノート一覧に戻る",
+      back: "戻る",
       
       // Notes List
       welcomeBack: "ようこそ",
+      welcome: "ようこそ",
       notesCount_one: "{{count}}件のノート",
       notesCount_other: "{{count}}件のノート",
       searchPlaceholder: "ノートを検索...",

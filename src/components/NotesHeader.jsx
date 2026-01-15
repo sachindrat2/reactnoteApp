@@ -160,7 +160,7 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount }) => {
             {user && (
               <div className="flex items-center space-x-3 pl-4 border-l border-gray-600">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-200">{t('welcomeBack')}</p>
+                  <p className="text-sm font-medium text-gray-200">{t('welcome')}</p>
                   <p className="text-xs text-gray-400">{user?.user?.name || user?.name || user?.user?.email || user?.email}</p>
                 </div>
                 <div className="w-10 h-10 rounded-full border-2 border-purple-500 shadow-sm bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center hover:scale-110 transition-transform duration-200">

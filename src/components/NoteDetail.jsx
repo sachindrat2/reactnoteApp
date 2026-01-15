@@ -74,7 +74,7 @@ const NoteDetail = () => {
               style={{ boxShadow: '0 4px 24px 0 rgba(80, 0, 120, 0.12)' }}
             >
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              <span className="font-bold text-white drop-shadow">{t('backToNotes')}</span>
+              <span className="font-bold text-white drop-shadow">{t('back')}</span>
             </button>
             {images.map((img, i) => (
               <img
