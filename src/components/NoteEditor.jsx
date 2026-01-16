@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import RichTextEditor from './RichTextEditor.jsx';
 import { useTranslation } from 'react-i18next';
 
 
@@ -295,17 +296,12 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
                     </div>
                   )}
                 </div>
-        {/* Content Textarea */}
+        {/* Content Rich Text Editor */}
         <div className="mb-8">
-          <textarea
-            ref={contentRef}
+          <RichTextEditor
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={setContent}
             placeholder={t('contentPlaceholder')}
-            className="w-full h-96 p-4 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-500
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                     transition-all duration-200 resize-y leading-relaxed"
-            style={{ minHeight: '400px' }}
           />
         </div>
 

@@ -40,7 +40,7 @@ const ResetPasswordScreen = () => {
     if (result.success) {
       setStatus('success');
       setMessage(t('resetPassword.success'));
-      setTimeout(() => navigate('/'), 3000);
+      setTimeout(() => navigate('/', { replace: true }), 3000);
     } else {
       setStatus('error');
       setMessage(result.error || t('resetPassword.error'));

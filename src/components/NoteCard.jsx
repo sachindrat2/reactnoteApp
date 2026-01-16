@@ -203,31 +203,11 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
           <h3 className="font-bold text-lg sm:text-xl text-slate-800 line-clamp-2 mb-1">
             {note.title}
           </h3>
-          <p className="leading-relaxed mb-2 text-slate-700 text-sm line-clamp-1">
-            {(() => {
-              if (!note.content) return null;
-              // Regex to match URLs
-              const urlRegex = /(https?:\/\/[^\s]+)/g;
-              const parts = note.content.split(urlRegex);
-              return parts.map((part, idx) => {
-                if (urlRegex.test(part)) {
-                  return (
-                    <a
-                      key={idx}
-                      href={part}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline hover:text-blue-800"
-                      onClick={e => e.stopPropagation()}
-                    >
-                      {part}
-                    </a>
-                  );
-                }
-                return <span key={idx}>{part}</span>;
-              });
-            })()}
-          </p>
+          <div className="leading-relaxed mb-2 text-slate-700 text-sm line-clamp-1">
+            {note.content && (
+              <span dangerouslySetInnerHTML={{ __html: note.content }} />
+            )}
+          </div>
           <div className="flex flex-wrap gap-2 mb-1 min-h-[2.2rem] items-center">
             {Array.isArray(note.tags) && note.tags.length > 0 ? (
               <>
@@ -238,7 +218,8 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
                   >
                     #{tag}
                   </span>
-                ))}
+                )
+                )}
                 {note.tags.length > (window.innerWidth < 640 ? 2 : 3) && (
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-600 border border-slate-300">
                     +{note.tags.length - (window.innerWidth < 640 ? 2 : 3)} more

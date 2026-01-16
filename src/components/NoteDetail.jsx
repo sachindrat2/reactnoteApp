@@ -188,28 +188,10 @@ const NoteDetail = () => {
             {/* Tags removed here to avoid duplicate rendering. Tags are shown below the created date. */}
           </div>
           {/* Content full width */}
-          <div className="mb-10 text-gray-800 whitespace-pre-line text-2xl leading-relaxed tracking-wide font-light bg-gradient-to-br from-purple-50 via-white to-emerald-50 rounded-2xl p-10 shadow-xl animate-slide-in-up w-full mx-0">
-            {(() => {
-              if (!note.content) return null;
-              const urlRegex = /(https?:\/\/[^\s]+)/g;
-              const parts = note.content.split(urlRegex);
-              return parts.map((part, idx) => {
-                if (urlRegex.test(part)) {
-                  return (
-                    <a
-                      key={idx}
-                      href={part}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline hover:text-blue-800 font-semibold transition-all"
-                    >
-                      {part}
-                    </a>
-                  );
-                }
-                return <span key={idx}>{part}</span>;
-              });
-            })()}
+          <div className="mb-10 text-gray-800 text-2xl leading-relaxed tracking-wide font-light bg-gradient-to-br from-purple-50 via-white to-emerald-50 rounded-2xl p-10 shadow-xl animate-slide-in-up w-full mx-0">
+            {note.content && (
+              <div dangerouslySetInnerHTML={{ __html: note.content }} />
+            )}
           </div>
         </div>
       </div>
