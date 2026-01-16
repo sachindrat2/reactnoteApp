@@ -351,18 +351,6 @@ const NotesApp = () => {
         />
       )}
 
-      {/* Floating Add Note Button - only visible on mobile */}
-      <button
-        onClick={() => setIsAddModalOpen(true)}
-        className="fixed bottom-6 right-6 z-[9999] p-5 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-full shadow-xl hover:scale-110 transition-transform duration-200 flex items-center justify-center md:hidden"
-        title={t('addNote')}
-        aria-label={t('addNote')}
-        style={{ pointerEvents: 'auto' }}
-      >
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
       </div>
     </div>
   );

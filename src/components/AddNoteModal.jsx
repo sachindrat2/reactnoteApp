@@ -73,12 +73,12 @@ const AddNoteModal = ({ onAdd, onClose }) => {
   };
   return (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex flex-col justify-center items-center z-50 p-4 sm:p-6 animate-fade-in"
+      className="fixed inset-0 h-screen bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-y-auto animate-scale-in">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-scale-in overflow-y-auto">
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200">
+        <div className="flex-shrink-0 flex items-center justify-between p-4 sm:p-6 border-b border-slate-200">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-800">{t('createNewNote')}</h2>
             <p className="text-slate-500 text-sm mt-1 hidden sm:block">{t('addNewNoteDesc')}</p>
@@ -94,7 +94,7 @@ const AddNoteModal = ({ onAdd, onClose }) => {
         </div>
 
         {/* Modal Content */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto min-h-0">
           {/* Title Input */}
           <div>
             <label htmlFor="note-title" className="block text-sm font-medium text-slate-700 mb-2">

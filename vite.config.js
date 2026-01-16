@@ -19,7 +19,7 @@ const timestampPlugin = () => {
 
 export default defineConfig({
   plugins: [react(), timestampPlugin()],
-  base: '/notes/', // Use /notes/ for correct subpath deployment
+  base: '/', // Use root for correct deployment at /
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

@@ -6,6 +6,34 @@ import { notesService } from '../services/notesService.js';
 
 const NoteDetail = () => {
   const { t } = useTranslation();
+  // Use the same date formatting as NoteCard
+  const formatDate = (dateString) => {
+    if (!dateString) return t('noDate');
+    let date;
+    if (dateString.includes('T') || dateString.includes('Z')) {
+      date = new Date(dateString);
+    } else {
+      date = new Date(dateString + 'Z');
+    }
+    const now = new Date();
+    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInMinutes < 1) return t('justNow');
+    if (diffInMinutes < 60) return t('minutesAgo', { count: diffInMinutes });
+    if (diffInHours < 24) return t('hoursAgo', { count: diffInHours });
+    if (diffInDays === 1) return t('yesterday');
+    if (diffInDays < 7) return t('daysAgo', { count: diffInDays });
+    return date.toLocaleString('ja-JP', {
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -138,20 +166,7 @@ const NoteDetail = () => {
               {/* Created Date Pill styled like NoteCard, just below title, width shorter */}
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 text-base font-semibold shadow border border-purple-200 mt-3 max-w-xs">
                 <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                {t('createdDate', { date: (() => {
-                  const dateStr = note.createdAt || note.created_at;
-                  if (!dateStr) return '';
-                  const date = new Date(dateStr);
-                  return date.toLocaleString('ja-JP', {
-                    timeZone: 'Asia/Tokyo',
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                  });
-                })() })}
+                {t('createdDate', { date: formatDate(note.createdAt || note.created_at) })}
               </span>
               {/* Tags below created date pill, styled like NoteCard */}
               {note.tags && note.tags.length > 0 && (
@@ -170,13 +185,7 @@ const NoteDetail = () => {
             </button>
           </div>
           <div className="mb-8 flex items-center gap-4 px-8 w-full">
-            {note.tags && note.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {note.tags.map((tag, idx) => (
-                  <span key={idx} className="px-4 py-1 rounded-full bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 text-base font-semibold shadow border border-purple-200">#{tag}</span>
-                ))}
-              </div>
-            )}
+            {/* Tags removed here to avoid duplicate rendering. Tags are shown below the created date. */}
           </div>
           {/* Content full width */}
           <div className="mb-10 text-gray-800 whitespace-pre-line text-2xl leading-relaxed tracking-wide font-light bg-gradient-to-br from-purple-50 via-white to-emerald-50 rounded-2xl p-10 shadow-xl animate-slide-in-up w-full mx-0">

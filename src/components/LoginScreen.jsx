@@ -51,7 +51,7 @@ const LoginScreen = () => {
     }
   };
   return (
-    <div className="fixed inset-0 w-full h-full bg-gray-950 flex flex-col justify-center p-4 sm:p-6 lg:p-8 overflow-hidden">
+    <div className="min-h-screen w-full bg-gray-950 flex flex-col justify-between p-4 sm:p-6 lg:p-8 overflow-hidden relative">
       {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-950 to-black">
         <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
@@ -197,7 +197,7 @@ const LoginScreen = () => {
       </div>
 
       {/* Copyright Footer */}
-      <footer className="absolute bottom-4 left-0 w-full flex justify-center z-20">
+      <footer className="w-full flex justify-center z-30 mt-8">
         <span className="text-xs text-gray-500 bg-gray-900/70 px-4 py-2 rounded-xl shadow-md">
           © 2026 Notes App. All rights reserved.
         </span>
