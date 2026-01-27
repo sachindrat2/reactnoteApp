@@ -34,7 +34,16 @@ const RegisterScreen = () => {
           navigate('/verify-code', { state: { username, password } });
         }, 100);
       } else {
-        setError(result.error || t('registrationFailed'));
+        let errorKey = result.error;
+        if (errorKey === 'registrationFailed') {
+          setError(t('registrationFailed'));
+        } else if (errorKey && t(errorKey) !== errorKey) {
+          setError(t(errorKey));
+        } else if (errorKey && errorKey.toLowerCase().includes('invalid')) {
+          setError(t('registrationFailed'));
+        } else {
+          setError(t('registrationFailed'));
+        }
       }
     } catch (err) {
       setError(t('registrationFailed'));

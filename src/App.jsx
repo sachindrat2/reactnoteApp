@@ -3,6 +3,7 @@ import './App.css'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import NotesApp from './components/NotesApp'
+import { NotesProvider } from './context/NotesContext';
 import NoteDetail from './components/NoteDetail.jsx'
 import LoginScreen from './components/LoginScreen'
 import RegisterScreen from './components/RegisterScreen'
@@ -66,9 +67,11 @@ const AppContent = () => {
 
   console.log('🎯 AppContent render - Auth state:', { isAuthenticated, isLoading });
 
-  // Only show loading screen if we're actively loading (like during login)
-  if (isLoading) {
-    console.log('🎯 AppContent: Showing loading screen');
+  // Only show loading screen for protected routes, not for /login or /register
+  // Determine current route
+  const path = window.location.pathname;
+  if (isLoading && path !== '/login' && path !== '/register') {
+    console.log('🎯 AppContent: Showing loading screen for protected route');
     return <LoadingScreen />;
   }
   console.log('🎯 AppContent: Rendering routes with authenticated =', isAuthenticated);
@@ -83,20 +86,12 @@ const AppContent = () => {
         element={isAuthenticated ? <Navigate to="/notes" replace /> : <RegisterScreen />} 
       />
       <Route 
-        path="/notes" 
+        path="/notes/*" 
         element={
           <ProtectedRoute>
             <NotesApp />
           </ProtectedRoute>
         } 
-      />
-      <Route
-        path="/notes/:id"
-        element={
-          <ProtectedRoute>
-            <NoteDetail />
-          </ProtectedRoute>
-        }
       />
       <Route path="/verify-email" element={<VerifyEmailScreen />} />
       <Route path="/verify-code" element={<VerifyCodeScreen />} />
@@ -117,9 +112,11 @@ const AppContent = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <NotesProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </NotesProvider>
     </AuthProvider>
   );
 }

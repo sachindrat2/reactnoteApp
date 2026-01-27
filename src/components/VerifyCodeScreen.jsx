@@ -69,7 +69,22 @@ const VerifyCodeScreen = () => {
         }, 1000);
       } else {
         setStatus('error');
-        setMessage(result.error || t('verifyCode.error'));
+        // Map known error messages to translation keys
+        let errorMsg = result.error;
+        if (errorMsg === 'Invalid code') {
+          errorMsg = t('verifyCode.invalidCode');
+        } else if (errorMsg === 'Code expired') {
+          errorMsg = t('verifyCode.codeExpired');
+        } else if (errorMsg === 'User not found') {
+          errorMsg = t('verifyCode.userNotFound');
+        } else if (errorMsg === 'Too many attempts') {
+          errorMsg = t('verifyCode.tooManyAttempts');
+        } else if (errorMsg) {
+          errorMsg = t('verifyCode.errorGeneric', { error: errorMsg });
+        } else {
+          errorMsg = t('verifyCode.error');
+        }
+        setMessage(errorMsg);
       }
     } catch (err) {
       console.error('🔍 Verify code error:', err);

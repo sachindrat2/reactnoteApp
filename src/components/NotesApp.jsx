@@ -1,8 +1,11 @@
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useParams, useNavigate } from 'react-router-dom';
 import NotesHeader from './NotesHeader';
 import NotesList from './NotesList';
 import NoteEditor from './NoteEditor';
+import NoteDetail from './NoteDetail';
 import AddNoteModal from './AddNoteModal';
 import AuthHealthChecker from './AuthHealthChecker';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -11,12 +14,17 @@ import NotesSkeleton from './NotesSkeleton';
 import { notesService } from '../services/notesService';
 import { useAuth } from '../context/AuthContext';
 
+
+
 const NotesApp = () => {
   const { t } = useTranslation();
   const { logout, user } = useAuth();
+  const { id: routeNoteId } = useParams();
+  const navigate = useNavigate();
   const [notes, setNotes] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false); // Start with false, set to true when actually loading
@@ -24,6 +32,19 @@ const NotesApp = () => {
   // Removed offline mode - only using real API authentication
   // Dirty flag: only reload notes if a change was made
   const isDirtyRef = useRef(false);
+
+  // Logout modal state and handlers
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const handleLogoutClick = () => setShowLogoutModal(true);
+  const handleLogoutCancel = () => setShowLogoutModal(false);
+  const handleLogoutConfirm = async () => {
+    setShowLogoutModal(false);
+    try {
+      await logout();
+    } catch (error) {
+      // Optionally show error
+    }
+  };
 
   // Memoize loadNotes function to prevent unnecessary re-renders
   const loadNotes = useCallback(async (force = false) => {
@@ -83,10 +104,16 @@ const NotesApp = () => {
       console.log('🚀 Initial notes load for authenticated user');
       hasLoadedRef.current = true;
       loadNotes(true); // Force initial load
+    } else if (user && isDirtyRef.current) {
+      // Only reload if notes are dirty
+      console.log('🟡 Notes dirty, reloading');
+      loadNotes();
     } else if (!user) {
-      hasLoadedRef.current = false;
-      console.log('🔄 User logged out, resetting loading state');
-      setIsLoading(true);
+      if (hasLoadedRef.current) {
+        hasLoadedRef.current = false;
+        console.log('🔄 User logged out, resetting loading state');
+        setIsLoading(true);
+      }
     }
   }, [user, loadNotes]);
 
@@ -163,10 +190,53 @@ const NotesApp = () => {
     }
   }, [user]);
 
+  // Show note detail view (navigates to /notes/:id)
+  const handleShowDetail = (note) => {
+    setSelectedNote(note);
+    setShowDetail(true);
+    setIsEditing(false);
+    if (note && note.id) {
+      navigate(`/notes/${note.id}`);
+    }
+  };
+
+  // When editing, show editor (keeps URL at /notes/:id)
   const handleEditNote = (note) => {
     setSelectedNote(note);
     setIsEditing(true);
+    setShowDetail(false);
+    if (note && note.id) {
+      navigate(`/notes/${note.id}`);
+    }
   };
+
+  // Close detail view (navigates back to /notes)
+  const handleCloseDetail = () => {
+    setShowDetail(false);
+    setIsEditing(false);
+    setSelectedNote(null);
+    navigate('/notes');
+  };
+  // Deep linking: show detail if routeNoteId is present
+  useEffect(() => {
+    if (routeNoteId && notes && notes.length > 0) {
+      const found = notes.find(n => String(n.id) === String(routeNoteId));
+      if (found) {
+        setSelectedNote(found);
+        setShowDetail(true);
+        setIsEditing(false);
+      } else {
+        // If not found, close detail
+        setShowDetail(false);
+        setSelectedNote(null);
+        setIsEditing(false);
+      }
+    } else if (!routeNoteId) {
+      setShowDetail(false);
+      setSelectedNote(null);
+      setIsEditing(false);
+    }
+  }, [routeNoteId, notes]);
 
   const handleSaveNote = async (updatedNote) => {
     const prevNotes = notes;
@@ -256,7 +326,36 @@ const NotesApp = () => {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         notesCount={notes.length}
+        onLogoutClick={handleLogoutClick}
       />
+            {/* Logout Confirmation Modal rendered at app root for visibility */}
+            {showLogoutModal && (
+              <div className="fixed inset-0 z-[9999] flex items-center justify-center min-h-screen bg-black/40 backdrop-blur-sm animate-fade-in">
+                <div className="bg-white rounded-3xl shadow-2xl p-4 sm:p-8 w-full max-w-xs sm:max-w-sm max-h-[96vh] overflow-y-auto flex flex-col items-center border-2 border-red-400/30 relative mx-4">
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-gradient-to-br from-red-500 via-pink-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg animate-bounce-slow">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 mt-10 mb-2 text-center">Are you sure you want to logout?</h2>
+                  <p className="text-gray-500 text-center mb-6">You will be signed out of your account.</p>
+                  <div className="flex gap-4 w-full justify-center">
+                    <button
+                      onClick={handleLogoutConfirm}
+                      className="px-5 py-2 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 text-white rounded-full font-semibold shadow-lg hover:scale-105 transition-all duration-200"
+                    >
+                      Yes
+                    </button>
+                    <button
+                      onClick={handleLogoutCancel}
+                      className="px-5 py-2 bg-gray-200 text-gray-700 rounded-full font-semibold shadow hover:bg-gray-300 transition-all duration-200"
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
       
       {/* Removed offline mode indicator - only using real API authentication now */}
       
@@ -315,18 +414,24 @@ const NotesApp = () => {
       )}
       
       <main
-        className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 animate-slide-in-right relative z-10"
+        className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-32 animate-slide-in-right relative z-10"
       >
         {isLoading ? (
           <div className="py-10 px-2">
             <NotesSkeleton count={6} />
           </div>
+        ) : showDetail && selectedNote ? (
+          <NoteDetail
+            note={selectedNote}
+            onEdit={handleEditNote}
+            onClose={handleCloseDetail}
+          />
         ) : isEditing && selectedNote ? (
           <div className="animate-scale-in">
             <NoteEditor
               note={selectedNote}
               onSave={handleSaveNote}
-              onClose={handleCloseEditor}
+              onClose={handleCloseDetail}
               onDelete={handleDeleteNote}
             />
           </div>
@@ -334,6 +439,7 @@ const NotesApp = () => {
           <NotesList
             notes={paginatedNotes}
             onEditNote={handleEditNote}
+            onShowDetail={handleShowDetail}
             onDeleteNote={handleDeleteNote}
             searchTerm={searchTerm}
             page={page}
@@ -344,6 +450,21 @@ const NotesApp = () => {
         )}
       </main>
 
+
+    </div>
+
+    {/* Floating Add Note Button - Circular FAB, outside main container for true floating */}
+    <button
+      onClick={() => setIsAddModalOpen(true)}
+      className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-2xl hover:scale-110 hover:from-purple-600 hover:to-pink-600 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-pink-300"
+      style={{ boxShadow: '0 8px 32px 0 rgba(80,0,255,0.18)' }}
+      aria-label="Add Note"
+    >
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+      </svg>
+    </button>
+
       {isAddModalOpen && (
         <AddNoteModal
           onAdd={handleAddNote}
@@ -352,8 +473,8 @@ const NotesApp = () => {
       )}
 
       </div>
-    </div>
-  );
+  )
+  
 };
 
 export default NotesApp;

@@ -43,7 +43,24 @@ const ResetPasswordScreen = () => {
       setTimeout(() => navigate('/', { replace: true }), 3000);
     } else {
       setStatus('error');
-      setMessage(result.error || t('resetPassword.error'));
+      // Map known error messages to translation keys
+      let errorMsg = result.error;
+      if (errorMsg === 'Invalid token') {
+        errorMsg = t('resetPassword.invalidToken');
+      } else if (errorMsg === 'Token expired') {
+        errorMsg = t('resetPassword.tokenExpired');
+      } else if (errorMsg === 'User not found') {
+        errorMsg = t('resetPassword.userNotFound');
+      } else if (errorMsg === 'Passwords do not match') {
+        errorMsg = t('resetPassword.passwordsMismatch');
+      } else if (errorMsg === 'Password too weak') {
+        errorMsg = t('resetPassword.passwordWeak');
+      } else if (errorMsg) {
+        errorMsg = t('resetPassword.errorGeneric', { error: errorMsg });
+      } else {
+        errorMsg = t('resetPassword.error');
+      }
+      setMessage(errorMsg);
     }
   };
 

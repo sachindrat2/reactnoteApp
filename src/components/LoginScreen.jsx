@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -39,13 +40,15 @@ const LoginScreen = () => {
       const result = await login(username, password);
       if (!result.success) {
         if (result.error === 'userNotFound') {
-          setError(t('userNotFound'));
+          setError('userNotFound');
+        } else if (result.error === 'loginFailed' || (result.error && result.error.toLowerCase().includes('invalid'))) {
+          setError('loginFailed');
         } else {
-          setError(result.error || t('loginFailed'));
+          setError(result.error || 'loginFailed');
         }
       }
     } catch (err) {
-      setError(t('loginFailed'));
+      setError('loginFailed');
     } finally {
       setIsLoading(false);
     }
@@ -169,22 +172,25 @@ const LoginScreen = () => {
                 {t('switchToRegisterNew')}
               </Link>
             </div>
-            {error && (
-              <div className="rounded-xl bg-red-900/50 border border-red-700 p-4 backdrop-blur-sm">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-300">
-                      {error}
-                    </h3>
+              {error && (
+                <div className="rounded-xl bg-red-900/50 border border-red-700 p-4 backdrop-blur-sm">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-red-300">
+                        {i18n.language === 'en' && error === 'loginFailed'
+                          ? 'Invalid email or password. Please check your credentials.'
+                          : i18n.language === 'en' ? t(error) : t(error)
+                        }
+                      </h3>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
             <button
               type="submit"
               disabled={isLoading}

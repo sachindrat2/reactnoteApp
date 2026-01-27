@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-const NoteCard = ({ note, onEdit, onDelete }) => {
+const NoteCard = ({ note, onEdit, onEditNote, onDelete, onShowDetail }) => {
     // Timer state for top left
     const [now, setNow] = useState(() => new Date());
     useEffect(() => {
@@ -13,8 +13,25 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
   const handleCardClick = (e) => {
     // Prevent click if edit/delete button was clicked
     if (e.target.closest('button')) return;
-    navigate(`/notes/${note.id}`, { state: { note } });
+    if (onShowDetail) {
+      onShowDetail(note);
+    } else {
+      navigate(`/notes/${note.id}`);
+    }
   };
+
+  // Handler for edit icon (always calls onEditNote if provided)
+  const handleEditClick = (e) => {
+    e.stopPropagation();
+    if (onEditNote) {
+      onEditNote(note);
+    } else if (onEdit) {
+      onEdit(note);
+    }
+  };
+
+  // Handler for edit icon (with event)
+ 
   const { t } = useTranslation();
   const formatDate = (dateString) => {
     if (!dateString) return t('noDate');
@@ -100,18 +117,19 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
 
   return (
     <div
-      className={`group rounded-2xl shadow-lg border border-gray-200/40 backdrop-blur-lg bg-gradient-to-br ${gradient}
-      overflow-hidden transition-all duration-300 hover:scale-[1.04] hover:-translate-y-2 animate-fade-in relative
-      hover:shadow-2xl hover:border-blue-400/60 hover:ring-2 hover:ring-blue-200/40
-      w-full h-56 p-0 flex flex-col justify-between border-transparent hover:border-blue-200 cursor-pointer`}
-      style={{ boxShadow: '0 4px 32px 0 rgba(80,120,255,0.07)' }}
+      className={`group rounded-lg shadow border border-gray-200/40 backdrop-blur-lg bg-gradient-to-br ${gradient}
+      overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5 animate-fade-in relative
+      hover:shadow-lg hover:border-blue-400/60 hover:ring-2 hover:ring-blue-200/40
+      w-full h-32 xs:h-40 sm:h-48 p-0 flex flex-col justify-between border-transparent hover:border-blue-200 cursor-pointer
+      text-xs xs:text-sm sm:text-base`}
+      style={{ boxShadow: '0 1px 8px 0 rgba(80,120,255,0.07)' }}
       onClick={handleCardClick}
       tabIndex={0}
       role="button"
       aria-label={note.title || 'Open note details'}
     >
       {/* Created Date - absolute top left with extra spacing */}
-      <div className="absolute top-1 left-4 z-40 flex items-center gap-1 bg-white/80 rounded-full px-2 py-0.5 shadow border border-blue-100 text-blue-700 text-[10px] font-semibold" style={{minWidth:'60px'}}>
+      <div className="absolute top-0.5 left-1 z-40 flex items-center gap-0.5 bg-white/80 rounded-full px-1 py-0.5 shadow border border-blue-100 text-blue-700 text-[8px] xs:text-[9px] sm:text-[10px] font-semibold" style={{minWidth:'32px'}}>
         <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <rect x="3" y="4" width="18" height="15" rx="4" fill="none" stroke="currentColor" strokeWidth="2" />
           <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -119,7 +137,7 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
         <span>{formatDate(getCreatedDate())}</span>
       </div>
       {/* Card Image Carousel */}
-      <div className="w-full h-24 bg-gray-200 border-b border-gray-300 rounded-t-2xl flex items-center justify-center relative overflow-hidden">
+      <div className="w-full h-12 xs:h-14 sm:h-20 bg-gray-200 border-b border-gray-300 rounded-t-lg flex items-center justify-center relative overflow-hidden">
         {images.map((img, i) => (
           <img
             key={i}
@@ -171,11 +189,11 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
       </div>
       {/* Floating Edit Button */}
       {/* Card Header with created time at top right */}
-      <div className="p-4 pb-2 relative z-10 flex items-start gap-4 flex-shrink-0">
+      <div className="p-1 xs:p-1.5 sm:p-3 pb-0.5 sm:pb-1.5 relative z-10 flex items-start gap-1 xs:gap-1.5 sm:gap-3 flex-shrink-0">
         {/* Edit & Delete Buttons - absolute top right, aligned */}
         <div className="absolute top-4 right-4 flex gap-2 z-30">
           <button
-            onClick={() => onEdit(note)}
+            onClick={handleEditClick}
             className="p-2 bg-white/80 rounded-full shadow-md border border-blue-100 text-blue-600 transition-all duration-300 hover:bg-blue-50 hover:text-blue-800"
             title="Edit note"
             style={{ boxShadow: '0 2px 8px 0 rgba(80,120,255,0.10)' }}
@@ -196,38 +214,37 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
           </button>
         </div>
         {/* Avatar */}
-        <div className={`flex-shrink-0 w-12 h-12 rounded-full ${avatarColor} flex items-center justify-center text-white text-xl font-bold shadow-md ring-2 ring-white/60`}>
+        <div className={`flex-shrink-0 w-6 h-6 xs:w-7 xs:h-7 sm:w-10 sm:h-10 rounded-full ${avatarColor} flex items-center justify-center text-white text-base xs:text-lg sm:text-xl font-bold shadow-md ring-2 ring-white/60`}>
           {firstLetter}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-lg sm:text-xl text-slate-800 line-clamp-2 mb-1">
+          <h3 className="font-bold text-sm xs:text-base sm:text-lg text-slate-800 line-clamp-2 mb-0.5 sm:mb-1">
             {note.title}
           </h3>
-          <div className="leading-relaxed mb-2 text-slate-700 text-sm line-clamp-1">
+          <div className="leading-relaxed mb-0.5 sm:mb-1.5 text-slate-700 text-[11px] xs:text-xs sm:text-sm line-clamp-1">
             {note.content && (
               <span dangerouslySetInnerHTML={{ __html: note.content }} />
             )}
           </div>
-          <div className="flex flex-wrap gap-2 mb-1 min-h-[2.2rem] items-center">
+          <div className="flex flex-wrap gap-0.5 xs:gap-1 sm:gap-2 mb-0.5 sm:mb-1 min-h-[1.1rem] xs:min-h-[1.4rem] sm:min-h-[2.2rem] items-center">
             {Array.isArray(note.tags) && note.tags.length > 0 ? (
               <>
                 {note.tags.slice(0, window.innerWidth < 640 ? 2 : 3).map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-slate-700 border border-slate-200 shadow-sm transition-all duration-200 hover:bg-blue-50 hover:text-blue-700"
+                    className="inline-flex items-center px-1.5 xs:px-2 sm:px-3 py-0.5 xs:py-0.5 sm:py-1 rounded-full text-[9px] xs:text-[10px] sm:text-xs font-semibold bg-white/90 text-slate-700 border border-slate-200 shadow-sm transition-all duration-200 hover:bg-blue-50 hover:text-blue-700"
                   >
                     #{tag}
                   </span>
-                )
-                )}
+                ))}
                 {note.tags.length > (window.innerWidth < 640 ? 2 : 3) && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-600 border border-slate-300">
+                  <span className="inline-flex items-center px-1.5 xs:px-2 sm:px-3 py-0.5 xs:py-0.5 sm:py-1 rounded-full text-[9px] xs:text-[10px] sm:text-xs font-semibold bg-slate-200 text-slate-600 border border-slate-300">
                     +{note.tags.length - (window.innerWidth < 640 ? 2 : 3)} more
                   </span>
                 )}
               </>
             ) : (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-400 border border-slate-200">No tags</span>
+              <span className="inline-flex items-center px-1.5 xs:px-2 sm:px-3 py-0.5 xs:py-0.5 sm:py-1 rounded-full text-[9px] xs:text-[10px] sm:text-xs font-medium bg-slate-100 text-slate-400 border border-slate-200">No tags</span>
             )}
           </div>
         </div>

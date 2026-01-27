@@ -4,7 +4,7 @@ import NoteCard from './NoteCard';
 // Skeleton NoteCard loader
 const NoteCardSkeleton = () => (
   <div
-    className="group rounded-2xl shadow-lg border border-gray-200/40 backdrop-blur-lg bg-gradient-to-br from-blue-100 via-white to-purple-100 overflow-hidden animate-pulse relative w-full h-56 p-0 flex flex-col justify-between border-transparent cursor-pointer"
+    className="group rounded-2xl shadow-lg border border-gray-200/40 backdrop-blur-lg bg-gradient-to-br from-blue-100 via-white to-purple-100 overflow-hidden animate-pulse relative w-full h-56 p-0 flex flex-col justify-between cursor-pointer"
     style={{ boxShadow: '0 4px 32px 0 rgba(80,120,255,0.07)' }}
   >
     {/* Created Date - absolute top left with extra spacing */}
@@ -37,7 +37,7 @@ const NoteCardSkeleton = () => (
     </div>
   </div>
 );
-const NotesList = ({ notes, onEditNote, onDeleteNote, searchTerm, page = 1, totalPages = 1, onPageChange, totalNotes }) => {
+const NotesList = ({ notes, onEditNote, onShowDetail, onDeleteNote, searchTerm, page = 1, totalPages = 1, onPageChange, totalNotes }) => {
   // Ensure notes is always an array
   const safeNotes = Array.isArray(notes) ? notes : [];
   // Skeleton loading state (simulate with notes === null)
@@ -82,8 +82,9 @@ const NotesList = ({ notes, onEditNote, onDeleteNote, searchTerm, page = 1, tota
           >
             <NoteCard
               note={note}
-              onEdit={onEditNote}
+              onEditNote={onEditNote}
               onDelete={onDeleteNote}
+              onShowDetail={onShowDetail}
             />
           </div>
         ))}

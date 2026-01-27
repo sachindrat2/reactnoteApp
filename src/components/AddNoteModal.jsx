@@ -233,25 +233,7 @@ const AddNoteModal = ({ onAdd, onClose }) => {
           </div>
         </form>
         {/* Quick Tips - Hidden on small screens to save space */}
-        <div className="px-4 sm:px-6 pb-4 sm:pb-6 hidden sm:block">
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-blue-900">{t('quickTips')}</h4>
-                <ul className="text-sm text-blue-700 mt-1 space-y-1">
-                  <li>{t('tipEscape')}</li>
-                  <li>{t('tipTags')}</li>
-                  <li>{t('tipEdit')}</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Quick tips/info container fully removed as requested */}
       </div>
     </div>
   );

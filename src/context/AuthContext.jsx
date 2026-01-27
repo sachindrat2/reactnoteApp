@@ -336,7 +336,8 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     login,
     register,
-    logout
+    logout,
+    setUser // Expose setUser for context updates
   };
 
   return (
