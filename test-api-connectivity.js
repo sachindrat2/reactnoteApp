@@ -7,7 +7,7 @@ const testAPI = async () => {
   const tests = [
     {
       name: 'Direct Backend',
-      url: 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net/notes'
+      url: 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io/notes'
     },
     {
       name: 'Local CORS Proxy',
@@ -15,7 +15,7 @@ const testAPI = async () => {
     },
     {
       name: 'CodeTabs Proxy',
-      url: 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net') + '/notes'
+      url: 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io') + '/notes'
     }
   ];
 

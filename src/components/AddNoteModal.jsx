@@ -173,9 +173,17 @@ const AddNoteModal = ({ onAdd, onClose }) => {
                     <button type="button" className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-xs" onClick={() => setImageFiles(imageFiles.filter((_, i) => i !== idx))}>&times;</button>
                   </div>
                 ))}
-                {images.map((url, idx) => (
+                {images.filter(url => url && typeof url === 'string' && (url.startsWith('data:') || url.startsWith('http') || url.startsWith('/'))).map((url, idx) => (
                   <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
-                    <img src={url} alt="Preview" className="object-cover w-full h-full" />
+                    <img 
+                      src={url} 
+                      alt="Preview" 
+                      className="object-cover w-full h-full" 
+                      onError={(e) => {
+                        console.error('Failed to load image:', url);
+                        e.target.style.display = 'none';
+                      }}
+                    />
                     <button type="button" className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-xs" onClick={() => setImages(images.filter((_, i) => i !== idx))}>&times;</button>
                   </div>
                 ))}

@@ -56,7 +56,7 @@ npm run deploy
 
 ### Production (.env.production)
 ```env
-VITE_API_URL=https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net
+VITE_API_URL=https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io
 VITE_APP_NAME=NotesApp
 VITE_APP_VERSION=2.0.0
 VITE_ENVIRONMENT=production

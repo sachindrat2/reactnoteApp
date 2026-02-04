@@ -246,9 +246,17 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-slate-700 mb-2">Images</label>
                   <div className="flex flex-wrap gap-3 mb-2">
-                    {images.map((img, idx) => (
+                    {images.filter(img => img && typeof img === 'string' && (img.startsWith('data:') || img.startsWith('http') || img.startsWith('/'))).map((img, idx) => (
                       <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
-                        <img src={img} alt={`Note image ${idx + 1}`} className="object-cover w-full h-full" />
+                        <img 
+                          src={img} 
+                          alt={`Note image ${idx + 1}`} 
+                          className="object-cover w-full h-full" 
+                          onError={(e) => {
+                            console.error('Failed to load image:', img);
+                            e.target.style.display = 'none';
+                          }}
+                        />
                         <button type="button" className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-xs" onClick={() => setImages(images.filter((_, i) => i !== idx))}>&times;</button>
                       </div>
                     ))}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { notesAPI } from '../services/api.js';
 
 const AuthHealthChecker = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -49,40 +50,28 @@ const AuthHealthChecker = () => {
       }
     }
 
-    // Test token with API
+    // Test token with API using the correct service
     try {
-  const baseUrl = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
-      const response = await fetch(`${baseUrl}/notes`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        mode: 'cors',
-        credentials: 'omit'
-      });
-
-      if (response.status === 401) {
-        console.log('🚨 AuthHealthChecker: API returned 401');
-        setHealthStatus('api-rejected');
-        
-        // Auto-fix disabled - let user stay logged in to debug  
-        console.log('🔧 Auto-logout disabled for debugging - API returned 401 but keeping user logged in');
-        // if (autoFixAttempts < 1) {
-        //   console.log('🔧 Auto-fixing 401 error by logging out');
-        //   setAutoFixAttempts(prev => prev + 1);
-        //   await logout();
-        //   return;
-        // }
-      } else if (response.ok) {
+      console.log('🔍 AuthHealthChecker: Testing token with API...');
+      const notes = await notesAPI.getAllNotes();
+      
+      if (notes && Array.isArray(notes)) {
+        console.log('✅ AuthHealthChecker: API accepted token');
         setHealthStatus('healthy');
       } else {
-        setHealthStatus(`api-error-${response.status}`);
+        console.log('⚠️ AuthHealthChecker: API returned unexpected response:', notes);
+        setHealthStatus('api-error');
       }
     } catch (error) {
       console.log('🌐 AuthHealthChecker: API test failed', error.message);
       
-      if (error.message.includes('CORS')) {
+      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        console.log('🚨 AuthHealthChecker: API returned authentication error');
+        setHealthStatus('api-rejected');
+        
+        // Auto-fix disabled - let user stay logged in to debug  
+        console.log('🔧 Auto-logout disabled for debugging - API returned auth error but keeping user logged in');
+      } else if (error.message.includes('CORS')) {
         setHealthStatus('cors-blocked');
       } else {
         setHealthStatus('network-error');

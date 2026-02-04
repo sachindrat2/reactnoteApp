@@ -34,7 +34,7 @@ const testConnectivity = async () => {
   
   const endpoints = [
     { name: 'Local CORS Proxy', url: 'http://localhost:3001/api/notes' },
-    { name: 'Direct Backend', url: 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net/notes' }
+    { name: 'Direct Backend', url: 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io/notes' }
   ];
   
   for (const endpoint of endpoints) {

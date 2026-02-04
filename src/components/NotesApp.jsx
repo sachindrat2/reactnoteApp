@@ -7,7 +7,6 @@ import NotesList from './NotesList';
 import NoteEditor from './NoteEditor';
 import NoteDetail from './NoteDetail';
 import AddNoteModal from './AddNoteModal';
-import AuthHealthChecker from './AuthHealthChecker';
 import LanguageSwitcher from './LanguageSwitcher';
 import LoadingScreen from './LoadingScreen';
 import NotesSkeleton from './NotesSkeleton';
@@ -49,34 +48,24 @@ const NotesApp = () => {
   // Memoize loadNotes function to prevent unnecessary re-renders
   const loadNotes = useCallback(async (force = false) => {
     if (!user) {
-      console.log('⏸️ No user available, skipping notes load');
       return;
     }
     // Only reload if dirty or forced
     if (!isDirtyRef.current && !force) {
-      console.log('🟢 Notes not dirty, skipping reload');
       return;
     }
     isDirtyRef.current = false;
-    console.log('🚀 Starting loadNotes - isLoading:', isLoading);
     setIsLoading(true);
     setError(null);
     try {
-      console.log('🔄 Loading notes for user:', user?.user?.email || user?.email);
       const result = await notesService.fetchNotes();
-      console.log('📦 fetchNotes result:', result);
       if (result && result.success) {
         const notesData = Array.isArray(result.data) ? result.data : [];
-        console.log('📋 Setting notes data:', notesData.length, 'notes');
         setNotes(notesData);
         if (result.isDemo) {
           setError(result.message || 'Showing demo notes - API connection unavailable');
-        } else if (result.fromCache) {
-          // setError('Using cached data. Some changes may not be synced.');
         }
-        console.log('✅ Notes loaded successfully');
       } else {
-        console.log('❌ Notes loading failed:', result?.error);
         let errorMessage = result?.error || 'Failed to load notes';
         if (errorMessage.includes('TIMEOUT_ERROR')) {
           errorMessage = 'Server is taking too long to respond. Your cached notes are displayed below.';
@@ -91,57 +80,37 @@ const NotesApp = () => {
       console.error('Failed to load notes:', error);
       setError('Failed to load notes. Please try again.');
     } finally {
-      console.log('🏁 Setting isLoading to false');
       setIsLoading(false);
     }
   }, [user]);
 
-  // Load notes from API on component mount - simplified approach
+  // Load notes from API on component mount
   const hasLoadedRef = React.useRef(false);
   
   useEffect(() => {
     if (user && !hasLoadedRef.current) {
-      console.log('🚀 Initial notes load for authenticated user');
       hasLoadedRef.current = true;
       loadNotes(true); // Force initial load
     } else if (user && isDirtyRef.current) {
-      // Only reload if notes are dirty
-      console.log('🟡 Notes dirty, reloading');
       loadNotes();
     } else if (!user) {
       if (hasLoadedRef.current) {
         hasLoadedRef.current = false;
-        console.log('🔄 User logged out, resetting loading state');
-        setIsLoading(true);
+        setNotes([]);
+        setSelectedNote(null);
+        setIsEditing(false);
+        setShowDetail(false);
       }
     }
   }, [user, loadNotes]);
 
-  // Debug: Monitor loading state changes
-  useEffect(() => {
-    console.log('🔄 Loading state changed:', { 
-      isLoading, 
-      notesCount: notes.length, 
-      hasUser: !!user,
-      userEmail: user?.user?.email || user?.email 
-    });
-  }, [isLoading, notes.length, user]);
-
-  // Ensure loading is cleared when notes are loaded
-  useEffect(() => {
-    if (notes.length > 0 && isLoading) {
-      console.log('📋 Notes loaded, clearing loading state');
-      setIsLoading(false);
-    }
-  }, [notes.length, isLoading]);
-
-  // Failsafe: Clear loading state after 10 seconds
+  // Failsafe: Clear loading state after reasonable timeout
   useEffect(() => {
     if (isLoading) {
       const timeoutId = setTimeout(() => {
-        console.log('⏰ Loading timeout - force clearing loading state');
         setIsLoading(false);
-      }, 10000);
+        setError('Loading timed out. Please try refreshing.');
+      }, 15000);
       
       return () => clearTimeout(timeoutId);
     }
@@ -154,7 +123,6 @@ const NotesApp = () => {
   // Memoize filtered notes to avoid unnecessary recalculations
   const filteredNotes = useMemo(() => {
     if (!searchTerm.trim()) return notes;
-    console.log('🔍 Search filter running:', { searchTerm, notesCount: notes.length });
     return notesService.searchNotes(searchTerm, notes);
   }, [searchTerm, notes]);
 
@@ -170,23 +138,46 @@ const NotesApp = () => {
       setError('Please login to create notes');
       return;
     }
+    
     const tempId = 'temp-' + Date.now();
-    const optimisticNote = { ...noteData, id: tempId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    const timestamp = new Date().toISOString();
+    const optimisticNote = { 
+      ...noteData, 
+      id: tempId, 
+      createdAt: timestamp, 
+      updatedAt: timestamp 
+    };
+    
+    // Optimistic update
     setNotes(prev => [optimisticNote, ...prev]);
     setIsAddModalOpen(false);
     isDirtyRef.current = true;
+    
     try {
       const result = await notesService.createNote(noteData);
       if (result && result.success) {
-        setNotes(prev => prev.map(note => note.id === tempId ? result.data : note));
+        setNotes(prev => prev.map(note => 
+          note.id === tempId ? result.data : note
+        ));
         setError(null);
       } else {
+        // Revert optimistic update
         setNotes(prev => prev.filter(note => note.id !== tempId));
         setError(result?.error || 'Failed to create note');
       }
     } catch (error) {
+      // Revert optimistic update
       setNotes(prev => prev.filter(note => note.id !== tempId));
-      setError('Failed to create note. Please try again.');
+      
+      if (error.message && error.message.includes('500')) {
+        if (error.message.includes('no DB row returned')) {
+          setError('Database error - unable to save note. Please check backend database configuration.');
+        } else {
+          setError('Server error (500) - please check backend logs');
+        }
+      } else {
+        setError('Failed to create note. Please try again.');
+      }
     }
   }, [user]);
 
@@ -195,7 +186,7 @@ const NotesApp = () => {
     setSelectedNote(note);
     setShowDetail(true);
     setIsEditing(false);
-    if (note && note.id) {
+    if (note && note.id && typeof note.id === 'string' && !note.id.includes(' ')) {
       navigate(`/notes/${note.id}`);
     }
   };
@@ -238,56 +229,101 @@ const NotesApp = () => {
     }
   }, [routeNoteId, notes]);
 
-  const handleSaveNote = async (updatedNote) => {
+  const handleSaveNote = useCallback(async (updatedNote) => {
     const prevNotes = notes;
-    setNotes(prev => prev.map(note => note.id === updatedNote.id ? updatedNote : note));
+    const prevSelectedNote = selectedNote;
+    
+    // Optimistic update
+    setNotes(prev => prev.map(note => 
+      note.id === updatedNote.id ? { ...updatedNote, updatedAt: new Date().toISOString() } : note
+    ));
     setIsEditing(false);
-    setSelectedNote(null);
+    setSelectedNote(updatedNote);
     isDirtyRef.current = true;
+    
     try {
       const result = await notesService.updateNote(updatedNote.id, updatedNote);
       if (result && result.success) {
-        setNotes(prev => prev.map(note => note.id === updatedNote.id ? result.data : note));
+        setNotes(prev => prev.map(note => 
+          note.id === updatedNote.id ? result.data : note
+        ));
+        setSelectedNote(result.data);
         setError(null);
+        navigate(`/notes/${result.data.id}`);
       } else {
+        // Revert optimistic updates
         setNotes(prevNotes);
+        setSelectedNote(prevSelectedNote);
+        setIsEditing(true);
         setError(result?.error || 'Failed to update note');
       }
     } catch (error) {
+      // Revert optimistic updates
       setNotes(prevNotes);
+      setSelectedNote(prevSelectedNote);
+      setIsEditing(true);
       setError('Failed to update note. Please try again.');
     }
-  };
+  }, [notes, selectedNote, navigate]);
 
-  const handleDeleteNote = async (noteId) => {
+  const handleDeleteNote = useCallback(async (noteId) => {
+    // Handle temporary notes
     if (String(noteId).startsWith('temp-')) {
       setNotes(prev => prev.filter(note => note.id !== noteId));
-      if (selectedNote && selectedNote.id === noteId) {
+      if (selectedNote?.id === noteId) {
         setSelectedNote(null);
         setIsEditing(false);
+        setShowDetail(false);
+        navigate('/notes');
       }
       return;
     }
+    
     const prevNotes = notes;
+    const wasSelected = selectedNote?.id === noteId;
+    
+    // Optimistic update
     setNotes(prev => prev.filter(note => note.id !== noteId));
-    if (selectedNote && selectedNote.id === noteId) {
+    if (wasSelected) {
       setSelectedNote(null);
       setIsEditing(false);
+      setShowDetail(false);
+      navigate('/notes');
     }
+    
     isDirtyRef.current = true;
+    
     try {
       const result = await notesService.deleteNote(noteId);
       if (result && result.success) {
         setError(null);
       } else {
+        // Revert optimistic update
         setNotes(prevNotes);
+        if (wasSelected) {
+          const noteToRestore = prevNotes.find(note => note.id === noteId);
+          if (noteToRestore) {
+            setSelectedNote(noteToRestore);
+            setShowDetail(true);
+            navigate(`/notes/${noteId}`);
+          }
+        }
         setError(result?.error || 'Failed to delete note');
       }
     } catch (error) {
+      // Revert optimistic update
       setNotes(prevNotes);
+      if (wasSelected) {
+        const noteToRestore = prevNotes.find(note => note.id === noteId);
+        if (noteToRestore) {
+          setSelectedNote(noteToRestore);
+          setShowDetail(true);
+          navigate(`/notes/${noteId}`);
+        }
+      }
       setError('Failed to delete note. Please try again.');
     }
-  };
+  }, [notes, selectedNote, navigate]);
 
   const handleCloseEditor = () => {
     setIsEditing(false);
@@ -318,9 +354,6 @@ const NotesApp = () => {
       
       {/* Content with backdrop blur */}
       <div className="relative z-10 backdrop-blur-sm">
-      {/* Authentication Health Checker */}
-      <AuthHealthChecker />
-      
       <NotesHeader
         onAddNote={() => setIsAddModalOpen(true)}
         searchTerm={searchTerm}
@@ -363,46 +396,51 @@ const NotesApp = () => {
       {error && (
         <div className="container mx-auto px-3 sm:px-4 lg:px-6 pt-4">
           <div className={`${
-            error.includes('demo notes') || error.includes('API connection unavailable') 
+            error.includes('demo notes') || error.includes('API connection unavailable') || error.includes('Showing demo notes')
               ? 'bg-blue-900/30 border border-blue-400/30' 
               : 'bg-red-900/50 border border-red-500/50'
           } rounded-lg p-4 mb-4 backdrop-blur-sm`}>
-            <div className="flex items-center">
-              {error.includes('demo notes') || error.includes('API connection unavailable') ? (
-                <svg className="w-5 h-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-start">
+              {error.includes('demo notes') || error.includes('API connection unavailable') || error.includes('Showing demo notes') ? (
+                <svg className="w-5 h-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               ) : (
-                <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-red-400 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               )}
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className={`${
-                  error.includes('demo notes') || error.includes('API connection unavailable') 
+                  error.includes('demo notes') || error.includes('API connection unavailable') || error.includes('Showing demo notes')
                     ? 'text-blue-300' 
                     : 'text-red-300'
-                } text-sm`}>{error}</p>
-                {error.includes('demo notes') && (
+                } text-sm break-words`}>{error}</p>
+                
+                {/* Helpful info for demo notes */}
+                {(error.includes('demo notes') || error.includes('API connection unavailable')) && (
                   <p className="text-blue-200/70 text-xs mt-1">
                     Configure your backend server with CORS headers for: https://s-thakur00.github.io
                   </p>
                 )}
-                {error.includes('taking too long') && (
+                
+                {/* Action buttons */}
+                <div className="mt-2 flex flex-wrap gap-2">
                   <button
                     onClick={() => {
                       setError(null);
-                      loadNotes();
+                      isDirtyRef.current = true;
+                      loadNotes(true);
                     }}
-                    className="text-red-200 hover:text-white text-xs underline mt-1"
+                    className="text-red-200 hover:text-white text-xs underline"
                   >
                     Try again
                   </button>
-                )}
+                </div>
               </div>
               <button
                 onClick={() => setError(null)}
-                className="ml-2 text-red-400 hover:text-red-300"
+                className="ml-2 text-red-400 hover:text-red-300 flex-shrink-0"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

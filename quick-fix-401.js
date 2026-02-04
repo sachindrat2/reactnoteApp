@@ -36,7 +36,7 @@
     async function testAPI() {
         console.log('🧪 Testing API connectivity...');
         
-        const baseUrl = 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net';
+        const baseUrl = 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io';
         
         try {
             // Test basic connectivity

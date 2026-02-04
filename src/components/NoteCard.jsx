@@ -90,8 +90,16 @@ const NoteCard = ({ note, onEdit, onEditNote, onDelete, onShowDetail }) => {
   const firstLetter = note.title ? note.title[0].toUpperCase() : '?';
 
   // Carousel state for images
-  const images = Array.isArray(note.images) && note.images.length > 0
-    ? note.images
+  const validImages = Array.isArray(note.images) 
+    ? note.images.filter(img => 
+        img && 
+        typeof img === 'string' && 
+        (img.startsWith('data:') || img.startsWith('http') || img.startsWith('/'))
+      )
+    : [];
+  
+  const images = validImages.length > 0
+    ? validImages
     : [
         'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
         'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80',

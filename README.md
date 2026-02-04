@@ -2,7 +2,7 @@
 
 ## 🚀 Live Demo
 
-[Open the app on Azure (Login/Register)](https://mynoteapp-ehahhgf7dhe8hufc.japanwest-01.azurewebsites.net/login)
+[Open the app on Azure (Login/Register)](https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io/login)
 # Notes App (React + Vite)
 
 
@@ -83,7 +83,7 @@ docker push sachindra785/mynotesapp:v1
 	- The included `nginx.conf` ensures all routes serve `index.html` for React Router support.
 
 ## Environment & API
-- All API calls use the Azure backend: `https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net`
+- All API calls use the Azure backend: `https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io`
 - No localhost or proxy logic in production.
 
 ## Troubleshooting

@@ -35,7 +35,7 @@ const AuthDebug = () => {
       }
       try {
         addLog('Testing token validity...');
-        const baseUrl = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
+        const baseUrl = 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io';
         
         const response = await fetch(`${baseUrl}/notes`, {
           method: 'GET',

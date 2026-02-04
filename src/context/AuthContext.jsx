@@ -145,10 +145,24 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('notesapp_user');
       }
     };
+    
+    // Listen for force logout events from services
+    const handleForceLogout = (event) => {
+      console.log('🚨 Force logout triggered:', event.detail.reason);
+      setUser(null);
+      setIsAuthenticated(false);
+      setIsLoading(false);
+      localStorage.removeItem('notesapp_user');
+      localStorage.removeItem('notesapp_notes_cache');
+    };
+    
     window.addEventListener('auth:token-expired', handleTokenExpired);
-    // Cleanup event listener
+    window.addEventListener('auth:force-logout', handleForceLogout);
+    
+    // Cleanup event listeners
     return () => {
       window.removeEventListener('auth:token-expired', handleTokenExpired);
+      window.removeEventListener('auth:force-logout', handleForceLogout);
     };
   }, [isAuthenticated]);
 
@@ -310,8 +324,13 @@ export const AuthProvider = ({ children }) => {
     
     try {
       await authAPI.logout();
+      console.log('✅ Logout API call successful');
     } catch (error) {
-      console.error('Logout API error:', error);
+      if (error.message.includes('404') || error.message.includes('Not Found')) {
+        console.log('ℹ️ Logout endpoint not available (404) - continuing with client-side logout');
+      } else {
+        console.error('Logout API error:', error);
+      }
     } finally {
       console.log('🧹 Clearing auth state and localStorage');
       setUser(null);

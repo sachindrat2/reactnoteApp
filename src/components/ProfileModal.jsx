@@ -8,9 +8,15 @@ import { profileService } from '../services/profileService.js';
 const ProfileModal = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
   const { user, logout, setUser } = useAuth();
-  const [name, setName] = useState(user?.user?.name || user?.name || '');
-  const [email, setEmail] = useState(user?.user?.email || user?.email || '');
-  const [avatar, setAvatar] = useState(user?.user?.avatar || user?.avatar || null);
+    // Only use username for username, and email for email
+    const initialUsername = user?.user?.username || user?.username || '';
+    const initialEmail = user?.user?.email || user?.email || '';
+    // If initialEmail is actually the username (no @), set to empty
+    const safeInitialEmail = initialEmail && initialEmail.includes('@') ? initialEmail : '';
+    const initialAvatar = user?.user?.avatar || user?.avatar || null;
+    const [username, setUsername] = useState(initialUsername);
+    const [email, setEmail] = useState(safeInitialEmail);
+  const [avatar, setAvatar] = useState(initialAvatar);
   const [avatarFile, setAvatarFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -19,11 +25,31 @@ const ProfileModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const handleAvatarChange = (e) => {
+
+  const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setAvatarFile(file);
-      setAvatar(URL.createObjectURL(file));
+      setIsSaving(true);
+      setError(null);
+      const result = await profileService.uploadAvatar(file);
+      if (result.success) {
+        setAvatar(result.data.avatar);
+        setAvatarFile(null);
+        setUser(prev => {
+          if (!prev) return prev;
+          let updated = { ...prev };
+          if (updated.user) {
+            updated.user.avatar = result.data.avatar;
+          } else {
+            updated.avatar = result.data.avatar;
+          }
+          localStorage.setItem('notesapp_user', JSON.stringify(updated));
+          return updated;
+        });
+      } else {
+        setError(result.error);
+      }
+      setIsSaving(false);
     }
   };
 
@@ -34,7 +60,6 @@ const ProfileModal = ({ isOpen, onClose }) => {
     if (result.success) {
       setAvatar(null);
       setAvatarFile(null);
-      // Update user context (remove avatar)
       setUser(prev => {
         if (!prev) return prev;
         let updated = { ...prev };
@@ -43,13 +68,67 @@ const ProfileModal = ({ isOpen, onClose }) => {
         } else {
           updated.avatar = null;
         }
-        // Also update localStorage
         localStorage.setItem('notesapp_user', JSON.stringify(updated));
         return updated;
       });
     } else {
       setError(result.error);
     }
+    setIsSaving(false);
+  };
+
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setError(null);
+    let updated = false;
+    // Update username if changed
+    if (username !== initialUsername) {
+      const result = await profileService.updateUsername(username);
+      if (result.success) {
+        setUser(prev => {
+          if (!prev) return prev;
+          let upd = { ...prev };
+          if (upd.user) {
+            upd.user.username = username;
+          } else {
+            upd.username = username;
+          }
+          localStorage.setItem('notesapp_user', JSON.stringify(upd));
+          return upd;
+        });
+        updated = true;
+      } else {
+        setError(result.error);
+        setIsSaving(false);
+        return;
+      }
+    }
+    // Update email if changed
+    if (email !== initialEmail) {
+      const result = await profileService.updateEmail(email);
+      if (result.success) {
+        setUser(prev => {
+          if (!prev) return prev;
+          let upd = { ...prev };
+          if (upd.user) {
+            upd.user.email = email;
+          } else {
+            upd.email = email;
+          }
+          localStorage.setItem('notesapp_user', JSON.stringify(upd));
+          return upd;
+        });
+        updated = true;
+      } else {
+        setError(result.error);
+        setIsSaving(false);
+        return;
+      }
+    }
+    // Avatar is handled immediately on change
+    if (updated) onClose();
     setIsSaving(false);
   };
 
@@ -106,7 +185,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
           </svg>
         </button>
         <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">{t('profile', 'Profile')}</h2>
-        <form onSubmit={handleSave} className="flex flex-col items-center gap-4">
+        <form onSubmit={handleSaveProfile} className="flex flex-col items-center gap-4">
           <div className="relative w-24 h-24 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center text-4xl text-white font-bold overflow-hidden">
             {avatar ? (
               <img src={avatar} alt="Avatar" className="object-cover w-full h-full" />
@@ -144,41 +223,45 @@ const ProfileModal = ({ isOpen, onClose }) => {
             />
           </div>
           <div className="w-full">
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('name', 'Name')}</label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
-              required
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('username', 'Username')}</label>
+              <input
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                autoComplete="username"
+                required
+              />
           </div>
           <div className="w-full">
             <label className="block text-sm font-medium text-gray-700 mb-1">{t('email', 'Email')}</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
-              required
-            />
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                autoComplete="email"
+                required={false}
+                placeholder=""
+              />
           </div>
           {error && <div className="text-red-500 text-sm w-full text-center">{error}</div>}
           <div className="flex flex-col gap-2 w-full mt-2">
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="w-full py-2 px-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl font-semibold shadow hover:scale-105 transition-all duration-200 disabled:opacity-60"
-            >
-              {isSaving ? t('saving') : t('saveProfile')}
-            </button>
-            <button
-              type="button"
-              onClick={handleLogoutClick}
-              className="w-full py-2 px-4 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl font-semibold shadow hover:scale-105 hover:bg-red-700 transition-all duration-200"
-            >
-              {t('logout', 'Logout')}
-            </button>
+              <button
+                type="submit"
+                disabled={isSaving || (username === initialUsername && email === safeInitialEmail)}
+                className="w-full py-2 px-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl font-semibold shadow hover:scale-105 transition-all duration-200 disabled:opacity-60"
+              >
+                {isSaving ? t('saving') : t('saveProfile')}
+              </button>
+              {/* Logout button must NOT be type submit! */}
+              <button
+                type="button"
+                onClick={handleLogoutClick}
+                className="w-full py-2 px-4 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl font-semibold shadow hover:scale-105 hover:bg-red-700 transition-all duration-200"
+              >
+                {t('logout', 'Logout')}
+              </button>
           </div>
           {/* Redesigned Logout Confirmation Modal Sheet */}
           {showLogoutConfirm && (
@@ -197,6 +280,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 </div>
                 <div className="flex gap-4 w-full mt-2">
                   <button
+                    type="button"
                     onClick={handleConfirmLogout}
                     className="flex-1 py-2 px-4 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl font-semibold shadow hover:scale-105 transition-all duration-200"
                   >

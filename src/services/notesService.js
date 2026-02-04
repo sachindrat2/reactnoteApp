@@ -1,71 +1,29 @@
-﻿// Reset password API
-export const resetPasswordAPI = async (token, newPassword) => {
-  try {
-    const baseUrl = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
-    const url = `${baseUrl}/reset-password`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, new_password: newPassword })
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      return { success: false, error: data.detail || data.message || 'Failed to reset password.' };
-    }
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message || 'Failed to reset password.' };
-  }
+﻿import { notesAPI, authAPI, handleAPIError } from './api.js';
 
-  // Fetch a single note by ID
-  fetchNoteById: async (noteId) => {
-    try {
-      const note = await notesAPI.getNoteById(noteId);
-      if (note) {
-        return { success: true, data: normalizeNoteData(note) };
-      } else {
-        return { success: false, error: 'Note not found' };
-      }
-    } catch (error) {
-      return { success: false, error: error.message || 'Failed to fetch note' };
-    }
+// Demo notes for when API is unavailable or authentication fails
+const DEMO_NOTES = [
+  {
+    id: 'demo-1',
+    title: 'Welcome to NotesApp! 🎉',
+    content: 'This is a demo note showing while your backend is being configured. Your real notes will appear here once the API connection is established.',
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: 'demo-2',
+    title: 'Getting Started 🚀',
+    content: 'Click the + button to create your first note! You can write, edit, and organize your thoughts here.',
+    createdAt: new Date(Date.now() - 172800000).toISOString(),
+    updatedAt: new Date(Date.now() - 172800000).toISOString()
+  },
+  {
+    id: 'demo-3',
+    title: 'Features ✨',
+    content: 'NotesApp supports rich text editing, search functionality, and real-time sync with your backend server.',
+    createdAt: new Date(Date.now() - 259200000).toISOString(),
+    updatedAt: new Date(Date.now() - 259200000).toISOString()
   }
-};
-// Forgot password API
-export const forgotPasswordAPI = async (email) => {
-  try {
-    const baseUrl = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
-    const url = `${baseUrl}/forgot-password`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      return { success: false, error: data.detail || data.message || 'Failed to send reset email.' };
-    }
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message || 'Failed to send reset email.' };
-  }
-};
-// Verify email API
-export const verifyEmailAPI = async (token) => {
-  try {
-    const baseUrl = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
-    const url = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}`;
-    const response = await fetch(url, { method: 'GET' });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      return { success: false, error: data.detail || data.message || 'Verification failed.' };
-    }
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message || 'Verification failed.' };
-  }
-};
-import { notesAPI, handleAPIError } from './api.js';
+];
 
 // Helper function to normalize note data from API (snake_case to camelCase)
 const normalizeNoteData = (note) => {
@@ -73,10 +31,10 @@ const normalizeNoteData = (note) => {
   
   return {
     ...note,
-    // Ensure camelCase format for dates
     createdAt: note.createdAt || note.created_at,
     updatedAt: note.updatedAt || note.updated_at,
-    // Clean up snake_case versions if they exist
+    tags: Array.isArray(note.tags) ? note.tags : [],
+    images: Array.isArray(note.images) ? note.images : [],
     created_at: undefined,
     updated_at: undefined
   };
@@ -99,9 +57,6 @@ const getCurrentUser = () => {
     }
     
     const userData = JSON.parse(userDataStr);
-    console.log('getCurrentUser - parsed data:', userData);
-
-    // Extract user info from the auth response
     const user = userData.user || userData;
     const userId = user.id;
     const userEmail = user.email;
@@ -112,14 +67,11 @@ const getCurrentUser = () => {
       return null;
     }
     
-    const result = {
+    return {
       id: userId,
       email: userEmail,
       name: userName || userEmail.split('@')[0]
     };
-    
-    console.log('getCurrentUser - result:', result);
-    return result;
   } catch (error) {
     console.error('Error getting current user:', error);
     localStorage.removeItem('notesapp_user');
@@ -127,74 +79,101 @@ const getCurrentUser = () => {
   }
 };
 
-// Notes service functions - Direct API only
+// Helper function to force clear authentication when getting persistent 401s
+const clearAuthenticationState = () => {
+  console.log('🧹 Clearing authentication state due to persistent 401 errors');
+  localStorage.removeItem('notesapp_user');
+  localStorage.removeItem('notesapp_notes_cache');
+  
+  // Dispatch event to force logout
+  window.dispatchEvent(new CustomEvent('auth:force-logout', {
+    detail: { reason: 'Persistent authentication failures - clearing corrupted session' }
+  }));
+};
+
+// Notes service functions - Always use api.js layer
 export const notesService = {
   // Get all notes from API
-  fetchNotes: async (forceRefresh = false, retryCount = 0) => {
+  fetchNotes: async (forceRefresh = false) => {
     const startTime = Date.now();
-    console.log('🚀 fetchNotes START at', new Date().toISOString());
     
     const currentUser = getCurrentUser();
-    console.log('fetchNotes called for user:', currentUser);
     
     if (!currentUser) {
-      console.log('❌ fetchNotes FAIL: No user at', new Date().toISOString());
+      console.log('❌ No user found - showing demo notes');
       return { 
-        success: false, 
-        error: 'User not authenticated. Please login to access your notes.',
-        requiresLogin: true
+        success: true, 
+        data: DEMO_NOTES,
+        isDemo: true,
+        message: 'Please login to access your personal notes'
       };
     }
     
     try {
-      console.log('🔄 Fetching notes from API...');
-      
-      // Debug: Check what token is being used
-      const authData = localStorage.getItem('notesapp_user');
-      if (authData) {
-        const parsed = JSON.parse(authData);
-        console.log('🔑 Debug: Token being used:', {
-          hasToken: !!parsed.access_token,
-          tokenStart: parsed.access_token?.substring(0, 30) + '...',
-          tokenType: parsed.token_type,
-          userEmail: parsed.user?.email
-        });
-      } else {
-        console.log('🚨 NO AUTH DATA found during fetchNotes!');
-      }
+      console.log('🔄 Fetching notes from API for user:', currentUser.email);
       
       const notes = await notesAPI.getAllNotes();
-      console.log('📦 API getAllNotes response:', notes);
-      console.log('⏱️ fetchNotes SUCCESS took', Date.now() - startTime, 'ms');
+      console.log('📦 API response:', notes);
       
       if (notes && Array.isArray(notes)) {
-        console.log('✅ Raw notes from API:', notes.length, 'notes');
         const normalizedNotes = normalizeNotesArray(notes);
-        console.log('🔄 Normalized notes:', normalizedNotes.length, 'notes with proper date formats');
+        
+        // Cache notes for offline access
+        localStorage.setItem('notesapp_notes_cache', JSON.stringify(normalizedNotes));
+        
         return { success: true, data: normalizedNotes };
       } else {
         console.log('❌ API returned invalid notes format:', notes);
-        return { success: false, error: 'Invalid notes data received from server' };
-      }
-    } catch (error) {
-      console.log('❌ fetchNotes FAIL:', error.message, 'took', Date.now() - startTime, 'ms');
-      
-      const isAuthError = error.message.includes('401') ||
-                         error.message.includes('Unauthorized');
-      
-      if (isAuthError) {
-        console.log('🚨 AUTHENTICATION ERROR detected - user needs to re-login');
-        console.log('🚨 This will trigger auto-logout!');
         return { 
           success: false, 
-          error: 'Your session has expired. Please login again to access your notes.',
+          error: `Invalid response from server: ${JSON.stringify(notes)}`
+        };
+      }
+    } catch (error) {
+      console.error('❌ fetchNotes error:', error.message);
+      
+      const isAuthError = error.message.includes('401') ||
+                         error.message.includes('Unauthorized') ||
+                         error.message.includes('Not authenticated');
+      
+      const isServerError = error.message.includes('500') ||
+                           error.message.includes('Internal Server Error');
+      
+      const isNetworkError = error.message.includes('TUNNEL_CONNECTION_FAILED') || 
+                            error.message.includes('NETWORK_ERROR') ||
+                            error.message.includes('Failed to fetch') ||
+                            error.message.includes('ERR_TUNNEL_CONNECTION_FAILED');
+      
+      if (isAuthError) {
+        console.log('🚨 AUTHENTICATION ERROR - clearing corrupted auth state');
+        clearAuthenticationState();
+        return { 
+          success: false, 
+          error: `Authentication failed: ${error.message}. Your session has been cleared. Please login again.`,
           requiresLogin: true
         };
       }
       
+      if (isServerError) {
+        console.log('🚨 SERVER ERROR (500)');
+        return { 
+          success: false, 
+          error: `Server Error (500): ${error.message}. The backend server is experiencing issues.`
+        };
+      }
+      
+      if (isNetworkError) {
+        console.log('🌐 NETWORK ERROR');
+        return { 
+          success: false, 
+          error: `Network Error: ${error.message}. Unable to connect to the server. Please check your internet connection.`
+        };
+      }
+      
+      // For any other error, show the exact error message
       return { 
         success: false, 
-        error: error.message || 'Failed to load notes. Please try again.'
+        error: `Failed to load notes: ${error.message}`
       };
     }
   },
@@ -203,7 +182,7 @@ export const notesService = {
   createNote: async (noteData) => {
     const currentUser = getCurrentUser();
     if (!currentUser) {
-      return { success: false, error: 'User not authenticated.', requiresLogin: true };
+      return { success: false, error: 'Please login to create notes', requiresLogin: true };
     }
 
     try {
@@ -212,22 +191,25 @@ export const notesService = {
       console.log('Note created successfully:', newNote);
       
       const normalizedNote = normalizeNoteData(newNote);
-      console.log('🔄 Normalized created note:', normalizedNote);
       return { success: true, data: normalizedNote };
     } catch (error) {
       console.error('Failed to create note:', error);
       
-      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+      const isAuthError = error.message.includes('401') || 
+                         error.message.includes('Unauthorized') ||
+                         error.message.includes('Not authenticated');
+      
+      if (isAuthError) {
         return { 
           success: false, 
-          error: 'Your session has expired. Please login again.',
+          error: 'Authentication failed. Please refresh the page and try again.',
           requiresLogin: true
         };
       }
       
       return { 
         success: false, 
-        error: handleAPIError(error)
+        error: handleAPIError(error) || 'Failed to create note. Please try again.'
       };
     }
   },
@@ -236,7 +218,7 @@ export const notesService = {
   updateNote: async (noteId, noteData) => {
     const currentUser = getCurrentUser();
     if (!currentUser) {
-      return { success: false, error: 'User not authenticated.', requiresLogin: true };
+      return { success: false, error: 'Please login to update notes', requiresLogin: true };
     }
 
     try {
@@ -245,22 +227,37 @@ export const notesService = {
       console.log('Note updated successfully:', updatedNote);
       
       const normalizedNote = normalizeNoteData(updatedNote);
-      console.log('🔄 Normalized updated note:', normalizedNote);
       return { success: true, data: normalizedNote };
     } catch (error) {
       console.error('Failed to update note:', error);
       
-      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+      const isAuthError = error.message.includes('401') || 
+                         error.message.includes('Unauthorized') ||
+                         error.message.includes('Not authenticated');
+      
+      const isDatabaseError = error.message.includes('no DB row returned') ||
+                             error.message.includes('Failed to create note') ||
+                             error.message.includes('500');
+      
+      if (isAuthError) {
+        clearAuthenticationState();
         return { 
           success: false, 
-          error: 'Your session has expired. Please login again.',
+          error: 'Authentication failed. Your session has been cleared. Please login again.',
           requiresLogin: true
+        };
+      }
+      
+      if (isDatabaseError) {
+        return { 
+          success: false, 
+          error: 'Database error: Unable to save note. The server database may be experiencing issues. Please try again or contact support.'
         };
       }
       
       return { 
         success: false, 
-        error: handleAPIError(error)
+        error: handleAPIError(error) || 'Failed to update note. Please try again.'
       };
     }
   },
@@ -269,7 +266,7 @@ export const notesService = {
   deleteNote: async (noteId) => {
     const currentUser = getCurrentUser();
     if (!currentUser) {
-      return { success: false, error: 'User not authenticated.', requiresLogin: true };
+      return { success: false, error: 'Please login to delete notes', requiresLogin: true };
     }
 
     try {
@@ -280,6 +277,43 @@ export const notesService = {
       return { success: true };
     } catch (error) {
       console.error('Failed to delete note:', error);
+      
+      const isAuthError = error.message.includes('401') || 
+                         error.message.includes('Unauthorized') ||
+                         error.message.includes('Not authenticated');
+      
+      if (isAuthError) {
+        clearAuthenticationState();
+        return { 
+          success: false, 
+          error: 'Authentication failed. Your session has been cleared. Please login again.',
+          requiresLogin: true
+        };
+      }
+      
+      return { 
+        success: false, 
+        error: handleAPIError(error) || 'Failed to delete note. Please try again.'
+      };
+    }
+  },
+
+  // Get single note by ID
+  fetchNoteById: async (noteId) => {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      return { success: false, error: 'User not authenticated.', requiresLogin: true };
+    }
+
+    try {
+      console.log('Fetching note by ID via API:', noteId);
+      const note = await notesAPI.getNoteById(noteId);
+      console.log('Note fetched successfully:', note);
+      
+      const normalizedNote = normalizeNoteData(note);
+      return { success: true, data: normalizedNote };
+    } catch (error) {
+      console.error('Failed to fetch note:', error);
       
       if (error.message.includes('401') || error.message.includes('Unauthorized')) {
         return { 
@@ -305,5 +339,59 @@ export const notesService = {
       note.title?.toLowerCase().includes(term) || 
       note.content?.toLowerCase().includes(term)
     );
+  }
+};
+
+// Email verification API wrapper
+export const verifyEmailAPI = async (token) => {
+  try {
+    const result = await authAPI.verifyEmail(token);
+    return {
+      success: true,
+      data: result,
+      message: result.message || 'Email verified successfully'
+    };
+  } catch (error) {
+    console.error('Email verification failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to verify email'
+    };
+  }
+};
+
+// Forgot password API wrapper
+export const forgotPasswordAPI = async (email) => {
+  try {
+    const result = await authAPI.forgotPassword(email);
+    return {
+      success: true,
+      data: result,
+      message: result.message || 'Password reset email sent successfully'
+    };
+  } catch (error) {
+    console.error('Forgot password failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to send password reset email'
+    };
+  }
+};
+
+// Reset password API wrapper
+export const resetPasswordAPI = async (token, password) => {
+  try {
+    const result = await authAPI.resetPassword(token, password);
+    return {
+      success: true,
+      data: result,
+      message: result.message || 'Password reset successfully'
+    };
+  } catch (error) {
+    console.error('Reset password failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to reset password'
+    };
   }
 };

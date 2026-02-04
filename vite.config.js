@@ -47,7 +47,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net',
+        target: 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
         secure: true,

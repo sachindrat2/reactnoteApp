@@ -37,7 +37,7 @@ if (authData) {
 
     // Test API call
     console.log('🌐 Testing API call...');
-    fetch('https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net/notes', {
+    fetch('https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io/notes', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${parsed.access_token}`,

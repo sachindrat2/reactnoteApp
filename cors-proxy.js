@@ -13,7 +13,7 @@ app.use(cors({
 
 // Proxy middleware
 app.use('/api', createProxyMiddleware({
-  target: 'https://ownnoteapp-hedxcahwcrhwb8hb.canadacentral-01.azurewebsites.net',
+  target: 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io',
   changeOrigin: true,
   pathRewrite: {
     '^/api': '',

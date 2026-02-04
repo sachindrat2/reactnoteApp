@@ -1,5 +1,5 @@
-// API Base Configuration - ALWAYS use absolute URL
-const BACKEND_URL = 'https://notesapps-b0bqb4degeekb6cn.japanwest-01.azurewebsites.net';
+// API Base Configuration - Use environment variable or fallback
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io';
 
 // Force absolute URL to prevent relative resolution issues
 const getAbsoluteBackendUrl = () => {
@@ -89,7 +89,10 @@ const API_ENDPOINTS = {
   REGISTER: '/register',
   LOGOUT: '/logout',
   NOTES: '/notes',
-  REFRESH: '/refresh'
+  REFRESH: '/refresh',
+  VERIFY_EMAIL: '/verify-email',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password'
 };
 
 // Token refresh API function
@@ -296,6 +299,13 @@ const makeRequest = async (url, options = {}, endpoint) => {
       throw new Error('NETWORK_ERROR: Unable to connect to server. Please check your internet connection and try again.');
     }
     
+    // Handle tunnel connection failures specifically
+    if (error.message.includes('ERR_TUNNEL_CONNECTION_FAILED')) {
+      apiConnectionFailed = true;
+      console.error('🚇 Tunnel Connection Failed - server unreachable');
+      throw new Error('TUNNEL_CONNECTION_FAILED: Unable to establish connection to server. Server may be down or unreachable.');
+    }
+    
     // Handle timeout errors
     if (error.message.includes('timeout')) {
       console.error('⏰ Request Timeout - server too slow');
@@ -353,6 +363,32 @@ export const authAPI = {
     return apiRequest(API_ENDPOINTS.LOGOUT, {
       method: 'POST'
     });
+  },
+
+  verifyEmail: async (token) => {
+    return apiRequest(`${API_ENDPOINTS.VERIFY_EMAIL}?token=${token}`, {
+      method: 'GET'
+    });
+  },
+
+  forgotPassword: async (email) => {
+    return apiRequest(API_ENDPOINTS.FORGOT_PASSWORD, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email })
+    });
+  },
+
+  resetPassword: async (token, password) => {
+    return apiRequest(API_ENDPOINTS.RESET_PASSWORD, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ token, password })
+    });
   }
 };
 
@@ -377,17 +413,26 @@ export const notesAPI = {
 
   createNote: async (noteData) => {
     console.log('📝 Creating note with data:', noteData);
-    return apiRequest(API_ENDPOINTS.NOTES, {
+    console.log('📝 Tags being sent:', noteData.tags);
+    console.log('📝 Images being sent:', noteData.images);
+    const result = await apiRequest(API_ENDPOINTS.NOTES, {
       method: 'POST',
       body: JSON.stringify(noteData)
     });
+    console.log('📝 Create note API response:', result);
+    return result;
   },
 
   updateNote: async (noteId, noteData) => {
-    return apiRequest(`${API_ENDPOINTS.NOTES}/${noteId}`, {
+    console.log('📝 Updating note with data:', noteData);
+    console.log('📝 Tags being updated:', noteData.tags);
+    console.log('📝 Images being updated:', noteData.images);
+    const result = await apiRequest(`${API_ENDPOINTS.NOTES}/${noteId}`, {
       method: 'PUT',
       body: JSON.stringify(noteData)
     });
+    console.log('📝 Update note API response:', result);
+    return result;
   },
 
   deleteNote: async (noteId) => {
