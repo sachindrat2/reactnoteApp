@@ -92,7 +92,11 @@ const API_ENDPOINTS = {
   REFRESH: '/refresh',
   VERIFY_EMAIL: '/verify-email',
   FORGOT_PASSWORD: '/forgot-password',
-  RESET_PASSWORD: '/reset-password'
+  RESET_PASSWORD: '/reset-password',
+  PROFILE: '/profile',
+  PROFILE_AVATAR: '/profile/avatar',
+  PROFILE_USERNAME: '/profile/username',
+  PROFILE_EMAIL: '/profile/email'
 };
 
 // Token refresh API function
@@ -388,6 +392,56 @@ export const authAPI = {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ token, password })
+    });
+  },
+
+  // Profile management endpoints
+  getProfile: async () => {
+    return apiRequest(API_ENDPOINTS.PROFILE, {
+      method: 'GET'
+    });
+  },
+
+  updateProfile: async (profileData) => {
+    // Handle both FormData and JSON payloads
+    const isFormData = profileData instanceof FormData;
+    
+    return apiRequest(API_ENDPOINTS.PROFILE, {
+      method: 'PUT',
+      headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+      body: isFormData ? profileData : JSON.stringify(profileData)
+    });
+  },
+
+  updateUsername: async (newUsername) => {
+    return apiRequest(API_ENDPOINTS.PROFILE_USERNAME, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ new_username: newUsername })
+    });
+  },
+
+  updateEmail: async (newEmail) => {
+    return apiRequest(API_ENDPOINTS.PROFILE_EMAIL, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ new_email: newEmail })
+    });
+  },
+
+  uploadAvatar: async (avatarFile) => {
+    const formData = new FormData();
+    formData.append('avatar', avatarFile);
+    
+    return apiRequest(API_ENDPOINTS.PROFILE_AVATAR, {
+      method: 'POST',
+      body: formData
+    });
+  },
+
+  removeAvatar: async () => {
+    return apiRequest(API_ENDPOINTS.PROFILE_AVATAR, {
+      method: 'DELETE'
     });
   }
 };

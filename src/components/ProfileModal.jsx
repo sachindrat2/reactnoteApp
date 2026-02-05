@@ -1,167 +1,229 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { profileService } from '../services/profileService.js';
 
-
-
 const ProfileModal = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
   const { user, logout, setUser } = useAuth();
-    // Only use username for username, and email for email
-    const initialUsername = user?.user?.username || user?.username || '';
-    const initialEmail = user?.user?.email || user?.email || '';
-    // If initialEmail is actually the username (no @), set to empty
-    const safeInitialEmail = initialEmail && initialEmail.includes('@') ? initialEmail : '';
-    const initialAvatar = user?.user?.avatar || user?.avatar || null;
-    const [username, setUsername] = useState(initialUsername);
-    const [email, setEmail] = useState(safeInitialEmail);
+  
+  // Only use username for username, and email for email
+  const initialUsername = user?.user?.username || user?.username || '';
+  const initialEmail = user?.user?.email || user?.email || '';
+  // If initialEmail is actually the username (no @), set to empty
+  const safeInitialEmail = initialEmail && initialEmail.includes('@') ? initialEmail : '';
+  const initialAvatar = user?.user?.avatar || user?.avatar || null;
+  
+  const [username, setUsername] = useState(initialUsername);
+  const [email, setEmail] = useState(safeInitialEmail);
   const [avatar, setAvatar] = useState(initialAvatar);
   const [avatarFile, setAvatarFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = useRef();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  // Fetch current profile data when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchProfile();
+    }
+  }, [isOpen]);
+
+  const fetchProfile = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const result = await profileService.getProfile();
+      if (result.success) {
+        // API returns: { id, username, email, avatar }
+        const profile = result.data;
+        setUsername(profile.username || '');
+        setEmail(profile.email || '');
+        setAvatar(profile.avatar || null);
+        
+        // Update user context with fresh profile data
+        setUser(prev => {
+          if (!prev) return prev;
+          let updated = { ...prev };
+          if (updated.user) {
+            updated.user = { ...updated.user, ...profile };
+          } else {
+            updated = { ...updated, ...profile };
+          }
+          localStorage.setItem('notesapp_user', JSON.stringify(updated));
+          return updated;
+        });
+      } else {
+        console.error('Failed to fetch profile:', result.error);
+        // Don't show error for profile fetch failure, use cached data
+      }
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setIsSaving(true);
-      setError(null);
+    if (!file) return;
+
+    // Validate file type and size
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    const maxSizeInMB = 5;
+    const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+    if (file.size > maxSizeInBytes) {
+      setError(`Image file size must be less than ${maxSizeInMB}MB`);
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+    
+    try {
       const result = await profileService.uploadAvatar(file);
       if (result.success) {
-        setAvatar(result.data.avatar);
+        // API returns: { success: true, data: { avatar: "/path/to/avatar.png" } }
+        const newAvatarUrl = result.data.avatar;
+        setAvatar(newAvatarUrl);
         setAvatarFile(null);
+        
+        // Update user context
         setUser(prev => {
           if (!prev) return prev;
           let updated = { ...prev };
           if (updated.user) {
-            updated.user.avatar = result.data.avatar;
+            updated.user.avatar = newAvatarUrl;
           } else {
-            updated.avatar = result.data.avatar;
+            updated.avatar = newAvatarUrl;
           }
           localStorage.setItem('notesapp_user', JSON.stringify(updated));
           return updated;
         });
+        
+        console.log('✅ Avatar uploaded successfully');
       } else {
-        setError(result.error);
+        setError(result.error || 'Failed to upload avatar');
       }
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      setError('An unexpected error occurred while uploading avatar');
+    } finally {
       setIsSaving(false);
     }
   };
-
-  const handleRemoveAvatar = async () => {
-    setIsSaving(true);
-    setError(null);
-    const result = await profileService.removeAvatar();
-    if (result.success) {
-      setAvatar(null);
-      setAvatarFile(null);
-      setUser(prev => {
-        if (!prev) return prev;
-        let updated = { ...prev };
-        if (updated.user) {
-          updated.user.avatar = null;
-        } else {
-          updated.avatar = null;
-        }
-        localStorage.setItem('notesapp_user', JSON.stringify(updated));
-        return updated;
-      });
-    } else {
-      setError(result.error);
-    }
-    setIsSaving(false);
-  };
-
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setIsSaving(true);
     setError(null);
     let updated = false;
+    
     // Update username if changed
     if (username !== initialUsername) {
       const result = await profileService.updateUsername(username);
       if (result.success) {
+        // API returns: { success: true, data: { username: "new_username" } }
+        const newUsername = result.data.username;
         setUser(prev => {
           if (!prev) return prev;
           let upd = { ...prev };
           if (upd.user) {
-            upd.user.username = username;
+            upd.user.username = newUsername;
           } else {
-            upd.username = username;
+            upd.username = newUsername;
           }
           localStorage.setItem('notesapp_user', JSON.stringify(upd));
           return upd;
         });
         updated = true;
+        console.log('✅ Username updated successfully');
       } else {
         setError(result.error);
         setIsSaving(false);
         return;
       }
     }
+    
     // Update email if changed
     if (email !== initialEmail) {
       const result = await profileService.updateEmail(email);
       if (result.success) {
+        // API returns: { success: true, data: { email: "new_email" } }
+        const newEmail = result.data.email;
         setUser(prev => {
           if (!prev) return prev;
           let upd = { ...prev };
           if (upd.user) {
-            upd.user.email = email;
+            upd.user.email = newEmail;
           } else {
-            upd.email = email;
+            upd.email = newEmail;
           }
           localStorage.setItem('notesapp_user', JSON.stringify(upd));
           return upd;
         });
         updated = true;
+        console.log('✅ Email updated successfully');
       } else {
         setError(result.error);
         setIsSaving(false);
         return;
       }
     }
+    
     // Avatar is handled immediately on change
-    if (updated) onClose();
-    setIsSaving(false);
-  };
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    setIsSaving(true);
-    setError(null);
-    const result = await profileService.updateProfile({ name, email, avatar: avatarFile });
-    if (!result.success) {
-      setError(result.error);
-    } else {
-      setError(null);
-      // Update user context with new profile data
-      setUser(prev => {
-        if (!prev) return prev;
-        let updated = { ...prev };
-        const d = result.data;
-        if (updated.user) {
-          if (d.username) updated.user.name = d.username;
-          if (d.email) updated.user.email = d.email;
-          if ('avatar' in d) updated.user.avatar = d.avatar;
-        } else {
-          if (d.username) updated.name = d.username;
-          if (d.email) updated.email = d.email;
-          if ('avatar' in d) updated.avatar = d.avatar;
-        }
-        // Also update localStorage
-        localStorage.setItem('notesapp_user', JSON.stringify(updated));
-        return updated;
-      });
+    if (updated) {
+      console.log('✅ Profile updated successfully');
       onClose();
     }
     setIsSaving(false);
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!avatar) return;
+    
+    setIsSaving(true);
+    setError(null);
+    
+    try {
+      const result = await profileService.removeAvatar();
+      if (result.success) {
+        setAvatar(null);
+        
+        // Update user context
+        setUser(prev => {
+          if (!prev) return prev;
+          let updated = { ...prev };
+          if (updated.user) {
+            updated.user.avatar = null;
+          } else {
+            updated.avatar = null;
+          }
+          localStorage.setItem('notesapp_user', JSON.stringify(updated));
+          return updated;
+        });
+        
+        console.log('✅ Avatar removed successfully');
+      } else {
+        setError(result.error || 'Failed to remove avatar');
+      }
+    } catch (error) {
+      console.error('Avatar removal error:', error);
+      setError('An unexpected error occurred while removing avatar');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleLogoutClick = () => setShowLogoutConfirm(true);

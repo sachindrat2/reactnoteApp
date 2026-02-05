@@ -1,109 +1,126 @@
 // src/services/profileService.js
-import apiRequest from './api.js';
+import { authAPI, handleAPIError } from './api.js';
 
 export const profileService = {
   async getProfile() {
     try {
-      const res = await apiRequest('/profile', { method: 'GET' });
-      if (res && res.data) {
-        return { success: true, data: res.data };
+      const response = await authAPI.getProfile();
+      
+      // API returns: { id, username, email, avatar }
+      if (response && (response.id || response.username || response.email)) {
+        return { success: true, data: response };
       }
-      if (res && res.success && res.success === true) {
-        return { success: true, data: res };
-      }
-      return { success: false, error: 'No profile data' };
+      
+      return { success: false, error: 'No profile data received' };
     } catch (error) {
-      return { success: false, error: error?.message || 'Failed to fetch profile' };
+      console.error('Profile fetch error:', error);
+      return { success: false, error: handleAPIError(error) };
     }
   },
 
-  async updateProfile({ name, email, avatar }) {
+  async updateUsername(newUsername) {
     try {
-      const formData = new FormData();
-      if (name) formData.append('name', name);
-      if (email) formData.append('email', email);
-      if (avatar) formData.append('avatar', avatar);
-      const res = await apiRequest('/profile', {
-        method: 'PUT',
-        body: formData
-      });
-      if (res && res.data && res.data.success) {
-        return { success: true, data: res.data };
+      const response = await authAPI.updateUsername(newUsername);
+      
+      // API returns: { success: true, username: "new_username" }
+      if (response && response.success && response.username) {
+        return { success: true, data: { username: response.username } };
       }
-      if (res && res.success === true) {
-        return { success: true, data: res };
-      }
-      return { success: false, error: res?.data?.message || 'Profile update failed' };
+      
+      return { success: false, error: response?.error || 'Failed to update username' };
     } catch (error) {
-      return { success: false, error: error?.message || 'Failed to update profile' };
+      console.error('Username update error:', error);
+      return { success: false, error: handleAPIError(error) };
+    }
+  },
+
+  async updateEmail(newEmail) {
+    try {
+      const response = await authAPI.updateEmail(newEmail);
+      
+      // API returns: { success: true, email: "new_email" }
+      if (response && response.success && response.email) {
+        return { success: true, data: { email: response.email } };
+      }
+      
+      return { success: false, error: response?.error || 'Failed to update email' };
+    } catch (error) {
+      console.error('Email update error:', error);
+      return { success: false, error: handleAPIError(error) };
+    }
+  },
+
+  async uploadAvatar(avatarFile) {
+    try {
+      const response = await authAPI.uploadAvatar(avatarFile);
+      
+      // API returns: { success: true, avatar: "/path/to/avatar.png" }
+      if (response && response.success && response.avatar) {
+        return { success: true, data: { avatar: response.avatar } };
+      }
+      
+      return { success: false, error: response?.error || 'Failed to upload avatar' };
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      return { success: false, error: handleAPIError(error) };
     }
   },
 
   async removeAvatar() {
     try {
-      const res = await apiRequest('/profile/avatar', { method: 'DELETE' });
-      if (res && res.data && res.data.success) {
-        return { success: true, data: res.data };
+      const response = await authAPI.removeAvatar();
+      
+      // API returns: { success: true, message: "Avatar removed." }
+      if (response && response.success) {
+        return { success: true, data: { message: response.message || 'Avatar removed' } };
       }
-      if (res && res.success === true) {
-        return { success: true, data: res };
-      }
-      return { success: false, error: res?.data?.message || 'Failed to remove avatar' };
+      
+      return { success: false, error: response?.message || 'Failed to remove avatar' };
     } catch (error) {
-      return { success: false, error: error?.message || 'Failed to remove avatar' };
+      console.error('Avatar removal error:', error);
+      return { success: false, error: handleAPIError(error) };
     }
   },
 
-  // PATCH /profile/username
-  async updateUsername(newUsername) {
+  // Legacy method - kept for backward compatibility but uses individual endpoints
+  async updateProfile({ name, email, avatar }) {
     try {
-      const res = await apiRequest('/profile/username', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ new_username: newUsername })
-      });
-      if (res && res.success) {
-        return { success: true, data: res };
+      let results = [];
+      
+      // Update username if provided
+      if (name) {
+        const result = await this.updateUsername(name);
+        if (!result.success) {
+          return result;
+        }
+        results.push({ username: result.data.username });
       }
-      return { success: false, error: res?.error || 'Failed to update username' };
-    } catch (error) {
-      return { success: false, error: error?.message || 'Failed to update username' };
-    }
-  },
-
-  // PATCH /profile/email
-  async updateEmail(newEmail) {
-    try {
-      const res = await apiRequest('/profile/email', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ new_email: newEmail })
-      });
-      if (res && res.success) {
-        return { success: true, data: res };
+      
+      // Update email if provided
+      if (email) {
+        const result = await this.updateEmail(email);
+        if (!result.success) {
+          return result;
+        }
+        results.push({ email: result.data.email });
       }
-      return { success: false, error: res?.error || 'Failed to update email' };
-    } catch (error) {
-      return { success: false, error: error?.message || 'Failed to update email' };
-    }
-  },
-
-  // POST /profile/avatar
-  async uploadAvatar(avatarFile) {
-    try {
-      const formData = new FormData();
-      formData.append('avatar', avatarFile);
-      const res = await apiRequest('/profile/avatar', {
-        method: 'POST',
-        body: formData,
-        headers: {}, // Let browser set Content-Type for FormData
-      });
-      if (res && res.success) {
-        return { success: true, data: res };
+      
+      // Upload avatar if provided
+      if (avatar) {
+        const result = await this.uploadAvatar(avatar);
+        if (!result.success) {
+          return result;
+        }
+        results.push({ avatar: result.data.avatar });
       }
-      return { success: false, error: res?.error || 'Failed to upload avatar' };
+      
+      // Combine all results
+      const combinedData = results.reduce((acc, curr) => ({ ...acc, ...curr }), {});
+      return { success: true, data: combinedData };
+      
     } catch (error) {
-      return { success: false, error: error?.message || 'Failed to upload avatar' };
+      console.error('Profile update error:', error);
+      return { success: false, error: handleAPIError(error) };
     }
   },
 };
