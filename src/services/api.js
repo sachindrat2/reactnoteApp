@@ -102,12 +102,31 @@ const API_ENDPOINTS = {
 // Token refresh API function
 export const refreshTokenAPI = async () => {
   const url = `${getApiUrl()}${API_ENDPOINTS.REFRESH}`;
-  const response = await fetch(url, {
-    method: 'POST',
-    credentials: 'include', // <-- send cookies!
-  });
-  if (!response.ok) throw new Error('Failed to refresh token');
-  return await response.json();
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      credentials: 'include', // <-- send cookies!
+      headers: {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+      }
+    });
+    
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Refresh token is invalid/expired
+        console.log('🚫 Refresh token expired or invalid (401)');
+        throw new Error('Refresh token expired - please login again');
+      }
+      throw new Error(`Failed to refresh token: ${response.status} ${response.statusText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('🔄 Token refresh error:', error.message);
+    throw error;
+  }
 };
 
 // Helper function to get auth headers

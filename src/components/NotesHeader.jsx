@@ -98,7 +98,7 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount, onLogo
                   title={t('profile', 'Profile')}
                 >
                   <span className="text-white text-xs sm:text-sm font-medium">
-                    {(user?.user?.name || user?.name || user?.user?.email || user?.email || 'U').charAt(0).toUpperCase()}
+                    {(user?.user?.name || user?.name || user?.user?.email || user?.email || 'U').toString().charAt(0).toUpperCase()}
                   </span>
                 </button>
               )}

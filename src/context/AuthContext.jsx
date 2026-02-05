@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { authAPI, handleAPIError, refreshTokenAPI } from '../services/api.js';
 
 const AuthContext = createContext(undefined);
@@ -65,6 +65,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Prevent multiple simultaneous token refresh attempts
+  const refreshInProgress = useRef(false);
 
   // Initialize auth state from localStorage on mount and auto-logout if token expired
   useEffect(() => {
@@ -79,7 +82,15 @@ export const AuthProvider = ({ children }) => {
           const now = new Date();
           if (now > expDate) {
             console.log('⏰ Token expired at', expDate.toISOString(), '- attempting refresh');
-            // Try to refresh token
+            
+            // Prevent multiple simultaneous refresh attempts
+            if (refreshInProgress.current) {
+              console.log('🔄 Token refresh already in progress, skipping...');
+              return true;
+            }
+            
+            refreshInProgress.current = true;
+            
             try {
               const refreshed = await refreshTokenAPI();
               if (refreshed && refreshed.access_token) {
@@ -90,18 +101,29 @@ export const AuthProvider = ({ children }) => {
                 setIsLoading(false);
                 localStorage.setItem('notesapp_user', JSON.stringify(newUser));
                 console.log('🔄 Token refreshed and stored');
+                refreshInProgress.current = false;
                 return false; // Not expired anymore
               } else {
                 throw new Error('No access_token in refresh response');
               }
             } catch (refreshErr) {
               console.error('❌ Token refresh failed:', refreshErr);
+              console.log('🧹 Clearing all auth data due to refresh failure');
+              
+              // Clear all authentication data
               setUser(null);
               setIsAuthenticated(false);
               setIsLoading(false);
               localStorage.removeItem('notesapp_user');
-              window.dispatchEvent(new CustomEvent('auth:token-expired', { detail: { reason: 'Token expired and refresh failed' } }));
-              return true;
+              localStorage.removeItem('notesapp_notes_cache');
+              
+              // Dispatch event to trigger logout UI
+              window.dispatchEvent(new CustomEvent('auth:token-expired', { 
+                detail: { reason: 'Token expired and refresh failed - please login again' } 
+              }));
+              
+              refreshInProgress.current = false;
+              return true; // Token is expired and cannot be refreshed
             }
           }
         }
