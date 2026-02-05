@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>NotesApp - Personal Note Taking</title>
+    
+    <!-- PWA Manifest and Icons -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" href="/app-icon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#8b5cf6" />
+    <meta name="background-color" content="#1f2937" />
+    <meta name="description" content="A modern, responsive note-taking application with offline support" />
+    <meta name="keywords" content="notes, notepad, productivity, offline, PWA" />
+    <meta name="author" content="NotesApp" />
+    
+    <!-- Mobile optimization -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="NotesApp" />
+    
+    <!-- Cache busting meta tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="version" content="2.0.3-1770258830348" />
+    <meta name="build-timestamp" content="2026-02-05T02:33:50.348Z" />
+    
+    <!-- Start Single Page Apps for GitHub Pages -->
+    <script type="text/javascript">
+      // Single Page Apps for GitHub Pages
+      // MIT License
+      // https://github.com/rafgraph/spa-github-pages
+      // This script checks to see if a redirect is present in the query string,
+      // converts it back into the correct url and adds it to the
+      // Handle redirected routes from 404.html
+      (function(l) {
+        var params = new URLSearchParams(l.search);
+        var redirectedPath = params.get('p');
+        
+        if (redirectedPath) {
+          console.log('Handling redirected route:', redirectedPath);
+          // Replace the current URL with the intended route
+          window.history.replaceState(null, null, 
+            l.pathname + redirectedPath + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+    <!-- End Single Page Apps for GitHub Pages -->
+    
+    <!-- Service Worker Registration -->
+    <script>
+      // Service Worker temporarily disabled to fix 404 errors
+      console.log('Service Worker registration disabled to prevent 404 errors');
+      
+      // Debug: Log all failed resource loads
+      window.addEventListener('error', (e) => {
+        if (e.target !== window) {
+          console.error('Failed to load resource:', e.target.src || e.target.href, e);
+        }
+      }, true);
+      
+      // Advanced Cache-Busting and Auto-Refresh Logic
+      let assetLoadFailures = 0;
+      const MAX_ASSET_FAILURES = 2;
+      
+      // Detect asset loading failures and auto-refresh
+      window.addEventListener('error', (e) => {
+        if (e.target !== window && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+          assetLoadFailures++;
+          console.warn(`Asset load failure ${assetLoadFailures}/${MAX_ASSET_FAILURES}:`, e.target.src || e.target.href);
+          
+          if (assetLoadFailures >= MAX_ASSET_FAILURES) {
+            console.warn('Multiple asset failures detected. Forcing cache refresh...');
+            
+            // Clear all caches and reload
+            if ('caches' in window) {
+              caches.keys().then(cacheNames => {
+                return Promise.all(
+                  cacheNames.map(cacheName => {
+                    console.log('Clearing cache:', cacheName);
+                    return caches.delete(cacheName);
+                  })
+                );
+              }).then(() => {
+                console.log('All caches cleared. Reloading with cache bypass...');
+                window.location.reload(true);
+              });
+            } else {
+              // Fallback: reload with cache bypass
+              window.location.reload(true);
+            }
+          }
+        }
+      }, true);
+      
+      // Check if we're loading the correct assets
+      window.addEventListener('DOMContentLoaded', () => {
+        const scripts = document.querySelectorAll('script[src]');
+        const stylesheets = document.querySelectorAll('link[rel="stylesheet"]');
+        
+        let assetsToCheck = Array.from(scripts).concat(Array.from(stylesheets));
+        let checkedAssets = 0;
+        let failedAssets = 0;
+        
+        assetsToCheck.forEach(asset => {
+          const url = asset.src || asset.href;
+          if (url && url.includes('/assets/')) {
+            fetch(url, { method: 'HEAD' })
+              .then(response => {
+                checkedAssets++;
+                if (!response.ok) {
+                  failedAssets++;
+                  console.error('Asset check failed:', url, response.status);
+                }
+                
+                // If all assets checked and we have failures, refresh
+                if (checkedAssets === assetsToCheck.length && failedAssets > 0) {
+                  console.warn(`${failedAssets} assets failed. Auto-refreshing...`);
+                  setTimeout(() => window.location.reload(true), 1000);
+                }
+              })
+              .catch(() => {
+                checkedAssets++;
+                failedAssets++;
+                console.error('Asset check network error:', url);
+                
+                if (checkedAssets === assetsToCheck.length && failedAssets > 0) {
+                  console.warn(`${failedAssets} assets failed. Auto-refreshing...`);
+                  setTimeout(() => window.location.reload(true), 1000);
+                }
+              });
+          }
+        });
+      });
+      
+      if (false && 'serviceWorker' in navigator && window.location.hostname !== 'localhost') {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/reactnoteApp/sw.js', {
+            scope: '/reactnoteApp/'
+          })
+          .then((registration) => {
+            console.log('SW registered: ', registration);
+            
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New version available
+                  if (confirm('New version available. Reload to update?')) {
+                    window.location.reload();
+                  }
+                }
+              });
+            });
+          })
+          .catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
+        });
+      }
+      
+      // PWA Install Prompt
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show install button or notification
+        const installBtn = document.getElementById('install-btn');
+        if (installBtn) {
+          installBtn.style.display = 'block';
+          installBtn.addEventListener('click', () => {
+            installBtn.style.display = 'none';
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+              if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+              }
+              deferredPrompt = null;
+            });
+          });
+        }
+      });
+    </script>
+    <script type="module" crossorigin src="/assets/index-0c2a0faa.js?v=1770258830348"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-da68e5f0.js?v=1770258830348">
+    <link rel="modulepreload" crossorigin href="/assets/utils-151f953e.js?v=1770258830348">
+    <link rel="modulepreload" crossorigin href="/assets/router-0b9e58e5.js?v=1770258830348">
+    <link rel="stylesheet" href="/assets/index-99ea3772.css?v=1770258830348">
+  </head>
+  <body>
+    <div id="root"></div>
+    
+  </body>
+</html>
