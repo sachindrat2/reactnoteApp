@@ -83,7 +83,6 @@ const getCurrentUser = () => {
 const clearAuthenticationState = () => {
   console.log('🧹 Clearing authentication state due to persistent 401 errors');
   localStorage.removeItem('notesapp_user');
-  localStorage.removeItem('notesapp_notes_cache');
   
   // Dispatch event to force logout
   window.dispatchEvent(new CustomEvent('auth:force-logout', {
@@ -117,9 +116,6 @@ export const notesService = {
       
       if (notes && Array.isArray(notes)) {
         const normalizedNotes = normalizeNotesArray(notes);
-        
-        // Cache notes for offline access
-        localStorage.setItem('notesapp_notes_cache', JSON.stringify(normalizedNotes));
         
         return { success: true, data: normalizedNotes };
       } else {

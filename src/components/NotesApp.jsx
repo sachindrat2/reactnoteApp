@@ -62,18 +62,27 @@ const NotesApp = () => {
       if (result && result.success) {
         const notesData = Array.isArray(result.data) ? result.data : [];
         setNotes(notesData);
+        
+        // Show appropriate messages for different scenarios
         if (result.isDemo) {
           setError(result.message || 'Showing demo notes - API connection unavailable');
+        } else {
+          setError(null); // Clear any previous errors for successful API calls
         }
       } else {
         let errorMessage = result?.error || 'Failed to load notes';
-        if (errorMessage.includes('TIMEOUT_ERROR')) {
-          errorMessage = 'Server is taking too long to respond. Your cached notes are displayed below.';
+        
+        // Handle specific tunnel connection failures
+        if (errorMessage.includes('TUNNEL_CONNECTION_FAILED') || errorMessage.includes('ERR_TUNNEL_CONNECTION_FAILED')) {
+          errorMessage = '🌐 Connection failed: Server unreachable. Check if the server is running.';
+        } else if (errorMessage.includes('TIMEOUT_ERROR')) {
+          errorMessage = '⏰ Server timeout: Request took too long. Please try again.';
         } else if (errorMessage.includes('CORS_ERROR')) {
-          errorMessage = 'Connection blocked by browser security. Using cached data.';
+          errorMessage = '🔒 Access blocked: Browser security restrictions.';
         } else if (errorMessage.includes('NETWORK_ERROR')) {
-          errorMessage = 'No internet connection. Using cached data.';
+          errorMessage = '📡 No internet connection detected.';
         }
+        
         setError(errorMessage);
       }
     } catch (error) {
@@ -390,23 +399,27 @@ const NotesApp = () => {
               </div>
             )}
       
-      {/* Removed offline mode indicator - only using real API authentication now */}
-      
       {/* Error Display */}
-      {error && (
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 pt-4">
+      <div className="container mx-auto px-2 sm:px-3 lg:px-6 pt-2 sm:pt-4">
+        {error && (
           <div className={`${
             error.includes('demo notes') || error.includes('API connection unavailable') || error.includes('Showing demo notes')
               ? 'bg-blue-900/30 border border-blue-400/30' 
+              : error.includes('Connection failed') || error.includes('TUNNEL_CONNECTION_FAILED') || error.includes('Server unreachable')
+              ? 'bg-orange-900/30 border border-orange-400/30'
               : 'bg-red-900/50 border border-red-500/50'
-          } rounded-lg p-4 mb-4 backdrop-blur-sm`}>
+          } rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 backdrop-blur-sm`}>
             <div className="flex items-start">
               {error.includes('demo notes') || error.includes('API connection unavailable') || error.includes('Showing demo notes') ? (
-                <svg className="w-5 h-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 mr-2 sm:mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
+              ) : error.includes('Connection failed') || error.includes('TUNNEL_CONNECTION_FAILED') || error.includes('Server unreachable') ? (
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400 mr-2 sm:mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
               ) : (
-                <svg className="w-5 h-5 text-red-400 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 mr-2 sm:mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               )}
@@ -414,12 +427,23 @@ const NotesApp = () => {
                 <p className={`${
                   error.includes('demo notes') || error.includes('API connection unavailable') || error.includes('Showing demo notes')
                     ? 'text-blue-300' 
+                    : error.includes('Connection failed') || error.includes('TUNNEL_CONNECTION_FAILED') || error.includes('Server unreachable')
+                    ? 'text-orange-300'
                     : 'text-red-300'
-                } text-sm break-words`}>{error}</p>
+                } text-xs sm:text-sm break-words`}>{error}</p>
                 
-                {/* Helpful info for demo notes */}
-                {(error.includes('demo notes') || error.includes('API connection unavailable')) && (
-                  <p className="text-blue-200/70 text-xs mt-1">
+                {/* Helpful info for connection issues */}
+                {error.includes('Connection failed') || error.includes('TUNNEL_CONNECTION_FAILED') || error.includes('Server unreachable') ? (
+                  <div className="text-orange-200/70 text-xs mt-2 space-y-1">
+                    <p>Possible solutions:</p>
+                    <ul className="ml-4 space-y-1 list-disc">
+                      <li>Check if the backend server is running</li>
+                      <li>Verify your network connection</li>
+                      <li>Try refreshing the page</li>
+                    </ul>
+                  </div>
+                ) : (error.includes('demo notes') || error.includes('API connection unavailable')) && (
+                  <p className="text-blue-200/70 text-xs mt-1 hidden sm:block">
                     Configure your backend server with CORS headers for: https://s-thakur00.github.io
                   </p>
                 )}
@@ -440,19 +464,18 @@ const NotesApp = () => {
               </div>
               <button
                 onClick={() => setError(null)}
-                className="ml-2 text-red-400 hover:text-red-300 flex-shrink-0"
+                className="ml-1 sm:ml-2 text-red-400 hover:text-red-300 flex-shrink-0 p-1"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
           </div>
-        </div>
-      )}
-      
+        )}
+      </div>
       <main
-        className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-32 animate-slide-in-right relative z-10"
+        className="container mx-auto px-2 sm:px-3 lg:px-6 py-3 sm:py-4 lg:py-6 pb-24 sm:pb-32 animate-slide-in-right relative z-10"
       >
         {isLoading ? (
           <div className="py-10 px-2">
@@ -494,11 +517,11 @@ const NotesApp = () => {
     {/* Floating Add Note Button - Circular FAB, outside main container for true floating */}
     <button
       onClick={() => setIsAddModalOpen(true)}
-      className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-2xl hover:scale-110 hover:from-purple-600 hover:to-pink-600 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-pink-300"
+      className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50 flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-2xl hover:scale-110 hover:from-purple-600 hover:to-pink-600 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-pink-300"
       style={{ boxShadow: '0 8px 32px 0 rgba(80,0,255,0.18)' }}
       aria-label="Add Note"
     >
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
       </svg>
     </button>

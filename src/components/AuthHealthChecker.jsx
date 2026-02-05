@@ -3,6 +3,11 @@ import { useAuth } from '../context/AuthContext';
 import { notesAPI } from '../services/api.js';
 
 const AuthHealthChecker = () => {
+  // Disable the component entirely in production
+  if (import.meta.env.PROD) {
+    return null;
+  }
+
   const { user, isAuthenticated, logout } = useAuth();
   const [healthStatus, setHealthStatus] = useState('checking');
   const [lastCheck, setLastCheck] = useState(null);
