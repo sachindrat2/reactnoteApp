@@ -5,7 +5,7 @@ const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://notesapp.agreeableo
 const getAbsoluteBackendUrl = () => {
   // Ensure we always return an absolute URL
   const url = BACKEND_URL.startsWith('http') ? BACKEND_URL : `https://${BACKEND_URL}`;
-  console.log('🔗 Backend URL:', url);
+  console.log('Backend URL:', url);
   return url;
 };
 
@@ -13,7 +13,7 @@ const getAbsoluteBackendUrl = () => {
 const APP_VERSION = import.meta.env.VITE_APP_VERSION || '2.0.0';
 const IS_PRODUCTION = import.meta.env.PROD;
 
-console.log(`🔄 API Service loaded - Version: ${APP_VERSION} - Environment: ${IS_PRODUCTION ? 'Production' : 'Development'}`);
+console.log(`API Service loaded - Version: ${APP_VERSION} - Environment: ${IS_PRODUCTION ? 'Production' : 'Development'}`);
 
 // Global flag to track if we should skip API attempts (for better UX)
 let apiConnectionFailed = false;
@@ -33,7 +33,7 @@ const CORS_PROXIES = [
 
 // Final fallback: try direct connection with no-cors mode
 const tryNoCorsRequest = async (url, options = {}) => {
-  console.log('🔄 Trying no-cors mode as final fallback...');
+  console.log('Trying no-cors mode as final fallback...');
   
   try {
     const response = await fetch(url, {
@@ -116,7 +116,7 @@ export const refreshTokenAPI = async () => {
     if (!response.ok) {
       if (response.status === 401) {
         // Refresh token is invalid/expired
-        console.log('🚫 Refresh token expired or invalid (401)');
+        console.log('Refresh token expired or invalid (401)');
         throw new Error('Refresh token expired - please login again');
       }
       throw new Error(`Failed to refresh token: ${response.status} ${response.statusText}`);
@@ -124,7 +124,7 @@ export const refreshTokenAPI = async () => {
     
     return await response.json();
   } catch (error) {
-    console.error('🔄 Token refresh error:', error.message);
+    console.error('Token refresh error:', error.message);
     throw error;
   }
 };
@@ -133,7 +133,7 @@ export const refreshTokenAPI = async () => {
 const getAuthHeaders = () => {
   const userDataStr = localStorage.getItem('notesapp_user');
   if (!userDataStr) {
-    console.log('🔑 No authentication data founds');
+    console.log('No authentication data founds');
     return {
       'Content-Type': 'application/json'
     };
@@ -154,7 +154,7 @@ const getAuthHeaders = () => {
   // Get the access token
   const token = user.access_token;
   if (!token) {
-    console.warn('� No access token found in user data');
+    console.warn('No access token found in user data');
     return {
       'Content-Type': 'application/json'
     };
@@ -282,7 +282,7 @@ const makeRequest = async (url, options = {}, endpoint) => {
         localStorage.removeItem('notesapp_user');
         
         // Dispatch event for components to handle
-        console.log('� Dispatching token expiration event due to 401 error');
+        console.log('Dispatching token expiration event due to 401 error');
         window.dispatchEvent(new CustomEvent('auth:token-expired', {
           detail: { 
             reason: 'API returned 401 Unauthorized',
@@ -300,7 +300,9 @@ const makeRequest = async (url, options = {}, endpoint) => {
         return data;
       }
       
-      const errorMessage = data?.detail || data?.message || data || `HTTP error! status: ${response.status} ${response.statusText}`;
+      const errorMessage = data?.detail || data?.message || 
+        (typeof data === 'string' ? data : JSON.stringify(data)) || 
+        `HTTP error! status: ${response.status} ${response.statusText}`;
       throw new Error(errorMessage);
     }
 
@@ -308,17 +310,16 @@ const makeRequest = async (url, options = {}, endpoint) => {
   } catch (error) {
     console.error('API request failed:', error);
     
-    // Detect CORS-specific errors
     if (detectCorsError(error)) {
       corsFailureDetected = true;
-      console.error('🚨 CORS Error Detected:', error.message);
-      throw new Error('CORS_ERROR: Unable to connect to server due to CORS policy restrictions. Please check your network connection and try again.');
+      console.error('CORS Error Detected:', error.message);
+      throw new Error('CORS_ERROR: Unable to connect to server due to CORS policy restrictions.');
     }
     
     // Handle specific network errors
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
       apiConnectionFailed = true;
-      console.error('🌐 Network Error - unable to connect to server');
+      console.error('Network Error - unable to connect to server');
       throw new Error('NETWORK_ERROR: Unable to connect to server. Please check your internet connection and try again.');
     }
     

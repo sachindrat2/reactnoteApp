@@ -52,6 +52,12 @@ export const profileService = {
 
   async uploadAvatar(avatarFile) {
     try {
+      console.log('📤 Uploading avatar file:', {
+        name: avatarFile.name,
+        size: avatarFile.size,
+        type: avatarFile.type
+      });
+      
       const response = await authAPI.uploadAvatar(avatarFile);
       
       // API returns: { success: true, avatar: "/path/to/avatar.png" }
@@ -59,9 +65,22 @@ export const profileService = {
         return { success: true, data: { avatar: response.avatar } };
       }
       
-      return { success: false, error: response?.error || 'Failed to upload avatar' };
+      console.error('❌ Avatar upload failed:', response);
+      return { success: false, error: response?.error || response?.message || 'Failed to upload avatar' };
     } catch (error) {
       console.error('Avatar upload error:', error);
+      
+      // Try to extract meaningful error message
+      let errorMessage = 'Failed to upload avatar';
+      if (error.message) {
+        try {
+          const parsed = JSON.parse(error.message);
+          errorMessage = parsed.detail || parsed.message || error.message;
+        } catch {
+          errorMessage = error.message;
+        }
+      }
+      
       return { success: false, error: handleAPIError(error) };
     }
   },

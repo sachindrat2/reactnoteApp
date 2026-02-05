@@ -81,17 +81,39 @@ const ProfileModal = ({ isOpen, onClose }) => {
       return;
     }
 
-    const maxSizeInMB = 5;
+    const maxSizeInMB = 2; // Reduced from 5MB to 2MB
     const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
       setError(`Image file size must be less than ${maxSizeInMB}MB`);
       return;
     }
 
+    // Check image dimensions (optional)
+    const img = new Image();
+    img.onload = async () => {
+      const maxDimension = 1024;
+      if (img.width > maxDimension || img.height > maxDimension) {
+        setError(`Image dimensions should not exceed ${maxDimension}x${maxDimension} pixels`);
+        return;
+      }
+      
+      // Proceed with upload
+      await uploadAvatar(file);
+    };
+    
+    img.onerror = () => {
+      setError('Invalid image file format');
+    };
+    
+    img.src = URL.createObjectURL(file);
+  };
+
+  const uploadAvatar = async (file) => {
     setIsSaving(true);
     setError(null);
     
     try {
+      console.log('🔄 Starting avatar upload...');
       const result = await profileService.uploadAvatar(file);
       if (result.success) {
         // API returns: { success: true, data: { avatar: "/path/to/avatar.png" } }
@@ -114,6 +136,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
         
         console.log('✅ Avatar uploaded successfully');
       } else {
+        console.error('❌ Avatar upload failed:', result.error);
         setError(result.error || 'Failed to upload avatar');
       }
     } catch (error) {
