@@ -135,20 +135,40 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
 
     // Listen for token expiration events from API layer
-    const handleTokenExpired = (event) => {
+    const handleTokenExpired = async (event) => {
       console.log('🚨 Token expiration event received:', event.detail);
       if (isAuthenticated) {
-        console.log('🚪 Auto-logout due to token expiration');
+        console.log('🚪 Auto-logout due to token expiration - calling logout API');
+        
+        // Call the proper logout function which includes API call
+        try {
+          await authAPI.logout();
+          console.log('✅ Logout API call successful during token expiration');
+        } catch (error) {
+          console.log('ℹ️ Logout API failed during token expiration (expected):', error.message);
+        }
+        
+        // Clear auth state
         setUser(null);
         setIsAuthenticated(false);
         setIsLoading(false);
         localStorage.removeItem('notesapp_user');
+        localStorage.removeItem('notesapp_notes_cache');
       }
     };
     
     // Listen for force logout events from services
-    const handleForceLogout = (event) => {
+    const handleForceLogout = async (event) => {
       console.log('🚨 Force logout triggered:', event.detail.reason);
+      
+      // Call logout API if we have a valid session
+      try {
+        await authAPI.logout();
+        console.log('✅ Logout API call successful during force logout');
+      } catch (error) {
+        console.log('ℹ️ Logout API failed during force logout:', error.message);
+      }
+      
       setUser(null);
       setIsAuthenticated(false);
       setIsLoading(false);
