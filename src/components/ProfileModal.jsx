@@ -11,7 +11,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
   const initialUsername = user?.user?.username || user?.username || '';
   const initialEmail = user?.user?.email || user?.email || '';
   // If initialEmail is actually the username (no @), set to empty
-  const safeInitialEmail = initialEmail && initialEmail.includes('@') ? initialEmail : '';
+  const safeInitialEmail = initialEmail && typeof initialEmail === 'string' && initialEmail.includes('@') ? initialEmail : '';
   const initialAvatar = user?.user?.avatar || user?.avatar || null;
   
   const [username, setUsername] = useState(initialUsername);
@@ -252,7 +252,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
             {avatar ? (
               <img src={avatar} alt="Avatar" className="object-cover w-full h-full" />
             ) : (
-              (user?.user?.name || user?.name || user?.user?.email || user?.email || 'U').charAt(0).toUpperCase()
+              (user?.user?.name || user?.name || user?.user?.email || user?.email || 'U').toString().charAt(0).toUpperCase()
             )}
             <button
               type="button"

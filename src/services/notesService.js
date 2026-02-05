@@ -70,7 +70,7 @@ const getCurrentUser = () => {
     return {
       id: userId,
       email: userEmail,
-      name: userName || userEmail.split('@')[0]
+      name: userName || (typeof userEmail === 'string' ? userEmail.split('@')[0] : 'User')
     };
   } catch (error) {
     console.error('Error getting current user:', error);
