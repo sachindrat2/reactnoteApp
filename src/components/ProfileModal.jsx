@@ -37,7 +37,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
   const constructAvatarUrl = (avatarPath) => {
     if (!avatarPath) return '';
     if (avatarPath.startsWith('http')) return avatarPath;
-    return `https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io${avatarPath}`;
+    return `https://backend-noteapp-new.salmonground-95e8af22.japaneast.azurecontainerapps.io${avatarPath}`;
   };
 
   // Fetch current profile data when modal opens
@@ -153,7 +153,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
         // Construct full URL for avatar display
         const fullAvatarUrl = newAvatarUrl.startsWith('http') 
           ? newAvatarUrl 
-          : `https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io${newAvatarUrl}`;
+          : `https://backend-noteapp-new.salmonground-95e8af22.japaneast.azurecontainerapps.io${newAvatarUrl}`;
         
         console.log('📸 Full avatar URL constructed:', fullAvatarUrl);
         setAvatar(fullAvatarUrl);
