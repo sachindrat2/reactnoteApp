@@ -33,9 +33,10 @@ const NoteDetail = ({ note, onEdit, onClose }) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6 animate-fade-in">
+    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6 animate-fade-in overflow-hidden">
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-2xl font-bold text-gray-900 break-words leading-tight">{note.title}</h2>
+        <h2 className="text-2xl font-bold text-gray-900 break-words leading-tight max-w-full overflow-hidden" 
+            style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{note.title}</h2>
         <button
           onClick={onClose}
           className="text-gray-500 hover:text-gray-700 rounded-full p-1"
@@ -93,7 +94,13 @@ const NoteDetail = ({ note, onEdit, onClose }) => {
       </div>
 
       {/* Content rendered as HTML */}
-      <div className="mb-4 text-gray-700 whitespace-pre-line text-lg" dangerouslySetInnerHTML={{ __html: note.content }} />
+      <div className="mb-4 text-gray-700 whitespace-pre-line text-lg break-words overflow-wrap-anywhere max-w-full" 
+           style={{
+             wordBreak: 'break-word',
+             overflowWrap: 'break-word',
+             maxWidth: '100%'
+           }}
+           dangerouslySetInnerHTML={{ __html: note.content }} />
 
       {/* Tags */}
       {note.tags && note.tags.length > 0 && (

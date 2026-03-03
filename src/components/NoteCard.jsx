@@ -154,7 +154,11 @@ const NoteCard = ({ note, onEdit, onEditNote, onDelete, onShowDetail }) => {
             className={`object-cover w-full h-full absolute top-0 left-0 transition-opacity duration-700 ${i === imgIdx ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
             loading="lazy"
             style={{ display: 'block' }}
-            onError={e => { e.target.style.display = 'none'; }}
+            onError={e => {
+              // Fallback to default avatar if image fails to load
+              e.target.onerror = null;
+              e.target.src = '/default-avatar.png';
+            }}
           />
         ))}
         {images.length > 1 && (
@@ -226,10 +230,12 @@ const NoteCard = ({ note, onEdit, onEditNote, onDelete, onShowDetail }) => {
           {firstLetter}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-sm xs:text-base sm:text-lg text-slate-800 line-clamp-2 mb-0.5 sm:mb-1">
+          <h3 className="font-bold text-sm xs:text-base sm:text-lg text-slate-800 line-clamp-2 mb-0.5 sm:mb-1 break-words overflow-hidden"
+              style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
             {note.title}
           </h3>
-          <div className="leading-relaxed mb-0.5 sm:mb-1.5 text-slate-700 text-[11px] xs:text-xs sm:text-sm line-clamp-1">
+          <div className="leading-relaxed mb-0.5 sm:mb-1.5 text-slate-700 text-[11px] xs:text-xs sm:text-sm line-clamp-1 break-words overflow-hidden"
+               style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
             {note.content && (
               <span dangerouslySetInnerHTML={{ __html: note.content }} />
             )}

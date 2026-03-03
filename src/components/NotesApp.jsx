@@ -11,13 +11,14 @@ import LanguageSwitcher from './LanguageSwitcher';
 import LoadingScreen from './LoadingScreen';
 import NotesSkeleton from './NotesSkeleton';
 import { notesService } from '../services/notesService';
+import { profileService } from '../services/profileService.js';
 import { useAuth } from '../context/AuthContext';
 
 
 
 const NotesApp = () => {
   const { t } = useTranslation();
-  const { logout, user } = useAuth();
+  const { logout, user, setUser } = useAuth();
   const { id: routeNoteId } = useParams();
   const navigate = useNavigate();
   const [notes, setNotes] = useState([]);
@@ -95,7 +96,68 @@ const NotesApp = () => {
 
   // Load notes from API on component mount
   const hasLoadedRef = React.useRef(false);
+  const hasLoadedProfileRef = React.useRef(false);
   
+  // Fetch user profile (including avatar) after login
+  useEffect(() => {
+    if (user && !hasLoadedProfileRef.current) {
+      hasLoadedProfileRef.current = true;
+      const fetchUserProfile = async () => {
+        console.log('👤 Fetching user profile after login...');
+        try {
+          const result = await profileService.getProfile();
+          if (result.success) {
+            const profile = result.data;
+            console.log('👤 Profile fetched successfully:', profile);
+            
+            // Update user context with profile data including avatar
+            if (profile) {
+              setUser(prev => {
+                if (!prev) return prev;
+                let updated = { ...prev };
+                
+                // Update user profile data
+                if (updated.user) {
+                  updated.user.username = profile.username || updated.user.username;
+                  updated.user.email = profile.email || updated.user.email;
+                  if (profile.avatar) {
+                    const fullAvatarUrl = profile.avatar.startsWith('http') 
+                      ? profile.avatar 
+                      : `https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io${profile.avatar}`;
+                    updated.user.avatar = fullAvatarUrl;
+                    console.log('📸 Updated user avatar:', fullAvatarUrl);
+                  }
+                } else {
+                  updated.username = profile.username || updated.username;
+                  updated.email = profile.email || updated.email;
+                  if (profile.avatar) {
+                    const fullAvatarUrl = profile.avatar.startsWith('http') 
+                      ? profile.avatar 
+                      : `https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io${profile.avatar}`;
+                    updated.avatar = fullAvatarUrl;
+                    console.log('📸 Updated user avatar:', fullAvatarUrl);
+                  }
+                }
+                
+                localStorage.setItem('notesapp_user', JSON.stringify(updated));
+                return updated;
+              });
+            }
+          } else {
+            console.warn('⚠️ Profile fetch failed:', result.error);
+          }
+        } catch (error) {
+          console.error('❌ Error fetching user profile:', error);
+        }
+      };
+      
+      fetchUserProfile();
+    } else if (!user && hasLoadedProfileRef.current) {
+      hasLoadedProfileRef.current = false;
+    }
+  }, [user]);
+  
+  // Load notes from API after profile is fetched
   useEffect(() => {
     if (user && !hasLoadedRef.current) {
       hasLoadedRef.current = true;

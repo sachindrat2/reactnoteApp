@@ -60,6 +60,26 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
     });
   };
 
+  // Content validation and sanitization
+  const sanitizeContent = (content) => {
+    if (!content) return '';
+    
+    // Remove excessive repeated characters (more than 20 consecutive same chars)
+    let sanitized = content.replace(/(.)\1{20,}/g, (match, char) => {
+      return char.repeat(Math.min(match.length, 20));
+    });
+    
+    // Limit extremely long lines
+    sanitized = sanitized.split('\n').map(line => {
+      if (line.length > 1000) {
+        return line.substring(0, 997) + '...';
+      }
+      return line;
+    }).join('\n');
+    
+    return sanitized;
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     let updatedImages = images;
@@ -70,7 +90,7 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
     const updatedNote = {
       ...note,
       title: title.trim() || t('untitledNote'),
-      content: content.trim(),
+      content: sanitizeContent(content.trim()),
       tags,
       images: updatedImages
     };
@@ -128,9 +148,9 @@ const NoteEditor = ({ note = null, onSave, onClose, onDelete }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white" onKeyDown={handleKeyDown}>
+    <div className="min-h-screen bg-white overflow-visible" onKeyDown={handleKeyDown}>
       {/* Editor Header */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-200 z-10">
+      <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-200 z-30" style={{ position: 'sticky', top: 0, zIndex: 30 }}>
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Back Button */}

@@ -8,6 +8,14 @@
 .ql-editor .ql-font-notojp {
   font-family: 'Noto Sans JP', sans-serif;
 }
+
+/* Quill editor text handling improvements */
+.ql-editor {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
 /* Ensure Quill font and size classes are respected */
 .ql-editor .ql-font-serif { font-family: serif; }
 .ql-editor .ql-font-monospace { font-family: monospace; }
@@ -114,6 +122,28 @@ html, body {
   font-variant: normal;
   display: inline-block;
   vertical-align: baseline;
+}
+
+/* Japanese text and content handling */
+.japanese-text, [lang="ja"] {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-break: strict;
+}
+
+/* Global text overflow prevention */
+.content-text {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Prevent problematic whitespace handling */
+.preserve-formatting {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Utility classes for line clamping */

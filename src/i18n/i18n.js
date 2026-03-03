@@ -163,7 +163,18 @@ const resources = {
       // Language Switcher
       language: "Language",
       english: "English",
-      japanese: "日本語"
+      japanese: "日本語",
+      
+      // Profile Modal
+      profile: "Profile",
+      username: "Username", 
+      saveProfile: "Save Profile",
+      saving: "Saving...",
+      addAvatar: "Add",
+      changeAvatar: "Change",
+      removeAvatar: "Remove",
+      usernameReadonly: "Username cannot be changed",
+      emailReadonly: "Email cannot be changed"
     }
   },
   ja: {
@@ -306,6 +317,17 @@ const resources = {
       japanese: "日本語",
       "username.label": "ユーザー名",
       "username.placeholder": "ユーザー名を入力してください",
+      
+      // Profile Modal
+      profile: "プロフィール",
+      username: "ユーザー名",
+      saveProfile: "プロフィールを保存",
+      saving: "保存中...",
+      addAvatar: "追加",
+      changeAvatar: "変更",
+      removeAvatar: "削除",
+      usernameReadonly: "ユーザー名は変更できません",
+      emailReadonly: "メールアドレスは変更できません"
     }
   }
 };

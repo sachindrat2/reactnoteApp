@@ -8,13 +8,13 @@ console.log('Current location:', window.location.href);
 console.log('Current hostname:', window.location.hostname);
 
 // Check the backend URL constant
-console.log('BACKEND_URL constant:', 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io');
+console.log('BACKEND_URL constant:', 'https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io');
 
 // Test URL construction for different endpoints
 const testEndpoints = ['/notes', '/token', '/register'];
 
 testEndpoints.forEach(endpoint => {
-  const backendUrl = 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io';
+  const backendUrl = 'https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io';
   const fullUrl = `${backendUrl}${endpoint}`;
   
   console.log(`Endpoint ${endpoint}:`);
@@ -25,7 +25,7 @@ testEndpoints.forEach(endpoint => {
 
 // Test if the issue is with relative URL resolution
 console.log('\n🔍 Testing URL resolution:');
-const baseUrl = 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io';
+const baseUrl = 'https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io';
 const endpoint = '/notes';
 const testUrl = `${baseUrl}${endpoint}`;
 

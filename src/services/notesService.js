@@ -177,6 +177,15 @@ export const notesService = {
   // Create a new note
   createNote: async (noteData) => {
     const currentUser = getCurrentUser();
+      // Add current date in YYYY-MM-DD format (JST)
+      const now = new Date();
+      // Convert to JST (UTC+9)
+      const jst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+      const yyyy = jst.getUTCFullYear();
+      const mm = String(jst.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(jst.getUTCDate()).padStart(2, '0');
+      const date = `${yyyy}-${mm}-${dd}`;
+      const noteWithDate = { ...noteData, date };
     if (!currentUser) {
       return { success: false, error: 'Please login to create notes', requiresLogin: true };
     }

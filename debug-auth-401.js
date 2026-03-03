@@ -22,7 +22,7 @@ async function debugAuthState() {
     
     // Test API endpoint directly
     console.log('\n=== Direct API Test ===');
-    const baseUrl = 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io';
+    const baseUrl = 'https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io';
     
     // Test with current token
     if (storedUser) {

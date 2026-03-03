@@ -44,10 +44,10 @@ export default defineConfig({
   },
   server: {
     port: 8080,
-    strictPort: true,
+    strictPort: false, // Allow Vite to use alternative ports if 8080 is busy
     proxy: {
       '/api': {
-        target: 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io',
+        target: ' https://backend-noteapp-new.salmonground-95e8af22.japaneast.azurecontainerapps.io',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
         secure: true,

@@ -1,5 +1,10 @@
 // API Base Configuration - Use environment variable or fallback
-const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://notesapp.agreeableocean-d7058ab3.japanwest.azurecontainerapps.io';
+// Set your backend URL via VITE_API_URL or fallback to the correct base URL
+const BACKEND_URL = 'https://backend-noteapp-new.salmonground-95e8af22.japaneast.azurecontainerapps.io';
+
+// Prevent duplicate 401 events
+let tokenExpiredEventSent = false;
+let tokenExpiredEventReset = null;
 
 // Force absolute URL to prevent relative resolution issues
 const getAbsoluteBackendUrl = () => {
@@ -130,11 +135,11 @@ export const refreshTokenAPI = async () => {
 };
 
 // Helper function to get auth headers
-const getAuthHeaders = () => {
+const getAuthHeaders = (excludeContentType = false) => {
   const userDataStr = localStorage.getItem('notesapp_user');
   if (!userDataStr) {
     console.log('No authentication data founds');
-    return {
+    return excludeContentType ? {} : {
       'Content-Type': 'application/json'
     };
   }
@@ -146,7 +151,7 @@ const getAuthHeaders = () => {
     console.error('Error parsing user data from localStorage:', error);
     // Clear corrupted data
     localStorage.removeItem('notesapp_user');
-    return {
+    return excludeContentType ? {} : {
       'Content-Type': 'application/json'
     };
   }
@@ -155,7 +160,7 @@ const getAuthHeaders = () => {
   const token = user.access_token;
   if (!token) {
     console.warn('No access token found in user data');
-    return {
+    return excludeContentType ? {} : {
       'Content-Type': 'application/json'
     };
   }
@@ -165,11 +170,18 @@ const getAuthHeaders = () => {
   console.log('🔑 Using access token for authentication');
   console.log('   - Authorization header:', authHeader);
 
-  return {
-    'Content-Type': 'application/json',
+  const headers = {
     'Authorization': `Bearer ${token}`
   };
-};// Generic API request function with better error handling and fallback
+
+  if (!excludeContentType) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  return headers;
+};
+
+// Generic API request function with better error handling and fallback
 const apiRequest = async (endpoint, options = {}) => {
   const requestId = ++requestCounter;
   const requestKey = `${options.method || 'GET'}_${endpoint}`;
@@ -202,12 +214,15 @@ const apiRequest = async (endpoint, options = {}) => {
 
 // Extracted request logic with timeout
 const makeRequest = async (url, options = {}, endpoint) => {
+  const isFormData = options.body instanceof FormData;
+  
   const config = {
     headers: {
-      ...getAuthHeaders(),
+      // For FormData, exclude Content-Type to let browser set multipart boundary
+      ...getAuthHeaders(isFormData),
       'Accept': 'application/json',
-      // Set Content-Type for requests with body (unless overridden)
-      ...(options.body && !options.headers?.['Content-Type'] ? { 'Content-Type': 'application/json' } : {}),
+      // Set Content-Type for JSON requests only (not for FormData)
+      ...(options.body && !isFormData && !options.headers?.['Content-Type'] ? { 'Content-Type': 'application/json' } : {}),
       ...options.headers,  // Allow options to override headers
     },
     mode: 'cors',
@@ -221,7 +236,9 @@ const makeRequest = async (url, options = {}, endpoint) => {
     console.log('API Request:', { 
       url: url.split('?')[0], // Hide query params for cleaner logs
       method: config.method || 'GET',
-      isLocalhost: window.location.hostname === 'localhost'
+      isLocalhost: window.location.hostname === 'localhost',
+      headers: config.headers,
+      bodyType: config.body?.constructor?.name
     });
   }
 
@@ -273,23 +290,40 @@ const makeRequest = async (url, options = {}, endpoint) => {
         data: data
       });
       
+      // Also log the raw data for debugging
+      console.error('Raw error data:', data);
+      console.error('Data type:', typeof data);
+      console.error('Data stringified:', JSON.stringify(data, null, 2));
+      
       // Handle 401 errors specifically
       if (response.status === 401) {
         console.log('🚫 401 Unauthorized - clearing auth and triggering event');
         
-        // Clear any stored auth immediately on 401
-        console.log('🧹 Clearing invalid token from localStorage after 401');
-        localStorage.removeItem('notesapp_user');
-        
-        // Dispatch event for components to handle
-        console.log('Dispatching token expiration event due to 401 error');
-        window.dispatchEvent(new CustomEvent('auth:token-expired', {
-          detail: { 
-            reason: 'API returned 401 Unauthorized',
-            endpoint: endpoint,
-            url: url
-          }
-        }));
+        // Prevent duplicate events
+        if (!tokenExpiredEventSent) {
+          tokenExpiredEventSent = true;
+          
+          // Clear any stored auth immediately on 401
+          console.log('🧹 Clearing invalid token from localStorage after 401');
+          localStorage.removeItem('notesapp_user');
+          
+          // Dispatch event for components to handle
+          console.log('Dispatching token expiration event due to 401 error');
+          window.dispatchEvent(new CustomEvent('auth:token-expired', {
+            detail: { 
+              reason: 'API returned 401 Unauthorized',
+              endpoint: endpoint,
+              url: url
+            }
+          }));
+          
+          // Reset the flag after 5 seconds to allow future 401 events
+          if (tokenExpiredEventReset) clearTimeout(tokenExpiredEventReset);
+          tokenExpiredEventReset = setTimeout(() => {
+            tokenExpiredEventSent = false;
+            tokenExpiredEventReset = null;
+          }, 5000);
+        }
         
         throw new Error('401: Unauthorized - Session expired');
       }
@@ -300,9 +334,54 @@ const makeRequest = async (url, options = {}, endpoint) => {
         return data;
       }
       
-      const errorMessage = data?.detail || data?.message || 
-        (typeof data === 'string' ? data : JSON.stringify(data)) || 
-        `HTTP error! status: ${response.status} ${response.statusText}`;
+      let errorMessage = 'Unknown error occurred';
+      
+      console.log('Extracting error message from data:', data);
+      console.log('data?.detail:', data?.detail);
+      console.log('data?.message:', data?.message);
+      console.log('typeof data:', typeof data);
+      
+      if (data?.detail) {
+        errorMessage = data.detail;
+        console.log('Using data.detail:', errorMessage);
+      } else if (data?.message) {
+        errorMessage = data.message;
+        console.log('Using data.message:', errorMessage);
+      } else if (typeof data === 'string') {
+        errorMessage = data;
+        console.log('Using data as string:', errorMessage);
+      } else if (data && typeof data === 'object') {
+        console.log('Processing object data...');
+        // Try to extract meaningful error information from object
+        if (data.error) {
+          errorMessage = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+          console.log('Using data.error:', errorMessage);
+        } else if (data.errors && Array.isArray(data.errors)) {
+          errorMessage = data.errors.map(e => typeof e === 'string' ? e : e.message || JSON.stringify(e)).join(', ');
+          console.log('Using data.errors array:', errorMessage);
+        } else {
+          console.log('No standard error fields found, stringifying data...');
+          // Last resort: stringify but handle potential issues
+          try {
+            errorMessage = JSON.stringify(data);
+            console.log('Stringified data:', errorMessage);
+            // If it's just {}, provide more context
+            if (errorMessage === '{}') {
+              errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+              console.log('Empty object, using status:', errorMessage);
+            }
+          } catch (stringifyError) {
+            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            console.log('Stringify failed, using status:', errorMessage);
+          }
+        }
+      } else {
+        errorMessage = `HTTP error! status: ${response.status} ${response.statusText}`;
+        console.log('No data, using status:', errorMessage);
+      }
+      
+      console.log('Final error message:', errorMessage);
+      
       throw new Error(errorMessage);
     }
 
@@ -411,7 +490,7 @@ export const authAPI = {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ token, password })
+      body: JSON.stringify({ token, new_password: password })
     });
   },
 
@@ -450,8 +529,21 @@ export const authAPI = {
   },
 
   uploadAvatar: async (avatarFile) => {
+    console.log('📤 Preparing avatar upload:', {
+      file: avatarFile,
+      name: avatarFile?.name,
+      size: avatarFile?.size,
+      type: avatarFile?.type,
+      constructor: avatarFile?.constructor?.name
+    });
+    
     const formData = new FormData();
-    formData.append('avatar', avatarFile);
+    formData.append('avatar', avatarFile);  // Backend expects 'avatar' field name
+    
+    console.log('📄 FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
     
     return apiRequest(API_ENDPOINTS.PROFILE_AVATAR, {
       method: 'POST',

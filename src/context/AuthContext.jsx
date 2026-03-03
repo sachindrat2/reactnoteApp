@@ -198,13 +198,26 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('notesapp_notes_cache');
     };
     
+    // Listen for token refresh events from profile service
+    const handleTokenRefreshed = (event) => {
+      console.log('🔄 Token refresh event received from service:', event.detail);
+      const { userData } = event.detail;
+      if (userData && userData.access_token) {
+        console.log('✅ Updating auth context with refreshed token');
+        setUser(userData);
+        setIsAuthenticated(true);
+      }
+    };
+    
     window.addEventListener('auth:token-expired', handleTokenExpired);
     window.addEventListener('auth:force-logout', handleForceLogout);
+    window.addEventListener('auth:token-refreshed', handleTokenRefreshed);
     
     // Cleanup event listeners
     return () => {
       window.removeEventListener('auth:token-expired', handleTokenExpired);
       window.removeEventListener('auth:force-logout', handleForceLogout);
+      window.removeEventListener('auth:token-refreshed', handleTokenRefreshed);
     };
   }, [isAuthenticated]);
 

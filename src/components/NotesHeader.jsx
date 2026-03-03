@@ -10,11 +10,23 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount, onLogo
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [avatarKey, setAvatarKey] = useState(0); // Force re-render of avatar
 
   // Profile modal state
   const [showProfileModal, setShowProfileModal] = useState(false);
   const handleProfileClick = () => setShowProfileModal(true);
   const handleProfileClose = () => setShowProfileModal(false);
+
+  // Listen for avatar updates
+  useEffect(() => {
+    const handleAvatarUpdate = (event) => {
+      console.log('🔄 Avatar update event received in header:', event.detail);
+      setAvatarKey(prev => prev + 1); // Force re-render
+    };
+    
+    window.addEventListener('auth:avatar-updated', handleAvatarUpdate);
+    return () => window.removeEventListener('auth:avatar-updated', handleAvatarUpdate);
+  }, []);
 
   // Collapsing header logic
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -43,7 +55,7 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount, onLogo
             {/* Logo and Title */}
             <div className="flex items-center space-x-1.5 flex-shrink-0">
               <div className={`transition-all duration-300 ${isCollapsed ? 'w-4 h-4 sm:w-5 sm:h-5' : 'w-5 h-5 sm:w-6 sm:h-6'} bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center animate-float shadow-lg`}>
-                <svg className={`transition-all duration-300 ${isCollapsed ? 'w-2 h-2 sm:w-2.5 h-2.5' : 'w-2.5 h-2.5 sm:w-3 sm:h-3'} text-white`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`transition-all duration-300 ${isCollapsed ? 'w-2 h-2 sm:w-2.5 sm:h-2.5' : 'w-2.5 h-2.5 sm:w-3 sm:h-3'} text-white`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
@@ -94,10 +106,31 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount, onLogo
               {user && (
                 <button
                   onClick={handleProfileClick}
-                  className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 rounded-full border border-purple-400 shadow-sm bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center hover:scale-110 transition-transform duration-200"
+                  className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 rounded-full border border-purple-400 shadow-sm bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center hover:scale-110 transition-transform duration-200 overflow-hidden"
                   title={t('profile', 'Profile')}
                 >
-                  <span className="text-white text-xs sm:text-sm font-medium">
+                  {(user?.user?.avatar || user?.avatar) ? (
+                    <img
+                      key={avatarKey}
+                      src={(() => {
+                        const avatarPath = user?.user?.avatar || user?.avatar;
+                        if (!avatarPath) return '';
+                        if (avatarPath.startsWith('http')) return avatarPath;
+                        return `https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io${avatarPath}`;
+                      })()}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextElementSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <span 
+                    className={`text-white text-xs sm:text-sm font-medium ${
+                      (user?.user?.avatar || user?.avatar) ? 'hidden' : 'flex'
+                    } items-center justify-center w-full h-full`}
+                  >
                     {(user?.user?.name || user?.name || user?.user?.email || user?.email || 'U').toString().charAt(0).toUpperCase()}
                   </span>
                 </button>

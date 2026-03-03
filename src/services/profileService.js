@@ -20,6 +20,12 @@ export const profileService = {
 
   async updateUsername(newUsername) {
     try {
+      // Check if token is expired and refresh if needed
+      const tokenValid = await this.validateAndRefreshToken();
+      if (!tokenValid) {
+        return { success: false, error: 'Authentication expired. Please login again.' };
+      }
+      
       const response = await authAPI.updateUsername(newUsername);
       
       // API returns: { success: true, username: "new_username" }
@@ -30,12 +36,99 @@ export const profileService = {
       return { success: false, error: response?.error || 'Failed to update username' };
     } catch (error) {
       console.error('Username update error:', error);
+      
+      // If it's a 401 error, try one more time with token refresh
+      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        console.log('🔄 Retrying username update after 401 error...');
+        try {
+          const tokenValid = await this.validateAndRefreshToken();
+          if (tokenValid) {
+            const retryResponse = await authAPI.updateUsername(newUsername);
+            if (retryResponse && retryResponse.success && retryResponse.username) {
+              return { success: true, data: { username: retryResponse.username } };
+            }
+          }
+        } catch (retryError) {
+          console.error('Retry failed:', retryError);
+        }
+      }
+      
       return { success: false, error: handleAPIError(error) };
+    }
+  },
+
+  // Helper method to validate and refresh token if needed
+  async validateAndRefreshToken() {
+    try {
+      const userDataStr = localStorage.getItem('notesapp_user');
+      if (!userDataStr) {
+        console.log('❌ No user data in localStorage');
+        return false;
+      }
+      
+      const userData = JSON.parse(userDataStr);
+      if (!userData.access_token) {
+        console.log('❌ No access token in user data');
+        return false;
+      }
+      
+      console.log('🔍 Validating token...', {
+        tokenPrefix: userData.access_token.substring(0, 20) + '...',
+        hasToken: !!userData.access_token
+      });
+      
+      // Check if token is expired
+      const payload = JSON.parse(atob(userData.access_token.split('.')[1]));
+      if (payload.exp) {
+        const expDate = new Date(payload.exp * 1000);
+        const now = new Date();
+        const timeUntilExpiry = expDate.getTime() - now.getTime();
+        
+        console.log('⏰ Token timing:', {
+          expiresAt: expDate.toISOString(),
+          currentTime: now.toISOString(),
+          millisecondsUntilExpiry: timeUntilExpiry,
+          minutesUntilExpiry: Math.floor(timeUntilExpiry / (1000 * 60))
+        });
+        
+        // If token expires in less than 2 minutes, refresh it
+        if (timeUntilExpiry < 2 * 60 * 1000) {
+          console.log('🔄 Token expires soon, refreshing...');
+          const { refreshTokenAPI } = await import('./api.js');
+          const refreshed = await refreshTokenAPI();
+          
+          if (refreshed && refreshed.access_token) {
+            const newUserData = { ...userData, ...refreshed };
+            localStorage.setItem('notesapp_user', JSON.stringify(newUserData));
+            console.log('✅ Token refreshed successfully');
+            
+            // Dispatch custom event to update auth context
+            window.dispatchEvent(new CustomEvent('auth:token-refreshed', {
+              detail: { userData: newUserData }
+            }));
+            
+            return true;
+          }
+        } else {
+          console.log('✅ Token is still valid for', Math.floor(timeUntilExpiry / (1000 * 60)), 'minutes');
+        }
+      }
+      
+      return true; // Token is still valid
+    } catch (error) {
+      console.error('❌ Token validation error:', error);
+      return false;
     }
   },
 
   async updateEmail(newEmail) {
     try {
+      // Check if token is expired and refresh if needed
+      const tokenValid = await this.validateAndRefreshToken();
+      if (!tokenValid) {
+        return { success: false, error: 'Authentication expired. Please login again.' };
+      }
+      
       const response = await authAPI.updateEmail(newEmail);
       
       // API returns: { success: true, email: "new_email" }
@@ -46,6 +139,23 @@ export const profileService = {
       return { success: false, error: response?.error || 'Failed to update email' };
     } catch (error) {
       console.error('Email update error:', error);
+      
+      // If it's a 401 error, try one more time with token refresh
+      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        console.log('🔄 Retrying email update after 401 error...');
+        try {
+          const tokenValid = await this.validateAndRefreshToken();
+          if (tokenValid) {
+            const retryResponse = await authAPI.updateEmail(newEmail);
+            if (retryResponse && retryResponse.success && retryResponse.email) {
+              return { success: true, data: { email: retryResponse.email } };
+            }
+          }
+        } catch (retryError) {
+          console.error('Retry failed:', retryError);
+        }
+      }
+      
       return { success: false, error: handleAPIError(error) };
     }
   },
@@ -72,13 +182,12 @@ export const profileService = {
       
       // Try to extract meaningful error message
       let errorMessage = 'Failed to upload avatar';
-      if (error.message) {
-        try {
-          const parsed = JSON.parse(error.message);
-          errorMessage = parsed.detail || parsed.message || error.message;
-        } catch {
-          errorMessage = error.message;
-        }
+      if (error.message && error.message !== '[object Object]') {
+        errorMessage = error.message;
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
       }
       
       return { success: false, error: handleAPIError(error) };
