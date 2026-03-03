@@ -116,7 +116,7 @@ const NotesHeader = ({ onAddNote, searchTerm, onSearchChange, notesCount, onLogo
                         const avatarPath = user?.user?.avatar || user?.avatar;
                         if (!avatarPath) return '';
                         if (avatarPath.startsWith('http')) return avatarPath;
-                        return `https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io${avatarPath}`;
+                        return `https://backend-noteapp-new.salmonground-95e8af22.japaneast.azurecontainerapps.io${avatarPath}`;
                       })()}
                       alt="Avatar"
                       className="w-full h-full object-cover"

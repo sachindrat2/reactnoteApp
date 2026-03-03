@@ -123,7 +123,7 @@ const NotesApp = () => {
                   if (profile.avatar) {
                     const fullAvatarUrl = profile.avatar.startsWith('http') 
                       ? profile.avatar 
-                      : `https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io${profile.avatar}`;
+                      : `https://backend-noteapp-new.salmonground-95e8af22.japaneast.azurecontainerapps.io${profile.avatar}`;
                     updated.user.avatar = fullAvatarUrl;
                     console.log('📸 Updated user avatar:', fullAvatarUrl);
                   }
@@ -133,7 +133,7 @@ const NotesApp = () => {
                   if (profile.avatar) {
                     const fullAvatarUrl = profile.avatar.startsWith('http') 
                       ? profile.avatar 
-                      : `https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io${profile.avatar}`;
+                      : `https://backend-noteapp-new.salmonground-95e8af22.japaneast.azurecontainerapps.io${profile.avatar}`;
                     updated.avatar = fullAvatarUrl;
                     console.log('📸 Updated user avatar:', fullAvatarUrl);
                   }

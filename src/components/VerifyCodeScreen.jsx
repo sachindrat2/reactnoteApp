@@ -26,7 +26,7 @@ const VerifyCodeScreen = () => {
     const payload = { username, code };
     console.log('🔍 Sending to /verify-code:', payload);
     try {
-      const response = await fetch('https://noteappweb-backend.delightfulwave-7d742510.japaneast.azurecontainerapps.io/verify-code', {
+      const response = await fetch('https://backend-noteapp-new.salmonground-95e8af22.japaneast.azurecontainerapps.io/verify-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
