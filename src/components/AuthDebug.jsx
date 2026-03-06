@@ -36,7 +36,6 @@ const AuthDebug = () => {
       try {
         addLog('Testing token validity...');
         const baseUrl = 'https://backend-noteapp-new.salmonground-95e8af22.japaneast.azurecontainerapps.io';
-        
         const response = await fetch(`${baseUrl}/notes`, {
           method: 'GET',
           headers: {

@@ -87,6 +87,11 @@ docker push sachindra785/mynotesapp:v1
 - No localhost or proxy logic in production.
 
 ## Troubleshooting
+- **Forgot Password:**
+	- If you don't receive a reset email, check your spam folder.
+	- Make sure you enter the correct email address registered with your account.
+	- If the reset link doesn't work, request a new one from the app.
+	- After resetting, use your new password to log in.
 - **CORS errors:** Ensure your backend allows your frontend domain in CORS settings.
 - **404 on direct route:** SPA routing is handled by nginx config in Docker.
 - **Service worker/cache issues:** Clear browser cache and unregister service workers if you see old endpoints.
