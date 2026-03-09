@@ -10,6 +10,7 @@ import VerifyEmailScreen from './components/VerifyEmailScreen.jsx';
 import ForgotPasswordScreen from './components/ForgotPasswordScreen.jsx';
 import ResetPasswordScreen from './components/ResetPasswordScreen.jsx';
 import LoadingScreen from './components/LoadingScreen.jsx';
+import SplashScreen from './components/SplashScreen.jsx';
 
 // ...existing code...
 const ProtectedRoute = ({ children }) => {
@@ -82,10 +83,17 @@ const AppContent = () => {
 };
 
 function App() {
+  const [showSplash, setShowSplash] = React.useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
-        <AppContent />
+        {showSplash ? <SplashScreen /> : <AppContent />}
       </Router>
     </AuthProvider>
   );

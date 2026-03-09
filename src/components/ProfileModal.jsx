@@ -296,6 +296,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
             
             {/* Avatar Action Buttons */}
             <div className="flex gap-3">
+              {/*
               <button
                 type="button"
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
@@ -308,6 +309,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 </svg>
                 <span>{avatar ? t('changeAvatar', 'Change') : t('addAvatar', 'Add')}</span>
               </button>
+              */}
               
               {avatar && (
                 <button
@@ -363,6 +365,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
           
           {/* Action Buttons */}
           <div className="flex flex-col gap-3 pt-2">
+            {/*
             <button
               type="submit"
               disabled={isSaving}
@@ -370,6 +373,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
             >
               {isSaving ? t('saving', 'Saving...') : t('saveProfile', 'Save Profile')}
             </button>
+            */}
             
             <button
               type="button"
